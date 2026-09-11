@@ -59,7 +59,7 @@ public struct PrCandidateSet: Codable, Sendable {
     public var repFloor: Double?
     public var pairId: String?
     public var side: String?
-    /// Identity for the asserted record-book lookup — see `PrSeed`.
+    /// The session date and the set's place in it — carried for the ledger row.
     public var date: String?
     public var exerciseName: String?
     public var setNumber: Int?
@@ -277,7 +277,7 @@ public enum PrEngine {
     }
 
     /// Fold historical rows into per-axis bests. `isTimed` decides which axes
-    /// apply to a key. `floorFor` — hand it `PrTruth.floor(for:)` resolved
+    /// apply to a key. `floorFor` — hand it the session-less `personal_records` rows folded per key (`PrRecorder.floors`), resolved
     /// through whatever the key is, NEVER the raw book — supplies a bar the
     /// logged rows cannot account for, folded in last as just another contender.
     ///
@@ -471,22 +471,23 @@ public enum PrEngine {
 
     /// Run a whole session in order — the single entry point, so there is
     /// exactly one place where "what counts as a PR" is decided. `sets` MUST be
-    /// in the order performed. An asserted session (see `PrSeed`) takes its
-    /// axes from the record book alone and skips supersession; its sets still
-    /// advance the index so everything after them is judged correctly.
+    /// in the order performed.
+    ///
+    /// ── THE ASSERTED ERA IS GONE (W2) ───────────────────────────────────────
+    /// `PrSeed` declared the July 2026 record book by hand and suppressed
+    /// detection for those sessions. Those records are materialised in
+    /// `personal_records` and `workout_sets.is_pr`; the override was the
+    /// founder's history compiled into the engine, and it is deleted. A replay
+    /// of a July session now derives its records like any other — against the
+    /// floors `personal_records` carries with no session (`floorFor`).
     public static func detectSessionPrs(_ sets: [PrCandidateSet], _ baselines: PrBaselines) -> SessionPrResult {
         var idx = baselineIndex(baselines)
-        // `sets.find((s) => s.date)?.date` — the first NON-EMPTY date.
-        let seeded = PrSeed.isAssertedSession(sets.first { !($0.date ?? "").isEmpty }?.date)
         let credits = volumeCredits(sets.map { VolumeCreditRow(weightKg: $0.weightKg, reps: $0.reps, pairId: $0.pairId, side: $0.side) })
 
         var perSet: [DetectedSet] = []
         perSet.reserveCapacity(sets.count)
         for (i, s) in sets.enumerated() {
-            let asserted = PrSeed.seededAxes(
-                date: s.date, exercise: s.exerciseName ?? s.key, setNumber: s.setNumber, weightKg: s.weightKg, reps: s.reps
-            )
-            let axes = seeded ? asserted : detectSetPrs(s, idx, volumeKg: credits[i])
+            let axes = detectSetPrs(s, idx, volumeKg: credits[i])
             // No load, no one-rep max to estimate — nil, never 0.
             let est1rm = s.timed ? nil : Epley.oneRepMax(weight: s.weightKg, reps: s.reps)
             // READ THE BEATEN BASELINE BEFORE ABSORBING.
@@ -495,7 +496,7 @@ public enum PrEngine {
             perSet.append(DetectedSet(axes: axes, est1rm: est1rm, records: records))
         }
 
-        if !seeded { supersedeWithinSession(sets, &perSet, credits: credits) }
+        supersedeWithinSession(sets, &perSet, credits: credits)
 
         // Rebuilt from the per-set axes so `pr_count`, `is_pr` and the ledger
         // can never disagree about what counted.

@@ -55,6 +55,9 @@ public struct Exercise: Codable, FetchableRecord, PersistableRecord, Identifiabl
     public var equipment: String?
     public var isUnilateral: Bool?
     public var isBodyweight: Bool?
+    /// The legacy `helix5-…` id this row answers for (`exercises.slug`, W2).
+    /// A set logged before W2 carries it in `workout_sets.exercise_id`.
+    public var slug: String?
 
     public enum CodingKeys: String, CodingKey {
         case id
@@ -64,12 +67,13 @@ public struct Exercise: Codable, FetchableRecord, PersistableRecord, Identifiabl
         case equipment
         case isUnilateral = "is_unilateral"
         case isBodyweight = "is_bodyweight"
+        case slug
     }
 
     public init(
         id: String, name: String, primaryMuscle: String? = nil,
         secondaryMuscles: String? = nil, equipment: String? = nil,
-        isUnilateral: Bool? = nil, isBodyweight: Bool? = nil
+        isUnilateral: Bool? = nil, isBodyweight: Bool? = nil, slug: String? = nil
     ) {
         self.id = id
         self.name = name
@@ -78,6 +82,7 @@ public struct Exercise: Codable, FetchableRecord, PersistableRecord, Identifiabl
         self.equipment = equipment
         self.isUnilateral = isUnilateral
         self.isBodyweight = isBodyweight
+        self.slug = slug
     }
 }
 

@@ -226,12 +226,16 @@ public enum SessionSeedBuilder {
     ///
     /// `AppDatabase.progressionQueue` reads the same list, so the verdict and
     /// the number it pre-fills can never be about different sessions.
+    ///
+    /// `planOwning` names the plan a date belongs to (`Schedule.planId(owning:)`):
+    /// only sessions from TODAY's plan qualify, so a PPL-era Push never seeds
+    /// an Onyx Upper A. It replaces the compiled era boundary (`Era.forDate`).
     public static func sessionsForSeed(
-        _ sessions: [SeedSession], dayKey: String, today: String
+        _ sessions: [SeedSession], dayKey: String, today: String, planOwning: (String) -> String
     ) -> [SeedSession] {
-        let era = Era.forDate(today)
+        let plan = planOwning(today)
         return sessions
-            .filter { $0.dayKey == dayKey && !$0.maintenance && Era.forDate($0.date) == era }
+            .filter { $0.dayKey == dayKey && !$0.maintenance && planOwning($0.date) == plan }
             .sorted { a, b in
                 if a.date != b.date { return a.date > b.date }
                 if a.startedAt != b.startedAt { return a.startedAt > b.startedAt }
@@ -326,11 +330,12 @@ public enum SessionSeedBuilder {
         sets: [SeedSet],
         template: SeedTemplate? = nil,
         ready: [SeedProgression] = [],
-        program: Program = .onyx5
+        program: Program,
+        planOwning: (String) -> String
     ) -> SessionSeed {
         guard let day = program.day(key: dayKey) else { return SessionSeed(dayKey: dayKey, exercises: []) }
 
-        let ordered = sessionsForSeed(sessions, dayKey: dayKey, today: today)
+        let ordered = sessionsForSeed(sessions, dayKey: dayKey, today: today, planOwning: planOwning)
         let known = Set(ordered.map(\.id))
 
         // (session, canonical name) → its rows. Only sessions that qualified.

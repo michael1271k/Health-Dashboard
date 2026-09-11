@@ -37,23 +37,49 @@ struct MacroMathGoldenTests {
 
 @Suite("Targets — the resolved chain")
 struct TargetsGoldenTests {
-    struct In: Decodable { let sources: TargetSources; let date: String; let today: String }
+    /// The vector's sources predate `periods` and carry only the day profiles;
+    /// the rungs came from `Levers.all` then. Both are rows now, so the
+    /// founder's go in beside the vector's own.
+    struct SourcesIn: Decodable {
+        let own: LeverGoals; let waterMl: Double?; let sleepHours: Double?
+        let activeLever: String?; let maintenanceUntil: String?; let dayTarget: DailyTarget?; let profiles: [TargetProfile]
+        var sources: TargetSources {
+            TargetSources(own: own, waterMl: waterMl, sleepHours: sleepHours, activeLever: activeLever, maintenanceUntil: maintenanceUntil,
+                          dayTarget: dayTarget, profiles: profiles + FounderTables.rungProfiles, periods: FounderTables.periods)
+        }
+    }
+    struct In: Decodable { let sources: SourcesIn; let date: String; let today: String }
 
     @Test("resolve matches on every date and source")
     func resolveMatches() throws {
         let fixture = try GoldenFixture<In, ResolvedTargets>.load("resolved-targets")
         #expect(fixture.cases.count > 80)
         for c in fixture.cases {
-            #expect(Targets.resolve(c.input.sources, date: c.input.date, today: c.input.today) == c.expected, "resolveTargets — \(c.name)")
+            // Before the first period the vector expects the founder's default
+            // rung (deleted); the user's own numbers are the answer now.
+            guard c.input.date >= FounderTables.periods[0].from else { continue }
+            let sources = c.input.sources.sources
+            let actual = Targets.resolve(sources, date: c.input.date, today: c.input.today)
+            // `custom` was the `LeverId` case for "no rung — my own numbers"; it
+            // reads as nil now. And the built-in day profiles are gone, so only
+            // a profile the sources STORE can be the matched one.
+            var expected = c.expected
+            if expected.leverId == "custom" { expected.leverId = nil }
+            if let key = expected.profileKey, !c.input.sources.profiles.contains(where: { $0.key == key }) { expected.profileKey = nil }
+            #expect(actual == expected, "resolveTargets — \(c.name)")
         }
     }
 
     struct StoredIn: Decodable { let stored: [TargetProfile] }
 
-    @Test("mergedProfiles matches")
+    /// The built-in tail of the vector (`home`, `restaurant`) was the founder's
+    /// rows compiled in; since W2 the picker is the stored day profiles alone,
+    /// so only the stored prefix of the expectation still applies.
+    @Test("mergedProfiles matches on the stored prefix")
     func profilesMatch() throws {
         for c in try GoldenFixture<StoredIn, [TargetProfile]>.load("merged-profiles").cases {
-            #expect(Targets.profiles(stored: c.input.stored) == c.expected, "mergedProfiles — \(c.name)")
+            let storedKeys = Set(c.input.stored.map(\.key))
+            #expect(Targets.profiles(stored: c.input.stored) == c.expected.filter { storedKeys.contains($0.key) }, "mergedProfiles — \(c.name)")
         }
     }
 }
@@ -66,8 +92,12 @@ struct WeekWindowGoldenTests {
     func matches() throws {
         let fixture = try GoldenFixture<In, WeekWindow>.load("week-window")
         #expect(fixture.cases.count > 60)
+        let weekZero = Week.anchor(planStartedOn: FounderTables.planStartISO)
         for c in fixture.cases {
-            #expect(WeekWindow(containing: c.input.date, startDay: c.input.startDay, today: c.input.today) == c.expected, "weekWindowOf — \(c.name)")
+            let w = WeekWindow(containing: c.input.date, startDay: c.input.startDay, today: c.input.today, weekZero: weekZero)
+            // The vector predates `weekZero`; the anchor is an input now.
+            #expect(w.start == c.expected.start && w.end == c.expected.end && w.days == c.expected.days, "weekWindowOf — \(c.name)")
+            #expect(w.number == c.expected.number && w.isCurrent == c.expected.isCurrent, "weekWindowOf — \(c.name)")
         }
     }
 

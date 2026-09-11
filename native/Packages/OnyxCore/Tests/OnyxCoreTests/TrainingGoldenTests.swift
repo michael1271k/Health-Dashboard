@@ -8,6 +8,9 @@ import Testing
 
 private struct Empty: Decodable {}
 
+/// `FounderTables.deck` is read from `plan-templates.json`, a copy of the
+/// app's seed; this is the check that the copy is the deck the vectors on
+/// this page (and the seed, queue and schedule pages) were generated over.
 @Suite("Program deck — the Onyx-5 fixture")
 struct ProgramDeckGoldenTests {
     struct PhaseIn: Decodable { let phase: ProgramPhase }
@@ -15,10 +18,10 @@ struct ProgramDeckGoldenTests {
     struct DayOut: Decodable, Equatable { let key: String; let label: String; let weekday: Int; let exercises: [ExOut] }
     struct DeckOut: Decodable { let id: String; let days: [DayOut] }
 
-    @Test("the Swift deck equals the TypeScript deck, per phase")
+    @Test("the founder's routine rows equal the TypeScript deck, per phase")
     func deckMatches() throws {
         for c in try GoldenFixture<PhaseIn, DeckOut>.load("program-onyx5").cases {
-            let p = Program.onyx5
+            let p = FounderTables.deck
             #expect(p.id == c.expected.id)
             let days = p.days.map { d in
                 DayOut(key: d.key, label: d.label, weekday: d.weekday, exercises: d.exercises(for: c.input.phase).map {
@@ -50,9 +53,9 @@ struct CeilingsGoldenTests {
         #expect(fixture.cases.count > 400)
         for c in fixture.cases {
             let i = c.input
-            #expect(Ceilings.repWindow(for: i.name, dayKey: i.dayKey, phase: i.phase) == c.expected.window, "repWindowFor — \(c.name)")
-            expectClose(Ceilings.holdTarget(for: i.name, dayKey: i.dayKey, phase: i.phase), c.expected.hold, "holdTargetFor — \(c.name)")
-            expectClose(RestTargets.programRestSec(for: i.name, dayKey: i.dayKey, phase: i.phase), c.expected.restSec, "programRestSec — \(c.name)")
+            #expect(Ceilings.repWindow(for: i.name, dayKey: i.dayKey, program: FounderTables.deck, phase: i.phase) == c.expected.window, "repWindowFor — \(c.name)")
+            expectClose(Ceilings.holdTarget(for: i.name, dayKey: i.dayKey, program: FounderTables.deck, phase: i.phase), c.expected.hold, "holdTargetFor — \(c.name)")
+            expectClose(RestTargets.programRestSec(for: i.name, dayKey: i.dayKey, program: FounderTables.deck, phase: i.phase), c.expected.restSec, "programRestSec — \(c.name)")
         }
     }
 

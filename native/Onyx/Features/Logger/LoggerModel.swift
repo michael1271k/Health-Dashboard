@@ -12,7 +12,7 @@ import OnyxUI
 /// rest target and a seed load, and it exists so you know what to walk up to
 /// the machine and do. `workout_sets` only ever holds work that HAPPENED.
 ///
-/// So the screen is the deck (from `Program.onyx5`) with the log folded onto
+/// So the screen is the deck (a `routines` row, via `ScheduleContext`) with the log folded onto
 /// it. Ticking a set appends an event; untickng voids it; editing a ticked set
 /// amends it. Nothing here awaits the network to draw, which is the property
 /// the whole data layer exists to provide.
@@ -678,14 +678,18 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
     private static func loadSeed(
         store: AppDatabase?, day: ProgramDay, phase: ProgramPhase, userId: String
     ) -> SeededDeck {
+        // The deck IS this day: the seed only needs `program.day(key:)`, and a
+        // one-day program is exactly what the caller handed in.
+        let program = Program(id: "", label: "", days: [day])
         let cold = SeededDeck(
             seed: SessionSeedBuilder.build(
-                dayKey: day.key, today: LogicalDay.today(), phase: phase, sessions: [], sets: []
+                dayKey: day.key, today: LogicalDay.today(), phase: phase, sessions: [], sets: [],
+                program: program, planOwning: { _ in "" }
             ),
             alerts: []
         )
         guard let store else { return cold }
-        return (try? store.sessionSeed(dayKey: day.key, userId: userId, phase: phase)) ?? cold
+        return (try? store.sessionSeed(dayKey: day.key, userId: userId, phase: phase, program: program)) ?? cold
     }
 
     // MARK: - Deck
@@ -1205,7 +1209,7 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
     /// A PAIR asks for both sides: the two arms are two candidates with two set
     /// numbers, and "what did this set beat" is the union of what they beat.
     func records(for rows: [SetRow], in exercise: ExerciseState) -> [LivePrRecord] {
-        let key = exercise.storedExerciseId ?? Self.exerciseId(exercise.name)
+        let key = storedId(for: exercise)
         let prefixes = rows.compactMap { row -> String? in
             guard let index = exercise.rows.firstIndex(where: { $0.id == row.id }) else { return nil }
             return "\(key)|\(index + 1)|"
@@ -1257,7 +1261,7 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             // The same key `snapshot` writes and `attach(editing:)` built the
             // bar from. A slug here against uuid-keyed baselines is the bug
             // above, one layer up.
-            let key = exercise.storedExerciseId ?? Self.exerciseId(exercise.name)
+            let key = storedId(for: exercise)
             // ── THE LEDGER'S FLOOR, NOT THIS SESSION'S PHASE ────────────
             // `PrRecorder.baselines` and `PrRecorder.record` both call
             // `Ceilings.repWindow(for:dayKey:)` and take its `.cut` default, so
@@ -1266,7 +1270,7 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             // 12–15 on a cut: a bulk set of 140 × 10 would light gold live
             // (floor 8, eligible) and file nothing on close (floor 12, not
             // eligible). Matching `record` exactly is the requirement.
-            let floor = Ceilings.repWindow(for: name, dayKey: day.key)?.floor
+            let floor = Ceilings.repWindow(for: name, dayKey: day.key, program: Program(id: "", label: "", days: [day]))?.floor
             for (i, row) in exercise.rows.enumerated() where row.isDone {
                 candidates.append(PrCandidateSet(
                     key: key,
@@ -1275,9 +1279,9 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
                     setType: row.kind.rawValue,
                     timed: TimedExercise.isTimed(name),
                     repFloor: floor,
-                    // The session's own day when there is one: `PrSeed` matches
-                    // an asserted record by `(date, name, setNumber)`, and
-                    // today's date on a three-week-old set matches nothing.
+                    // The session's own day when there is one: a record is
+                    // dated by the session it was earned in, and today's date
+                    // on a three-week-old set would file it under the wrong day.
                     date: editing?.date ?? LogicalDay.today(),
                     exerciseName: name,
                     setNumber: i + 1
@@ -1650,9 +1654,12 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             // ledger on close (`PrRecorder.baselines`). Excluding this session
             // is what stops every set being measured against itself.
             let bar = try store.livePrBaselines(
-                exerciseIds: exercises.map { Self.exerciseId($0.name) },
+                // Both ids a movement can be filed under: the catalogue uuid
+                // the payload carries (W2) and the legacy slug older rows hold.
+                exerciseIds: Array(Set(exercises.flatMap { [storedId(for: $0), Self.exerciseId($0.name)] })),
                 excluding: live,
-                dayKey: day.key
+                dayKey: day.key,
+                program: Program(id: "", label: "", days: [day])
             )
             // Rejoining a session that was paused when the app was killed: the
             // log knows, and the wall clock has kept running.
@@ -1744,7 +1751,7 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         do {
             baselines = try store.livePrBaselines(
                 exerciseIds: Array(Set(
-                    exercises.map { Self.exerciseId($0.name) }
+                    exercises.flatMap { [storedId(for: $0), Self.exerciseId($0.name)] }
                         + exercises.compactMap(\.storedExerciseId)
                 )),
                 excluding: session.id,
@@ -1758,7 +1765,8 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
                 // at all on a session whose own summary page, one screen back,
                 // shows three.
                 before: session.date,
-                dayKey: day.key
+                dayKey: day.key,
+                program: Program(id: "", label: "", days: [day])
             )
             refreshLivePrs()
             storeError = nil
@@ -1793,12 +1801,12 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         // the local catalogue, then `ExerciseSlug.nameBySlug`, then the alias
         // table. The same two sources the PR ledger keys on, so a set restores
         // onto the movement it files its records under.
-        let catalogue = Dictionary(
-            (try? store.exercises().map { ($0.id, $0.name) }) ?? [],
-            uniquingKeysWith: { first, _ in first }
-        )
+        let rows = (try? store.exercises()) ?? []
+        let catalogue = Dictionary(rows.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
+        // The slug half is the catalogue's `slug` column since W2 (D3).
+        let bySlug = ExerciseSlug.nameBySlug(rows)
         func canonical(_ id: String) -> String {
-            ExerciseAliases.canonicalName(catalogue[id] ?? ExerciseSlug.nameBySlug[id] ?? id)
+            ExerciseAliases.canonicalName(catalogue[id] ?? bySlug[id] ?? id)
         }
         // ── AND THE REVERSE, FOR A MOVEMENT THIS SESSION DOES NOT HOLD ──────
         // `snapshot` falls back to `ExerciseSlug.id` when an exercise has no
@@ -1954,8 +1962,17 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
     /// local catalogue, so a set ADDED to a web-logged session joins the same
     /// row every other client resolves; then the slug, which is what a live
     /// session writes and what `ExerciseIndex.id(forSlug:)` resolves on push.
+    ///
+    /// ── THE UUID FIRST, SINCE W2 (D3) ───────────────────────────────────────
+    /// The routine payload names the catalogue row for every movement it
+    /// prescribes, so a set logged today carries the same id a web-logged set
+    /// does and the push needs no slug lookup. The slug is written only for a
+    /// movement the payload could not resolve — a template row the catalogue
+    /// has not been seeded for yet — and stays resolvable through
+    /// `exercises.slug`.
     private func storedId(for exercise: ExerciseState) -> String {
         if let stored = exercise.storedExerciseId { return stored }
+        if let catalogued = exercise.plan.exerciseId { return catalogued }
         if isEditing,
            let catalogued = idByCanonicalName[ExerciseAliases.canonicalName(exercise.name).lowercased()] {
             return catalogued

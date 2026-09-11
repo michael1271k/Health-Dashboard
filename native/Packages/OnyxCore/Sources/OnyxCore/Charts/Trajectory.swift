@@ -98,7 +98,8 @@ public enum TrajectorySeries {
         rateMinKgWk: Double? = nil,
         rateMaxKgWk: Double? = nil,
         energy: [GoalBoard.EnergyDay] = [],
-        halfLifeDays: Double = halfLifeDays
+        halfLifeDays: Double = halfLifeDays,
+        phases: [PhaseDef] = []
     ) -> Trajectory {
         let points = ewma(readings, halfLifeDays: halfLifeDays)
         return Trajectory(
@@ -107,7 +108,7 @@ public enum TrajectorySeries {
                 readings: readings, energy: energy, targetWeightKg: targetWeightKg,
                 rateMinKgWk: rateMinKgWk, rateMaxKgWk: rateMaxKgWk, today: today
             ),
-            phaseKind: Phases.span(for: today)?.def.kind,
+            phaseKind: Phases.span(for: today, in: phases)?.def.kind,
             latestEwmaKg: points.last?.ewma
         )
     }

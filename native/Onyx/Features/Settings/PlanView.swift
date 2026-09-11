@@ -37,7 +37,7 @@ struct PlanView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task { await model.observe() }
         .confirmationDialog(
-            "Switch to \(Programs.plan(id: selectedPlanId)?.label ?? selectedPlanId) · \(selectedPhase.label)?",
+            "Switch to \(model.plans.first { $0.id == selectedPlanId }?.label ?? selectedPlanId) · \(selectedPhase.label)?",
             isPresented: $isConfirming,
             titleVisibility: .visible
         ) {
@@ -55,7 +55,7 @@ struct PlanView: View {
 
     private var plans: some View {
         Section {
-            ForEach(Programs.pickerOrder) { plan in
+            ForEach(model.plans) { plan in
                 Button {
                     previewPlanId = plan.id
                     // A different plan starts from its own cut, because a phase
@@ -125,7 +125,7 @@ struct PlanView: View {
 
     @ViewBuilder
     private var consequences: some View {
-        let goals = Programs.goals(planId: selectedPlanId, phase: selectedPhase)
+        let goals = model.goals(for: selectedPlanId, phase: selectedPhase)
         Section {
             LabeledContent("Calories") {
                 Text(goals.calorieGoal, format: .number.precision(.fractionLength(0)))
@@ -140,7 +140,7 @@ struct PlanView: View {
             }
             LabeledContent("Weekly sets") {
                 Text(
-                    Programs.weeklySetTargets(selectedPhase).values.reduce(0, +),
+                    model.volumeTotal(for: selectedPlanId, phase: selectedPhase),
                     format: .number.precision(.fractionLength(0))
                 )
                 .onyxNumeral()

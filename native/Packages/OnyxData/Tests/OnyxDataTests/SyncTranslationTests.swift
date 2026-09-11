@@ -93,7 +93,7 @@ struct SyncTranslationTests {
     @Test("every ONYX-5 day key maps to a split_day the CHECK accepts")
     func splitDayCoversTheProgram() throws {
         let allowed: Set<String> = ["push", "pull", "legs", "upper", "lower"]
-        for day in Program.onyx5.days {
+        for day in SampleDeck.onyx5.days {
             let split = try SyncTranslation.splitDay(forDayKey: day.key)
             #expect(allowed.contains(split), "\(day.key) → \(split) violates workout_sessions_split_day_check")
         }

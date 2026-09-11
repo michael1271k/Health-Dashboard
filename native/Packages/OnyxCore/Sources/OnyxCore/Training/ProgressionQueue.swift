@@ -103,7 +103,7 @@ public enum ProgressionQueue {
 
     /// The queue, in the order `targets` is given — plan order, day by day
     /// and within a day the order the session is performed in.
-    public static func alerts(targets: [Target], rows: [SetRow], program: Program = .onyx5, phase: ProgramPhase = .cut) -> [Alert] {
+    public static func alerts(targets: [Target], rows: [SetRow], program: Program, phase: ProgramPhase = .cut) -> [Alert] {
         let byExDay = bucket(rows)
         var out: [Alert] = []
         for t in targets {

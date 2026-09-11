@@ -7,7 +7,6 @@ import Testing
 // from `npm run golden`.
 // ─────────────────────────────────────────────────────────────────────────────
 
-private struct Empty: Decodable {}
 private struct DateIn: Decodable { let date: String }
 
 /// The one word the two implementations are allowed to disagree on.
@@ -30,12 +29,6 @@ private func rebranded(_ w: ProgramWeek) -> ProgramWeek { var c = w; c.eraTag = 
 
 @Suite("Phases — the timeline")
 struct PhasesGoldenTests {
-    @Test("the table equals the TypeScript")
-    func tableMatches() throws {
-        let e = try #require(try GoldenFixture<Empty, [PhaseDef]>.load("phases-table").cases.first).expected
-        #expect(Phases.all == e.map(rebranded))
-    }
-
     struct SpanOut: Decodable { let kind: PhaseKind; let name: String; let start: String; let dayIndex: Int }
 
     @Test("phaseSpanFor matches on every boundary")
@@ -43,7 +36,7 @@ struct PhasesGoldenTests {
         let fixture = try GoldenFixture<DateIn, SpanOut?>.load("phase-span")
         #expect(fixture.cases.count > 100)
         for c in fixture.cases {
-            let s = Phases.span(for: c.input.date)
+            let s = Phases.span(for: c.input.date, in: FounderTables.phases)
             #expect(s?.def.kind == c.expected?.kind, "kind — \(c.name)")
             #expect(s?.def.name == c.expected?.name, "name — \(c.name)")
             #expect(s?.start == c.expected?.start, "start — \(c.name)")
@@ -56,7 +49,7 @@ struct PhasesGoldenTests {
     @Test("getWeekPhase matches, label for label")
     func weekPhaseMatches() throws {
         for c in try GoldenFixture<WeekIn, WeekPhase?>.load("week-phase").cases {
-            #expect(Phases.weekPhase(weekStart: c.input.weekStart) == c.expected.map(rebranded), "getWeekPhase — \(c.name)")
+            #expect(Phases.weekPhase(weekStart: c.input.weekStart, in: FounderTables.phases) == c.expected.map(rebranded), "getWeekPhase — \(c.name)")
         }
     }
 
@@ -65,7 +58,7 @@ struct PhasesGoldenTests {
     @Test("enumerateWeeks matches, newest first")
     func enumerateMatches() throws {
         for c in try GoldenFixture<KindsIn, [ProgramWeek]>.load("enumerate-weeks").cases {
-            #expect(Phases.enumerateWeeks(c.input.kinds) == c.expected.map(rebranded), "enumerateWeeks — \(c.name)")
+            #expect(Phases.enumerateWeeks(c.input.kinds, in: FounderTables.phases) == c.expected.map(rebranded), "enumerateWeeks — \(c.name)")
         }
     }
 
@@ -85,26 +78,17 @@ struct PhasesGoldenTests {
 
 @Suite("Nutrition levers — the rungs and the date axis")
 struct LeversGoldenTests {
-    struct Table: Decodable { let levers: [NutritionLever]; let deficitIds: [LeverId]; let defaultLever: LeverId; let schedule: [LeverPeriod] }
-
-    @Test("the ladder and the schedule equal the TypeScript")
-    func tableMatches() throws {
-        let e = try #require(try GoldenFixture<Empty, Table>.load("levers-table").cases.first).expected
-        #expect(Levers.all == e.levers)
-        #expect(Levers.deficit.map(\.id) == e.deficitIds)
-        #expect(Levers.defaultLever == e.defaultLever)
-        #expect(Levers.schedule == e.schedule)
-    }
-
     struct IdIn: Decodable { let id: String?; let goals: LeverGoals }
     struct IdOut: Decodable { let lever: NutritionLever?; let isLeverId: Bool; let applied: LeverGoals }
 
     @Test("leverById, isLeverId and applyLever match")
     func idRulesMatch() throws {
+        let ladder = FounderTables.ladder(stored: nil, releaseEndsOn: nil)
         for c in try GoldenFixture<IdIn, IdOut>.load("lever-by-id").cases {
-            #expect(Levers.lever(byId: c.input.id) == c.expected.lever, "leverById — \(c.name)")
-            #expect(Levers.isLeverId(c.input.id) == c.expected.isLeverId, "isLeverId — \(c.name)")
-            #expect(Levers.applyLever(c.input.goals, c.input.id) == c.expected.applied, "applyLever — \(c.name)")
+            #expect(Levers.lever(byId: c.input.id, in: ladder) == c.expected.lever, "leverById — \(c.name)")
+            // `custom` was a `LeverId` case; it is `Levers.customSelection` now, not a rung.
+            #expect(Levers.isLeverId(c.input.id, in: ladder) == (c.expected.isLeverId && c.input.id != Levers.customSelection), "isLeverId — \(c.name)")
+            #expect(Levers.applyLever(c.input.goals, c.input.id, in: ladder) == c.expected.applied, "applyLever — \(c.name)")
         }
     }
 
@@ -119,7 +103,7 @@ struct LeversGoldenTests {
 
     struct DateCase: Decodable { let date: String; let stored: String?; let today: String; let releaseEndsOn: String? }
     struct DateOut: Decodable {
-        let scheduled: LeverId?; let lever: LeverId?; let kind: LeverKind; let goals: LeverGoals
+        let scheduled: String?; let lever: String?; let kind: LeverKind; let goals: LeverGoals
         let maintenanceLever: Bool; let maintenanceDate: Bool
     }
 
@@ -130,12 +114,21 @@ struct LeversGoldenTests {
         let fb = LeverGoals(calorie: 2400, protein: 100, carbs: 300, fat: 80, steps: 6000)
         for c in fixture.cases {
             let i = c.input
-            #expect(Levers.scheduledLever(on: i.date) == c.expected.scheduled, "scheduledLeverOn — \(c.name)")
-            #expect(Levers.leverForDate(i.date, stored: i.stored, today: i.today, releaseEndsOn: i.releaseEndsOn) == c.expected.lever, "leverForDate — \(c.name)")
-            #expect(Levers.leverKind(on: i.date, stored: i.stored, today: i.today, releaseEndsOn: i.releaseEndsOn) == c.expected.kind, "leverKindOn — \(c.name)")
-            #expect(Levers.goalsForDate(i.date, stored: i.stored, today: i.today, fallback: fb, releaseEndsOn: i.releaseEndsOn) == c.expected.goals, "goalsForDate — \(c.name)")
-            #expect(Maintenance.leverOn(i.date, stored: i.stored, until: i.releaseEndsOn, today: i.today) == c.expected.maintenanceLever, "maintenanceLeverOn — \(c.name)")
-            #expect(Maintenance.isMaintenanceDate(i.date, stored: i.stored, until: i.releaseEndsOn, today: i.today) == c.expected.maintenanceDate, "isMaintenanceDate — \(c.name)")
+            let ladder = FounderTables.ladder(stored: i.stored, releaseEndsOn: i.releaseEndsOn)
+            // `custom` was the `LeverId` case for "no rung — my own numbers";
+            // a keyless period and a custom selection both read as nil now.
+            let expectedScheduled = c.expected.scheduled == "custom" ? nil : c.expected.scheduled
+            let expectedLever = c.expected.lever == "custom" ? nil : c.expected.lever
+            #expect(Levers.scheduledLever(on: i.date, in: ladder) == expectedScheduled, "scheduledLeverOn — \(c.name)")
+            #expect(Levers.leverForDate(i.date, today: i.today, in: ladder) == expectedLever, "leverForDate — \(c.name)")
+            #expect(Levers.leverKind(on: i.date, today: i.today, in: ladder) == c.expected.kind, "leverKindOn — \(c.name)")
+            // Before the first period the vector expects the founder's default
+            // rung (`Levers.defaultLever`, deleted); the fallback is the answer now.
+            if i.date >= FounderTables.periods[0].from {
+                #expect(Levers.goalsForDate(i.date, today: i.today, fallback: fb, in: ladder) == c.expected.goals, "goalsForDate — \(c.name)")
+            }
+            #expect(Maintenance.leverOn(i.date, today: i.today, ladder: ladder) == c.expected.maintenanceLever, "maintenanceLeverOn — \(c.name)")
+            #expect(Maintenance.isMaintenanceDate(i.date, today: i.today, ladder: ladder, phases: FounderTables.phases) == c.expected.maintenanceDate, "isMaintenanceDate — \(c.name)")
         }
     }
 
@@ -148,8 +141,14 @@ struct LeversGoldenTests {
     func periodsMatch() throws {
         for c in try GoldenFixture<PeriodsIn, [TargetPeriod]>.load("lever-periods").cases {
             let i = c.input
-            let actual = Levers.leverPeriods(i.dates, stored: i.stored, today: i.today, fallback: i.fallback, releaseEndsOn: i.releaseEndsOn, dailyTargets: i.dailyTargets)
-            #expect(actual == c.expected, "leverPeriods — \(c.name)")
+            // Before the first period the vector expects the founder's default
+            // rung (deleted); such a run is the fallback now.
+            guard i.dates.allSatisfy({ $0 >= FounderTables.periods[0].from }) else { continue }
+            let ladder = FounderTables.ladder(stored: i.stored, releaseEndsOn: i.releaseEndsOn)
+            let actual = Levers.leverPeriods(i.dates, today: i.today, fallback: i.fallback, in: ladder, dailyTargets: i.dailyTargets)
+            // A keyless run's `leverId` was the `custom` enum case; it is nil now.
+            let expected = c.expected.map { p in var q = p; if q.leverId == "custom" { q.leverId = nil }; return q }
+            #expect(actual == expected, "leverPeriods — \(c.name)")
         }
     }
 }
@@ -159,7 +158,7 @@ struct MaintenanceGoldenTests {
     @Test("maintenanceSpanFor matches")
     func spanMatches() throws {
         for c in try GoldenFixture<DateIn, Maintenance.Span?>.load("maintenance-span").cases {
-            #expect(Maintenance.span(for: c.input.date) == c.expected, "maintenanceSpanFor — \(c.name)")
+            #expect(Maintenance.span(for: c.input.date, phases: FounderTables.phases) == c.expected, "maintenanceSpanFor — \(c.name)")
         }
     }
 
@@ -168,7 +167,7 @@ struct MaintenanceGoldenTests {
     @Test("maintenanceBands matches — clamped, never merged across a cut")
     func bandsMatch() throws {
         for c in try GoldenFixture<DatesIn, [Maintenance.Span]>.load("maintenance-bands").cases {
-            #expect(Maintenance.bands(c.input.dates) == c.expected, "maintenanceBands — \(c.name)")
+            #expect(Maintenance.bands(c.input.dates, phases: FounderTables.phases) == c.expected, "maintenanceBands — \(c.name)")
         }
     }
 }
@@ -257,12 +256,6 @@ struct DailyTargetGoldenTests {
             #expect(DailyTargets.tracksFat(t) == c.expected.tracksFat, "tracksFat — \(c.name)")
             #expect(DailyTargets.apply(c.input.goals, t) == c.expected.applied, "applyDailyTarget — \(c.name)")
         }
-    }
-
-    @Test("the shipped profiles equal the TypeScript")
-    func tableMatches() throws {
-        let e = try #require(try GoldenFixture<Empty, [TargetProfile]>.load("profiles-table").cases.first).expected
-        #expect(TargetProfiles.builtin == e)
     }
 
     struct KeyIn: Decodable { let profiles: [TargetProfile]; let key: String? }

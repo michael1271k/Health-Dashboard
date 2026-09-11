@@ -14,10 +14,10 @@ import OnyxData
 /// The KEY is the exercise id. Baselines are every earlier set of the session's
 /// own exercises, carrying `set_type`, `side`, `pair_id` and the stored
 /// `est_1rm_kg`; the rep floor is the programmed window for THIS session's
-/// day key; `floorFor` is `PrTruth.floor(for:)` through the canonical name;
-/// `isTimed` is `TimedExercise.isTimed` through the same name. Candidates are
-/// the session's sets in performed order with `date`, `exerciseName` and
-/// `setNumber` so `PrSeed` can find an asserted record. Sides are mapped
+/// day key; `floorFor` is the session-less `personal_records` floor through
+/// the canonical name; `isTimed` is `TimedExercise.isTimed` through the same
+/// name. Candidates are the session's sets in performed order with `date`,
+/// `exerciseName` and `setNumber`. Sides are mapped
 /// `left`/`right` → `L`/`R` at the boundary (`HistorySetRow.lr`).
 enum SessionAnalysis {
 
@@ -159,7 +159,7 @@ enum SessionAnalysis {
     // ponytail: baselines are rebuilt per session from that session's
     // exercises' history — O(sessions × their history). Fine at a few thousand
     // rows; an incremental index if the ledger ever reaches six figures.
-    static func summaries(_ sessions: [WorkoutSession], ledger: [HistorySetRow]) -> [Summary] {
+    static func summaries(_ sessions: [WorkoutSession], ledger: [HistorySetRow], in ctx: Context) -> [Summary] {
         let bySession = Dictionary(grouping: ledger, by: \.sessionId)
         var history: [String: [HistorySetRow]] = [:]
         var out: [Summary] = []
@@ -167,7 +167,7 @@ enum SessionAnalysis {
             let rows = bySession[session.id] ?? []
             let groups = grouped(rows)
             let prior = groups.flatMap { history[$0.exerciseId] ?? [] }
-            let pr = detect(groups: groups, prior: prior, dayKey: session.dayKey, date: session.date)
+            let pr = detect(groups: groups, prior: prior, dayKey: session.dayKey, date: session.date, in: ctx)
             for g in groups { history[g.exerciseId, default: []] += g.sets }
             let working = rows.filter { SetTags.isWorkingSet($0.setType) }
             out.append(Summary(
@@ -192,14 +192,14 @@ enum SessionAnalysis {
     /// the session id OR the date, so any bout logged that day appeared). A
     /// treadmill bout that IS part of the session is a `workout_sets` row and
     /// comes through `rows` like every other movement.
-    static func report(_ session: WorkoutSession, rows: [HistorySetRow], history: [HistorySetRow]) -> Report {
+    static func report(_ session: WorkoutSession, rows: [HistorySetRow], history: [HistorySetRow], in ctx: Context) -> Report {
         let groups = grouped(rows)
         // The ledger is in performed order, so "prior" is everything before
         // this session's first row — a same-day session is ordered by start.
         let cut = history.firstIndex { $0.sessionId == session.id } ?? history.endIndex
         let prior = Array(history[..<cut])
         let priorByEx = Dictionary(grouping: prior, by: \.exerciseId)
-        let pr = detect(groups: groups, prior: prior, dayKey: session.dayKey, date: session.date)
+        let pr = detect(groups: groups, prior: prior, dayKey: session.dayKey, date: session.date, in: ctx)
 
         var exercises: [ExerciseReport] = []
         var i = 0   // index into pr.perSet, which is in `groups` order
@@ -252,11 +252,11 @@ enum SessionAnalysis {
             let verdict: ProgressionVerdict
             let window: String?
             if timed {
-                let target = Ceilings.holdTarget(for: canonical, dayKey: session.dayKey)
+                let target = Ceilings.holdTarget(for: canonical, dayKey: session.dayKey, program: ctx.program(on: session.date))
                 verdict = Ceilings.timedProgressionVerdict(ladder, targetSec: target)
                 window = target.map { "\(jsIntegerString($0))s" }
             } else {
-                let w = Ceilings.repWindow(for: canonical, dayKey: session.dayKey)
+                let w = Ceilings.repWindow(for: canonical, dayKey: session.dayKey, program: ctx.program(on: session.date))
                 verdict = Ceilings.progressionVerdict(ladder, ceiling: w?.ceiling)
                 window = w.map { "\(jsIntegerString($0.floor))–\(jsIntegerString($0.ceiling))" }
             }
@@ -267,9 +267,10 @@ enum SessionAnalysis {
 
             // The ceiling this session's sets were judged against — the same
             // number `verdict` used, so the header and the cue cannot disagree.
+            let program = ctx.program(on: session.date)
             let ceiling: Double? = timed
-                ? Ceilings.holdTarget(for: canonical, dayKey: session.dayKey)
-                : Ceilings.repWindow(for: canonical, dayKey: session.dayKey)?.ceiling
+                ? Ceilings.holdTarget(for: canonical, dayKey: session.dayKey, program: program)
+                : Ceilings.repWindow(for: canonical, dayKey: session.dayKey, program: program)?.ceiling
             let workingRows = g.sets.filter { SetTags.isWorkingSet($0.setType) }
             let atCeiling = ceiling.map { c in workingRows.filter { Double($0.reps) >= c }.count } ?? 0
 
@@ -336,9 +337,12 @@ enum SessionAnalysis {
     /// the two places and the card is built under one name while the rows fail
     /// to match it, so the sets never restore and the first tick writes a
     /// second exercise id.
+    ///
+    /// Since W2 the slug half is DATA: `historySets` coalesces the catalogue
+    /// name through `exercises.slug` as well as `exercises.id`, so a phone-
+    /// logged set arrives named and the compiled slug table is gone.
     static func displayName(id: String, stored: String) -> String {
-        guard stored == id else { return ExerciseAliases.canonicalName(stored) }
-        return ExerciseAliases.canonicalName(ExerciseSlug.nameBySlug[id] ?? stored)
+        ExerciseAliases.canonicalName(stored)
     }
 
     // MARK: - Exercise history
@@ -429,11 +433,38 @@ enum SessionAnalysis {
     /// `buildBaselines` over the prior rows + `detectSessionPrs` over the
     /// session, exactly as `save.ts` feeds them. `perSet` comes back in
     /// `groups`-flattened order.
-    static func detect(groups: [Group], prior: [HistorySetRow], dayKey: String?, date: String) -> SessionPrResult {
+    /// What the analysis needs from the store that is not a set row: the
+    /// catalogue (for the deck that owns a session's date, whose rep windows
+    /// gate the e1RM axis) and the asserted floors (session-less
+    /// `personal_records` rows). One value, read once per screen
+    /// (`context(database:)`), so a list of forty sessions does not read the
+    /// catalogue forty times.
+    struct Context: Sendable {
+        var schedule: ScheduleContext
+        var floors: [String: PrFloor]
+
+        static let empty = Context(schedule: ScheduleContext(programId: "", phase: .cut), floors: [:])
+
+        /// The deck for a date — the plan that owned it, not the one selected.
+        func program(on date: String) -> Program { Schedule.programForContext(schedule, date).program }
+    }
+
+    /// The context off the store. Nothing filters on `user_id` beyond the goals
+    /// row's own: the local store is ONE user's mirror (see `HistoryWeeks`).
+    nonisolated static func context(database: AppDatabase) -> Context {
+        let userId = database.localUserId()
+        return Context(
+            schedule: (try? database.scheduleContext(userId: userId)) ?? Context.empty.schedule,
+            floors: (try? database.prFloors()) ?? [:]
+        )
+    }
+
+    static func detect(groups: [Group], prior: [HistorySetRow], dayKey: String?, date: String, in ctx: Context) -> SessionPrResult {
         var nameByEx: [String: String] = [:]
         for g in groups { nameByEx[g.exerciseId] = displayName(id: g.exerciseId, stored: g.name) }
         func name(_ key: String) -> String { nameByEx[key] ?? "" }
-        func floor(_ key: String) -> Double? { Ceilings.repWindow(for: name(key), dayKey: dayKey)?.floor }
+        let program = ctx.program(on: date)
+        func floor(_ key: String) -> Double? { Ceilings.repWindow(for: name(key), dayKey: dayKey, program: program)?.floor }
 
         let baselines = PrEngine.buildBaselines(
             prior.map {
@@ -443,7 +474,7 @@ enum SessionAnalysis {
                 )
             },
             isTimed: { TimedExercise.isTimed(name($0)) },
-            floorFor: { PrTruth.floor(for: name($0)) }
+            floorFor: { ctx.floors[name($0)] }
         )
         let candidates = groups.flatMap { g in
             g.sets.map { s in
@@ -485,9 +516,12 @@ enum SessionAnalysis {
 
     /// "Legs A" for a day key, the key itself tidied when the program does not
     /// know it (a Onyx-4 or PPL session).
-    static func dayLabel(_ dayKey: String?) -> String? {
+    ///
+    /// `program` is the deck that owns the session — the caller's context
+    /// knows which; nil (a preview with no catalogue) tidies the key.
+    static func dayLabel(_ dayKey: String?, in program: Program?) -> String? {
         guard let dayKey, !dayKey.isEmpty else { return nil }
-        return Program.onyx5.day(key: dayKey)?.label
+        return program?.day(key: dayKey)?.label
             ?? dayKey.split(separator: "_").map(\.capitalized).joined(separator: " ")
     }
 }

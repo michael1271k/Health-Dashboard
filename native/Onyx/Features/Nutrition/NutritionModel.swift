@@ -191,10 +191,10 @@ final class NutritionModel {
     var ownGoals: LeverGoals { sources.own }
 
     /// The rung in force on the SELECTED date.
-    var leverInForce: LeverId? { resolved.leverId }
+    var leverInForce: String? { resolved.leverId }
 
     /// Non-nil when a rung holds the numbers; `custom` and no selection are nil.
-    var heldBy: NutritionLever? { Levers.lever(byId: leverInForce?.rawValue) }
+    var heldBy: NutritionLever? { Levers.lever(byId: leverInForce, in: targets.snapshot.ladder) }
 
     /// The rung's (or pinned history's) numbers for the date, before the override.
     var rungGoals: LeverGoals { Targets.resolve(targets.snapshot.sources(dayTarget: nil), date: date, today: today).goals }

@@ -225,7 +225,7 @@ struct AtlasFigure: View {
 
 #if DEBUG
 #Preview("Atlas — Upper B") {
-    let day = Program.onyx5.day(key: "cb_b")!
+    let day = PlanTemplates.day("onyx5", "cb_b")
     let sets = MuscleCredit.weightedSets(
         day.exercises(for: .cut).map { .init(physicalSets: $0.sets(for: .cut), movers: $0.movers) }
     )

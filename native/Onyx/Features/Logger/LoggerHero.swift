@@ -50,6 +50,7 @@ struct LoggerFaceSelection: Equatable {
 /// costs 40 pt the deck does not have, so it happens only at an accessibility
 /// size, where the title has taken the width anyway.
 struct LoggerHero: View {
+    @Environment(AppEnvironment.self) private var environment
     let day: ProgramDay
     let clock: any PauseControlling
     @Binding var selection: LoggerFaceSelection
@@ -96,7 +97,8 @@ struct LoggerHero: View {
     }
 
     private var week: String {
-        Week.label(ofWeekStart: Week.start(of: iso))
+        let schedule = environment.targets?.schedule
+        return Week.label(ofWeekStart: Week.start(of: iso), anchor: schedule?.weekZeroStart, phases: schedule?.phases ?? [])
     }
 
     /// "Sat 30 Aug" — the session's own date, which in edit mode takes the

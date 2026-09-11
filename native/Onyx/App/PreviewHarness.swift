@@ -31,9 +31,18 @@ enum PreviewHarness {
     /// The figures are the live block's: Lever 1 is not selected, so the screens
     /// show the user's own numbers — the state with the most controls visible,
     /// which is the one worth photographing.
+    /// Built once: `view(_:)` is a `@ViewBuilder` and runs on every evaluation,
+    /// and a model constructed inside it is a NEW model each time — the
+    /// `.task { model.observe() }` then observes an instance the rendered view
+    /// no longer holds, which since W2 (the catalogue arrives by observation)
+    /// photographed an empty plan and no rungs.
+    @MainActor static let sharedSettingsModel: SettingsModel = seededModel()
+
     @MainActor
     static func seededModel() -> SettingsModel {
         let database = try! AppDatabase.inMemory(deviceId: "shot")
+        // The catalogue as rows (W2): decks, plans, phases, rungs.
+        PreviewCatalogue.seed(database)
         let userId = "00000000-0000-0000-0000-000000000001"
         _ = try? database.editUserGoals(userId: userId) { row in
             row.calorieGoal = 1955
@@ -44,7 +53,7 @@ enum PreviewHarness {
             row.activeCalGoal = 500
             row.sleepGoalHours = 8
             row.waterGoalMl = 3000
-            row.activeLever = LeverId.custom.rawValue
+            row.activeLever = "custom"
             row.activePlan = "onyx5"
             row.activePhase = ProgramPhase.cut.rawValue
             row.unitSystem = "kg"
@@ -122,7 +131,7 @@ enum PreviewHarness {
 
     @MainActor @ViewBuilder
     static func view(_ screen: String) -> some View {
-        let model = seededModel()
+        let model = sharedSettingsModel
         switch screen {
         case "signin":
             SignInView().environment(AppEnvironment.preview)

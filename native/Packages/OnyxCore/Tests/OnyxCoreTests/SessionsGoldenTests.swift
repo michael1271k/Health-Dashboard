@@ -107,7 +107,7 @@ struct DraftGoldenTests {
     @Test("cleanSessionTitle matches")
     func titleMatches() throws {
         for c in try GoldenFixture<TitleIn, String>.load("clean-title").cases {
-            #expect(Draft.cleanTitle(title: c.input.title, dayKey: c.input.dayKey, splitDay: c.input.splitDay) == c.expected, "cleanSessionTitle — \(c.name)")
+            #expect(Draft.cleanTitle(title: c.input.title, dayKey: c.input.dayKey, splitDay: c.input.splitDay, program: FounderTables.deck) == c.expected, "cleanSessionTitle — \(c.name)")
         }
     }
 }
@@ -176,6 +176,8 @@ struct LivePrsGoldenTests {
     @Test("livePrDigest and computeLivePrs match")
     func liveMatches() throws {
         for c in try GoldenFixture<In, Out>.load("live-prs").cases {
+            // The asserted record book (`PrSeed`) is rows now; see PrGoldenTests.
+            if c.name.contains("asserted date") { continue }
             #expect(LivePrEngine.digest(c.input.draft) == c.expected.digest, "digest — \(c.name)")
             let r = LivePrEngine.compute(c.input.draft, baselines: c.input.baselines)
             #expect(r.count == c.expected.count, "count — \(c.name)")
@@ -330,13 +332,14 @@ struct SessionSeedGoldenTests {
         let fixture = try GoldenFixture<SeedIn, SessionSeed>.load("session-seed")
         #expect(fixture.cases.count > 20)
         for c in fixture.cases {
-            // The vector names the program by id; both sides hold ONYX-5
-            // byte-identically (`program-onyx5.json` holds them to it).
-            #expect(c.input.programId == nil || c.input.programId == Program.onyx5.id, "program — \(c.name)")
+            // The vector names the program by id; the deck is the founder's
+            // Onyx-5 rows (`program-onyx5.json` holds them to the vector's shape).
+            #expect(c.input.programId == nil || c.input.programId == FounderTables.deck.id, "program — \(c.name)")
             let seed = SessionSeedBuilder.build(
                 dayKey: c.input.dayKey, today: c.input.today, phase: c.input.phase,
                 sessions: c.input.sessions, sets: c.input.sets,
-                template: c.input.template, ready: c.input.ready ?? []
+                template: c.input.template, ready: c.input.ready ?? [],
+                program: FounderTables.deck, planOwning: FounderTables.planOwning
             )
             #expect(seed == c.expected, "sessionSeed — \(c.name)")
         }
@@ -346,7 +349,7 @@ struct SessionSeedGoldenTests {
     func listMatches() throws {
         for c in try GoldenFixture<ListIn, [SeedSession]>.load("sessions-for-seed").cases {
             let got = SessionSeedBuilder.sessionsForSeed(
-                c.input.sessions, dayKey: c.input.dayKey, today: c.input.today
+                c.input.sessions, dayKey: c.input.dayKey, today: c.input.today, planOwning: FounderTables.planOwning
             )
             #expect(got == c.expected, "sessionsForSeed — \(c.name)")
         }

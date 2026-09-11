@@ -81,7 +81,7 @@ struct LeversView: View {
 
     private var rungs: some View {
         Section {
-            ForEach(Levers.deficit, id: \.id) { lever in
+            ForEach(model.rungs, id: \.id) { lever in
                 rungRow(
                     id: lever.id,
                     label: lever.label,
@@ -90,7 +90,7 @@ struct LeversView: View {
                 )
             }
             rungRow(
-                id: .custom,
+                id: nil,
                 label: "My own numbers",
                 summary: "The five figures below, whatever you set them to.",
                 kcal: nil
@@ -110,7 +110,9 @@ struct LeversView: View {
         }
     }
 
-    private func rungRow(id: LeverId, label: String, summary: String, kcal: Double?) -> some View {
+    private func rungRow(id: String?, label: String, summary: String, kcal: Double?) -> some View {
+        // A held release matches no row, so the custom row must not light up
+        // for it either: `leverInForce` is the release's key then, not nil.
         let isOn = model.leverInForce == id
         return Button {
             model.pickLever(id)

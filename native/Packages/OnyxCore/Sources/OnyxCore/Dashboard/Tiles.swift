@@ -70,8 +70,8 @@ public enum Tiles {
     public static let ledgerMaxDays = 30
 
     /// Phase-to-date, floored at 14 and capped at 30; the flat month outside every phase.
-    public static func ledgerWindow(_ todayISO: String) -> LedgerWindow {
-        guard let span = Phases.span(for: todayISO) else { return LedgerWindow(days: ledgerMaxDays, inPhase: ledgerMaxDays, label: nil) }
+    public static func ledgerWindow(_ todayISO: String, phases: [PhaseDef]) -> LedgerWindow {
+        guard let span = Phases.span(for: todayISO, in: phases) else { return LedgerWindow(days: ledgerMaxDays, inPhase: ledgerMaxDays, label: nil) }
         let inPhase = min(span.dayIndex + 1, ledgerMaxDays)
         return LedgerWindow(
             days: min(ledgerMaxDays, max(inPhase, ledgerFloorDays)),

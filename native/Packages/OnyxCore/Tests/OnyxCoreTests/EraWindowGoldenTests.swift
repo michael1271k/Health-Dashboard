@@ -27,12 +27,18 @@ struct EraWindowGoldenTests {
         let fixture = try GoldenFixture<ResolveIn, ResolveOut>.load("era-window")
         #expect(fixture.cases.count >= 40)
         for c in fixture.cases {
-            let actual = c.input.mode.resolve(c.input.input)
+            // The vector predates the table fields; the founder's rows go in.
+            var input = c.input.input
+            input.phases = FounderTables.phases
+            input.rungs = FounderTables.rungs
+            input.periods = FounderTables.periods
+            input.planStartISO = FounderTables.planStartISO
+            let actual = c.input.mode.resolve(input)
             #expect(actual.label == rebranded(c.expected.label), "label — \(c.name)")
             #expect(actual.startISO == c.expected.startISO, "start — \(c.name)")
             #expect(actual.endISO == c.expected.endISO, "end — \(c.name)")
             #expect(actual.days == c.expected.days, "days — \(c.name)")
-            #expect(actual.era == c.expected.era, "era — \(c.name)")
+            #expect(actual.era(cutStartISO: FounderTables.planStartISO) == c.expected.era, "era — \(c.name)")
         }
     }
 
@@ -85,7 +91,8 @@ struct EraWindowGoldenTests {
     func windowsAreWellFormed() {
         let input = EraWindowInput(
             today: "2026-09-06", planLabel: "Onyx-5", storedLever: "lever-1",
-            releaseEndsOn: nil, firstDataISO: "2026-03-08"
+            releaseEndsOn: nil, firstDataISO: "2026-03-08", planStartISO: FounderTables.planStartISO,
+            phases: FounderTables.phases, rungs: FounderTables.rungs, periods: FounderTables.periods
         )
         for day in stride(from: -400, through: 30, by: 13) {
             guard let today = ISODate.addDays(input.today, day) else { continue }

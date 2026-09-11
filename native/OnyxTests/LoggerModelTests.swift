@@ -30,7 +30,7 @@ struct LoggerModelTests {
     }
 
     private func armsBulk() -> LoggerModel {
-        LoggerModel(day: Program.onyx5.day(key: "arms")!, phase: .bulk)
+        LoggerModel(day: PlanTemplates.day("onyx5", "arms"), phase: .bulk)
     }
 
     private func log(_ model: LoggerModel, _ name: String, sets: Int) {
@@ -135,7 +135,7 @@ struct LoggerModelTests {
 
     @Test("a zero-kilogram set is real work and a nil load is not zero")
     func bodyweightSetsCount() {
-        let model = LoggerModel(day: Program.onyx5.day(key: "legs_b")!, phase: .cut)
+        let model = LoggerModel(day: PlanTemplates.day("onyx5", "legs_b"), phase: .cut)
         let raise = model.exercises.first { $0.name == "Hanging Knee Raise" }!
         // The deck seeds no load for it, and nil is not 0 — nothing has silently
         // become a zero-kilogram set on the way in.
@@ -259,7 +259,7 @@ struct LoggerModelTests {
 
     @Test("a movement the program prescribes no load for seeds nil, not zero")
     func nilLoadIsNotZero() {
-        let model = LoggerModel(day: Program.onyx5.day(key: "legs_b")!, phase: .cut)
+        let model = LoggerModel(day: PlanTemplates.day("onyx5", "legs_b"), phase: .cut)
         let raise = model.exercises.first { $0.name == "Hanging Knee Raise" }!
         #expect(raise.rows[0].weightKg == nil)
     }
@@ -269,7 +269,7 @@ struct LoggerModelTests {
     @Test("pause stops the clock and resume starts it again")
     func pauseStopsTheClock() {
         let start = Date(timeIntervalSince1970: 1_757_000_000)
-        let model = LoggerModel(day: Program.onyx5.day(key: "arms")!, phase: .bulk, startedAt: start)
+        let model = LoggerModel(day: PlanTemplates.day("onyx5", "arms"), phase: .bulk, startedAt: start)
         #expect(model.isPaused == false)
         #expect(model.elapsed(at: start.addingTimeInterval(600)) == 600)
 
@@ -288,7 +288,7 @@ struct LoggerModelTests {
     @Test("pausing twice does not bank the interval twice")
     func doublePauseIsIdempotent() {
         let start = Date(timeIntervalSince1970: 1_757_000_000)
-        let model = LoggerModel(day: Program.onyx5.day(key: "arms")!, phase: .bulk, startedAt: start)
+        let model = LoggerModel(day: PlanTemplates.day("onyx5", "arms"), phase: .bulk, startedAt: start)
         model.pause(at: start.addingTimeInterval(60))
         model.pause(at: start.addingTimeInterval(120))
         model.resume(at: start.addingTimeInterval(180))
@@ -301,7 +301,7 @@ struct LoggerModelTests {
     @Test("the clock never runs backwards")
     func clockNeverNegative() {
         let start = Date(timeIntervalSince1970: 1_757_000_000)
-        let model = LoggerModel(day: Program.onyx5.day(key: "arms")!, phase: .bulk, startedAt: start)
+        let model = LoggerModel(day: PlanTemplates.day("onyx5", "arms"), phase: .bulk, startedAt: start)
         #expect(model.elapsed(at: start.addingTimeInterval(-600)) == 0)
     }
 
@@ -345,7 +345,7 @@ struct LoggerModelTests {
     func seedsFromHistory() throws {
         let db = try seeded("2026-08-24")
         let model = LoggerModel(
-            day: Program.onyx5.day(key: "cb_a")!, phase: .cut, store: db, userId: "u1"
+            day: PlanTemplates.day("onyx5", "cb_a"), phase: .cut, store: db, userId: "u1"
         )
         let face = model.exercises.first { $0.name == "Face Pull" }!
         #expect(face.rows.map(\.kind) == [.warmup, .normal, .normal, .normal])
@@ -361,7 +361,7 @@ struct LoggerModelTests {
         // one of them by the warm-up count.
         let db = try seeded("2026-08-24")
         let model = LoggerModel(
-            day: Program.onyx5.day(key: "cb_a")!, phase: .cut, store: db, userId: "u1"
+            day: PlanTemplates.day("onyx5", "cb_a"), phase: .cut, store: db, userId: "u1"
         )
         let face = model.exercises.first { $0.name == "Face Pull" }!
         #expect(face.rows[0].previous == "5kg × 15", "the warm-up's own set")
@@ -379,7 +379,7 @@ struct LoggerModelTests {
         // rule that counts the warm-up sees 2 of 3 rather than 1 of 3.
         let db = try seeded("2026-08-24")
         let model = LoggerModel(
-            day: Program.onyx5.day(key: "cb_a")!, phase: .cut, store: db, userId: "u1"
+            day: PlanTemplates.day("onyx5", "cb_a"), phase: .cut, store: db, userId: "u1"
         )
         let face = model.exercises.first { $0.name == "Face Pull" }!
         for row in face.rows.prefix(2) {

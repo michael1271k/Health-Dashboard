@@ -21,7 +21,7 @@ extension LoggerModel {
     /// photographed.
     static func previewUpperB(logged: Bool = false, resting: Bool = false) -> LoggerModel {
         let model = LoggerModel(
-            day: Program.onyx5.day(key: "cb_b")!,
+            day: PlanTemplates.day("onyx5", "cb_b"),
             phase: .cut,
             startedAt: Date().addingTimeInterval(-22 * 60)
         )

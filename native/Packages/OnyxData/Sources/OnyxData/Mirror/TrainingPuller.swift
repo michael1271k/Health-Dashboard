@@ -209,10 +209,13 @@ public actor TrainingPuller {
 public struct RemoteExerciseRow: Codable, Sendable, Equatable {
     public var id: String
     public var name: String
+    /// `exercises.slug` — nil until the W2 DDL has run on the server.
+    public var slug: String?
 
-    public init(id: String, name: String) {
+    public init(id: String, name: String, slug: String? = nil) {
         self.id = id
         self.name = name
+        self.slug = slug
     }
 }
 
@@ -397,10 +400,10 @@ extension AppDatabase {
             for row in rows {
                 try db.execute(
                     sql: """
-                        INSERT INTO exercises (id, name) VALUES (?, ?)
-                        ON CONFLICT(id) DO UPDATE SET name = excluded.name
+                        INSERT INTO exercises (id, name, slug) VALUES (?, ?, ?)
+                        ON CONFLICT(id) DO UPDATE SET name = excluded.name, slug = excluded.slug
                         """,
-                    arguments: [row.id, row.name]
+                    arguments: [row.id, row.name, row.slug]
                 )
             }
             return rows.count

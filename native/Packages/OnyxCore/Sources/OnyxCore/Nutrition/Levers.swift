@@ -1,41 +1,49 @@
 import Foundation
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Phase levers — the rungs of the cut, in code, with one selection in the
-// database. A port of `src/lib/nutrition/levers.ts`.
+// Phase levers — the rungs of the cut, as ROWS, with one selection in the
+// database. A port of `src/lib/nutrition/levers.ts`, generic since W2.
 //
 // A deficit has two dials: eat less, or move more. A lever is one named
-// combination of both. EVERY MACRO TRIPLE IS ATWATER-EXACT (4/4/9): the
+// combination of both. EVERY MACRO TRIPLE SHOULD BE ATWATER-EXACT (4/4/9): the
 // calorie figure is the SUM of the macros, never a round number written beside
-// them — `1950` was five kcal wrong for months that way.
+// them — `1950` was five kcal wrong for months that way. The seed's rungs are;
+// a rung a user writes is checked by `atwaterKcal`, not enforced.
+//
+// ── WHAT A RUNG IS NOW ───────────────────────────────────────────────────────
+// A `target_profiles` row whose `kind` is `deficit` or `release`. The founder's
+// four (`baseline`, `lever-1`, `lever-2`, `maintenance-week`) were compiled in
+// as `Levers.all`; they are rows now, and the id is the row's `key` — a String,
+// not an enum, because a second account names its own rungs.
 //
 // THE LEVER IS DATE-BOUND. `user_goals.active_lever` is one mutable value, and
 // every grader used to read it — including graders of days that finished weeks
 // ago. Pulling Lever 1 on 16 Aug silently re-marked the month behind it. So the
-// past belongs to `schedule` and today-and-after belong to the selection you
-// are holding; `leverForDate` is the one thing every grader asks.
+// past belongs to the SCHEDULE — `lever_periods` rows, "this rung came into
+// force on this date" — and today-and-after belong to the selection you are
+// holding; `leverForDate` is the one thing every grader asks.
 //
-// A rung coming OFF is also an event: a row goes in whenever the rung CHANGES,
-// and going back to your own numbers (`custom`) is a change. A release must
-// always be followed by the rung that resumes, or it is a permanent 2,151 kcal.
+// A rung coming OFF is also an event: a period goes in whenever the rung
+// CHANGES, and going back to your own numbers (no rung) is a change. A release
+// must always be followed by the rung that resumes, or it is a permanent
+// maintenance week.
 // ─────────────────────────────────────────────────────────────────────────────
-
-public enum LeverId: String, Codable, Sendable, CaseIterable {
-    case baseline
-    case lever1 = "lever-1"
-    case lever2 = "lever-2"
-    case maintenanceWeek = "maintenance-week"
-    /// A real selection — "these are my figures, leave them alone" — that names NO rung.
-    case custom
-}
 
 /// `deficit` rungs are the ordered ladder; `release` is a planned, bounded week
 /// at maintenance taken ON PURPOSE inside a cut — a rung by every mechanic, and
-/// emphatically not a step on the ladder.
+/// emphatically not a step on the ladder. `day` is not a rung at all: a shape
+/// one day can take (Home, Restaurant), applied with one tap.
+public enum ProfileKind: String, Codable, Sendable, CaseIterable {
+    case day, deficit, release
+}
+
+/// The two rung kinds, for readers that never see a `day` profile.
 public enum LeverKind: String, Codable, Sendable { case deficit, release }
 
+/// A rung, as the levers screen and the graders read it: a `TargetProfile`
+/// of kind deficit/release, with the lever vocabulary on its fields.
 public struct NutritionLever: Codable, Equatable, Sendable {
-    public var id: LeverId
+    public var id: String
     public var kind: LeverKind
     public var label: String
     public var summary: String
@@ -44,6 +52,27 @@ public struct NutritionLever: Codable, Equatable, Sendable {
     public var carbsGoalG: Double
     public var fatGoalG: Double
     public var stepsGoal: Double
+
+    public init(id: String, kind: LeverKind, label: String, summary: String, calorieGoal: Double,
+                proteinGoalG: Double, carbsGoalG: Double, fatGoalG: Double, stepsGoal: Double) {
+        self.id = id; self.kind = kind; self.label = label; self.summary = summary
+        self.calorieGoal = calorieGoal; self.proteinGoalG = proteinGoalG; self.carbsGoalG = carbsGoalG
+        self.fatGoalG = fatGoalG; self.stepsGoal = stepsGoal
+    }
+
+    /// Nil for a `day` profile, and for a rung missing a macro — a rung holds
+    /// ALL five numbers or it is not a rung.
+    public init?(_ p: TargetProfile) {
+        let kind: LeverKind
+        switch p.kind {
+        case .day: return nil
+        case .deficit: kind = .deficit
+        case .release: kind = .release
+        }
+        guard let carbs = p.carbsG, let fat = p.fatG, let steps = p.stepsGoal else { return nil }
+        self.init(id: p.key, kind: kind, label: p.label, summary: p.summary, calorieGoal: p.kcal,
+                  proteinGoalG: p.proteinG, carbsGoalG: carbs, fatGoalG: fat, stepsGoal: steps)
+    }
 }
 
 /// The goal fields a lever replaces. Everything else it leaves alone.
@@ -58,20 +87,27 @@ public struct LeverGoals: Codable, Equatable, Sendable {
     }
 }
 
-/// A row of the SCHEDULE — "this rung came into force on this date".
+/// A row of the SCHEDULE — `lever_periods`: "this rung came into force on
+/// this date".
 public struct LeverPeriod: Codable, Equatable, Sendable {
-    /// First date this rung applies to, inclusive.
+    /// First date this rung applies to, inclusive (`starts_on`).
     public var from: String
-    public var leverId: LeverId
-    /// Only ever on a `custom` row, and only on a CLOSED stretch: the numbers
+    /// The rung's key, or nil for a stretch on the user's own numbers.
+    public var profileKey: String?
+    /// Only ever on a keyless row, and only on a CLOSED stretch: the numbers
     /// that were in force from `from` until the next row. Absent means the
     /// stretch is still open and answers with the live `user_goals` row.
     public var goals: LeverGoals?
+
+    public init(from: String, profileKey: String?, goals: LeverGoals? = nil) {
+        self.from = from; self.profileKey = profileKey; self.goals = goals
+    }
 }
 
 /// The RESOLVED answer for a run of days that shared one set of targets.
 public struct TargetPeriod: Codable, Equatable, Sendable {
-    public var leverId: LeverId
+    /// The rung's key, or nil for the user's own numbers.
+    public var leverId: String?
     /// "Lever 1" / "Baseline" / "Custom".
     public var label: String
     public var goals: LeverGoals
@@ -79,97 +115,97 @@ public struct TargetPeriod: Codable, Equatable, Sendable {
     public var dates: [String]
 }
 
-public enum Levers {
-    /// The rungs, easiest first. `custom` is deliberately NOT here.
-    public static let all: [NutritionLever] = [
-        // ── ONE BASELINE, RE-BASED (2026-09-07, founder's call) ──────────────
-        // `baseline2` was a second rung carrying these same figures so the cut
-        // could resume on 6 Sep without re-grading July and August. The founder
-        // chose one baseline over two, so the rung is deleted and this one holds
-        // its numbers — which DOES re-grade 2026-07-15 → 2026-08-15 from
-        // 1,955 / 195 C. Deliberate; stored scores were recomputed with it.
-        // 1,935 = 170·4 + 190·4 + 55·9, Atwater-exact like every rung.
-        NutritionLever(id: .baseline, kind: .deficit, label: "Baseline",
-                       summary: "The plan as written — 190 g carbs, 10k steps.",
-                       calorieGoal: 1935, proteinGoalG: 170, carbsGoalG: 190, fatGoalG: 55, stepsGoal: 10000),
-        NutritionLever(id: .lever1, kind: .deficit, label: "Lever 1",
-                       summary: "−70 kcal off carbs and fat, steps to 10k.",
-                       calorieGoal: 1885, proteinGoalG: 170, carbsGoalG: 182, fatGoalG: 53, stepsGoal: 10000),
-        // From here the FOOD stops moving; the deficit deepens with movement.
-        // The last rung is a BAND: 12k is the floor that counts, 15k is where it runs out.
-        NutritionLever(id: .lever2, kind: .deficit, label: "Lever 2",
-                       summary: "Same food as Lever 1, steps 12k–15k. The last rung.",
-                       calorieGoal: 1885, proteinGoalG: 170, carbsGoalG: 182, fatGoalG: 53, stepsGoal: 12000),
-        // The maintenance week — a lever, not a phase (a phase would change the
-        // training programme and has no end date). 2,151 = 170·4 + 244·4 + 55·9.
-        NutritionLever(id: .maintenanceWeek, kind: .release, label: "Maintenance Week",
-                       summary: "A planned week at maintenance — full food, lighter steps. Still cutting.",
-                       calorieGoal: 2151, proteinGoalG: 170, carbsGoalG: 244, fatGoalG: 55, stepsGoal: 7500),
-    ]
+/// Everything `leverForDate` reads, in one value: the rungs, the schedule,
+/// and the live selection. Built once per read by the store (`TargetSources`
+/// carries it) and handed to every grader, so the past and the present are
+/// resolved by the same rows.
+public struct LeverLadder: Codable, Equatable, Sendable {
+    /// The user's profiles of kind deficit/release, in `sort` order.
+    public var rungs: [NutritionLever]
+    /// `lever_periods`, oldest first.
+    public var periods: [LeverPeriod]
+    /// `user_goals.active_lever`, verbatim.
+    public var stored: String?
+    /// `user_goals.maintenance_until` — a release that closes itself.
+    public var releaseEndsOn: String?
+
+    public init(rungs: [NutritionLever] = [], periods: [LeverPeriod] = [], stored: String? = nil, releaseEndsOn: String? = nil) {
+        self.rungs = rungs
+        self.periods = periods.sorted { $0.from < $1.from }
+        self.stored = stored
+        self.releaseEndsOn = releaseEndsOn
+    }
+
+    /// From profiles of every kind: the rungs are the ones that are rungs.
+    public init(profiles: [TargetProfile], periods: [LeverPeriod] = [], stored: String? = nil, releaseEndsOn: String? = nil) {
+        self.init(
+            rungs: profiles.sorted { $0.sort < $1.sort }.compactMap(NutritionLever.init),
+            periods: periods, stored: stored, releaseEndsOn: releaseEndsOn
+        )
+    }
 
     /// The ordered ladder — the rungs the "each is harder than the last" rule governs.
-    public static let deficit: [NutritionLever] = all.filter { $0.kind == .deficit }
+    public var deficit: [NutritionLever] { rungs.filter { $0.kind == .deficit } }
 
-    public static let defaultLever: LeverId = .baseline
+    public static let empty = LeverLadder()
+}
 
-    /// WHEN each rung came into force. Inclusive lower bounds, newest LAST.
-    public static let schedule: [LeverPeriod] = [
-        LeverPeriod(from: "2026-07-15", leverId: .baseline),
-        LeverPeriod(from: "2026-08-16", leverId: .lever1),
-        // Released — back to hand-set numbers. The stretch is CLOSED (the
-        // maintenance week opens on 30 Aug), so it pins what it meant: 1,999.
-        LeverPeriod(from: "2026-08-20", leverId: .custom, goals: LeverGoals(calorie: 1999, protein: 170, carbs: 206, fat: 55, steps: 10000)),
-        // The scheduled maintenance week, and its end. The second row is not optional.
-        LeverPeriod(from: "2026-08-30", leverId: .maintenanceWeek),
-        // The cut resumes on the baseline itself — pinned, not an open `custom`
-        // stretch that would move with the next `user_goals` edit.
-        LeverPeriod(from: "2026-09-06", leverId: .baseline),
-    ]
+public enum Levers {
 
-    /// The schedule row covering a date, or nil before the cut opened.
-    public static func scheduledPeriod(on dateISO: String) -> LeverPeriod? {
+    /// The rung a stored value names, or nil for `custom` / unknown / absent.
+    public static func lever(byId id: String?, in ladder: LeverLadder) -> NutritionLever? {
+        guard let id, !id.isEmpty else { return nil }
+        return ladder.rungs.first { $0.id == id }
+    }
+
+    /// Is this a value the lever column may hold at all — a rung's key?
+    public static func isLeverId(_ id: String?, in ladder: LeverLadder) -> Bool {
+        lever(byId: id, in: ladder) != nil
+    }
+
+    /// The schedule row covering a date, or nil before the first rung.
+    public static func scheduledPeriod(on dateISO: String, in ladder: LeverLadder) -> LeverPeriod? {
         var found: LeverPeriod?
-        for p in schedule {
+        for p in ladder.periods {
             if dateISO >= p.from { found = p } else { break }
         }
         return found
     }
 
-    /// The rung the SCHEDULE puts on a date, or nil before the cut opened.
-    public static func scheduledLever(on dateISO: String) -> LeverId? {
-        scheduledPeriod(on: dateISO)?.leverId
+    /// The rung the SCHEDULE puts on a date, or nil.
+    public static func scheduledLever(on dateISO: String, in ladder: LeverLadder) -> String? {
+        scheduledPeriod(on: dateISO, in: ladder)?.profileKey
     }
 
     /// The rung in force on a date — the one thing every grader should ask.
     ///
     /// The past belongs to the schedule; today and after belong to the stored
-    /// selection when it is a valid id — except a `release` past `releaseEndsOn`
-    /// (`user_goals.maintenance_until`), which stops being honoured and falls
-    /// back to the schedule so a release closes itself whether or not anyone
-    /// remembered to. `today` is a parameter, never a clock.
-    public static func leverForDate(_ dateISO: String, stored: String?, today: String, releaseEndsOn: String? = nil) -> LeverId? {
-        if dateISO >= today, let id = leverId(stored) {
-            let expired = releaseEndsOn != nil && releaseEndsOn != ""
-                && lever(byId: stored)?.kind == .release
-                && dateISO > releaseEndsOn!
-            if !expired { return id }
+    /// selection when it names a rung — except a `release` past
+    /// `releaseEndsOn`, which stops being honoured and falls back to the
+    /// schedule so a release closes itself whether or not anyone remembered
+    /// to. `today` is a parameter, never a clock.
+    ///
+    /// `stored == "custom"` is an explicit selection too — "my own numbers" —
+    /// and for today and after it wins over the schedule exactly as a rung
+    /// would; only an ABSENT selection (nil / empty / a key no rung claims)
+    /// falls through to the schedule.
+    public static func leverForDate(_ dateISO: String, today: String, in ladder: LeverLadder) -> String? {
+        if dateISO >= today {
+            if ladder.stored == customSelection { return nil }
+            if let rung = lever(byId: ladder.stored, in: ladder) {
+                let expired = ladder.releaseEndsOn != nil && ladder.releaseEndsOn != ""
+                    && rung.kind == .release
+                    && dateISO > ladder.releaseEndsOn!
+                if !expired { return rung.id }
+            }
         }
-        return scheduledLever(on: dateISO)
+        return scheduledLever(on: dateISO, in: ladder)
     }
 
-    /// The rung a stored value names, or nil for `custom` / unknown / absent.
-    public static func lever(byId id: String?) -> NutritionLever? {
-        guard let id, !id.isEmpty else { return nil }
-        return all.first { $0.id.rawValue == id }
-    }
-
-    /// Is this a value the lever column may hold at all?
-    public static func isLeverId(_ id: String?) -> Bool { leverId(id) != nil }
-
-    private static func leverId(_ id: String?) -> LeverId? {
-        guard let id else { return nil }
-        return LeverId(rawValue: id)
-    }
+    /// The `user_goals.active_lever` value that means "no rung, my own
+    /// numbers" — stored, never nil: nil means "no selection", which falls
+    /// through to the schedule, and the schedule may be the rung just left.
+    public static let customSelection = "custom"
 
     /// Atwater energy of a macro triple, for the invariant every rung must satisfy.
     public static func atwaterKcal(proteinG: Double, carbsG: Double, fatG: Double) -> Double {
@@ -177,39 +213,48 @@ public enum Levers {
     }
 
     /// Apply a lever over resolved goals. Hands the input back untouched for
-    /// `custom`, an unknown id and no selection — the three cases where the
-    /// user has not asked for a rung.
-    public static func applyLever(_ goals: LeverGoals, _ leverId: String?) -> LeverGoals {
-        guard let lever = lever(byId: leverId) else { return goals }
+    /// no rung, an unknown id and no selection — the cases where the user has
+    /// not asked for a rung.
+    public static func applyLever(_ goals: LeverGoals, _ leverId: String?, in ladder: LeverLadder) -> LeverGoals {
+        guard let lever = lever(byId: leverId, in: ladder) else { return goals }
         return LeverGoals(calorie: lever.calorieGoal, protein: lever.proteinGoalG, carbs: lever.carbsGoalG, fat: lever.fatGoalG, steps: lever.stepsGoal)
     }
 
     /// The targets that were in force on a date — rung, pinned history, or your
-    /// row. A real rung wins; otherwise a `custom` row's pinned goals (that
+    /// row. A real rung wins; otherwise a keyless period's pinned goals (that
     /// stretch is finished and said what it meant); otherwise the fallback,
     /// the live `user_goals` row, correct only for the stretch you are inside.
-    public static func goalsForDate(_ dateISO: String, stored: String?, today: String, fallback: LeverGoals, releaseEndsOn: String? = nil) -> LeverGoals {
-        let id = leverForDate(dateISO, stored: stored, today: today, releaseEndsOn: releaseEndsOn) ?? defaultLever
-        if lever(byId: id.rawValue) != nil { return applyLever(fallback, id.rawValue) }
-        return scheduledPeriod(on: dateISO)?.goals ?? fallback
+    public static func goalsForDate(_ dateISO: String, today: String, fallback: LeverGoals, in ladder: LeverLadder) -> LeverGoals {
+        if let id = leverForDate(dateISO, today: today, in: ladder), lever(byId: id, in: ladder) != nil {
+            return applyLever(fallback, id, in: ladder)
+        }
+        // A keyless period's pin is only ever written when the NEXT change
+        // closes it (`recordLeverChange`), so the stretch that is still open —
+        // today's — reads the live row through the nil below, and every edit
+        // to it lands at once.
+        return scheduledPeriod(on: dateISO, in: ladder)?.goals ?? fallback
     }
 
-    /// Which KIND of week a date belongs to. `custom` and any date before the
-    /// cut opened are `deficit`; only a `release` rung is the other thing.
-    public static func leverKind(on dateISO: String, stored: String?, today: String, releaseEndsOn: String? = nil) -> LeverKind {
-        let id = leverForDate(dateISO, stored: stored, today: today, releaseEndsOn: releaseEndsOn)
-        return lever(byId: id?.rawValue)?.kind ?? .deficit
+    /// Which KIND of week a date belongs to. No rung and any date before the
+    /// first period are `deficit`; only a `release` rung is the other thing.
+    public static func leverKind(on dateISO: String, today: String, in ladder: LeverLadder) -> LeverKind {
+        lever(byId: leverForDate(dateISO, today: today, in: ladder), in: ladder)?.kind ?? .deficit
+    }
+
+    /// Is the rung in force on a date a release — a planned maintenance week?
+    public static func isRelease(on dateISO: String, today: String, in ladder: LeverLadder) -> Bool {
+        leverKind(on: dateISO, today: today, in: ladder) == .release
     }
 
     /// Which targets were in force on each day of a range, collapsed into runs.
     ///
-    /// Resolve every day (rung ⊂ pinned custom ⊂ fallback, then the day's own
+    /// Resolve every day (rung ⊂ pinned period ⊂ fallback, then the day's own
     /// `daily_targets` row on top) and glue equal NEIGHBOURS. Runs are compared
     /// on the RESOLVED GOALS, not the rung's name: two rungs asking for the same
     /// food and steps are the same instruction however they are labelled.
     public static func leverPeriods(
-        _ dates: [String], stored: String?, today: String, fallback: LeverGoals,
-        releaseEndsOn: String? = nil, dailyTargets: [DailyTarget]? = nil
+        _ dates: [String], today: String, fallback: LeverGoals, in ladder: LeverLadder,
+        dailyTargets: [DailyTarget]? = nil
     ) -> [TargetPeriod] {
         var out: [TargetPeriod] = []
         // `new Map(rows.map(t => [t.date, t]))` — a later duplicate wins.
@@ -217,18 +262,13 @@ public enum Levers {
         for t in dailyTargets ?? [] { overrides[t.date] = t }
 
         for date in dates {
-            let id = leverForDate(date, stored: stored, today: today, releaseEndsOn: releaseEndsOn) ?? defaultLever
-            let goals = DailyTargets.apply(
-                goalsForDate(date, stored: stored, today: today, fallback: fallback, releaseEndsOn: releaseEndsOn),
-                overrides[date]
-            )
+            let id = leverForDate(date, today: today, in: ladder)
+            let goals = DailyTargets.apply(goalsForDate(date, today: today, fallback: fallback, in: ladder), overrides[date])
             if let last = out.indices.last, out[last].goals == goals {
                 out[last].dates.append(date)
                 continue
             }
-            // `lever(byId:)` is nil for `custom`, which is the point — it names
-            // the ABSENCE of a rung, and the numbers beside it are the user's own.
-            out.append(TargetPeriod(leverId: id, label: lever(byId: id.rawValue)?.label ?? "Custom", goals: goals, dates: [date]))
+            out.append(TargetPeriod(leverId: id, label: lever(byId: id, in: ladder)?.label ?? "Custom", goals: goals, dates: [date]))
         }
         return out
     }

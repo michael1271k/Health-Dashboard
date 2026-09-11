@@ -21,10 +21,13 @@ import OnyxCore
 /// ── IT IS `ScheduleContext` PLUS TWO FIELDS, AND DELIBERATELY SO ────────────
 /// `ScheduleContext` already resolves a date to a split — the plan, the phase,
 /// the weekday layout and the dated overrides — and it is already `Codable` and
-/// `Sendable` because the phone stores it. `Program.onyx5` is compiled into
-/// `OnyxCore`, so with these three values the watch can name today's workout,
-/// list its movements and their prescribed loads and rests, with no request to
-/// anything.
+/// `Sendable` because the phone stores it. Since W2 it carries the decks
+/// (`programs`), the plan rows and the phases too, so with these three values
+/// the watch can name today's workout, list its movements and their prescribed
+/// loads and rests, with no request to anything.
+///
+/// ponytail: every program rides along (~25 KB); send only the active deck
+/// when the watch transfer ever gets slow.
 ///
 /// The two extra fields are the ones a schedule cannot answer: whose data this
 /// is, and what the phone believes today is. `today` travels rather than being

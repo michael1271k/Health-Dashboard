@@ -96,7 +96,7 @@ public extension AppDatabase {
             id: id, userId: userId, name: name, dose: dose,
             color: color, form: form, time: time,
             schedule: try Self.json(resolved), micros: try Self.json(micros),
-            createdAt: now, archivedAt: nil
+            createdAt: now, archivedAt: nil, sortOrder: 0
         )
         try writer.write { db in
             try row.insert(db)

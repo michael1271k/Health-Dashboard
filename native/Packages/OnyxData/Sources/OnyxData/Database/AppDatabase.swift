@@ -932,6 +932,70 @@ public final class AppDatabase: Sendable {
             }
         }
 
+        // ── v21 ─────────────────────────────────────────────────────────────
+        // The generic data model (W2, 2026-09-10).
+        //
+        // Until now the founder's plan was compiled in: the three decks, the
+        // dated phases, the nutrition ladder and its schedule, the asserted
+        // record book and the supplement seed all lived in `OnyxCore` as
+        // constants, and a second account inherited every one of them. This
+        // migration is the local half of moving them into rows:
+        //
+        //   · `routines`, `plan_phases`, `lever_periods`, `stress_logs` — the
+        //     four tables `native/schema/supabase.json` marks `since: 2`, created
+        //     by the generated `migrateMirrorV2` (a fresh install runs V1 at v9
+        //     and V2 here, in that order; this store runs V2 only).
+        //   · Columns W2 added to tables the mirror already holds, altered in
+        //     under the same guard `v13.supplementArchive` uses: the regenerated
+        //     `migrateMirrorV1` names them for a fresh install, and the guard is
+        //     what stops this failing on a store that got them that way.
+        //   · `exercises.slug` — the legacy `helix5-…` id as an ALIAS column,
+        //     so a set logged before W2 keeps resolving to its catalogue row
+        //     through data rather than through `Program.onyx5` (D3). The rep
+        //     window and rest columns ride along for W5's routine builder.
+        //
+        // `docs/sql/w2-generic-model.sql` is the Postgres half and the founder
+        // pastes it by hand. Until they do, the four new tables pull nothing
+        // (PGRST205, which the sync HOLDS rather than acknowledges since W1)
+        // and the readers see an empty catalogue.
+        migrator.registerMigration("v21.genericModel") { db in
+            if try !db.tableExists("routines") {
+                try Self.migrateMirrorV2(db)
+            }
+
+            // Every column is NULLABLE locally, even the ones Postgres declares
+            // NOT NULL DEFAULT (`plans.is_legacy`, `target_profiles.kind`,
+            // `custom_supplements.sort_order`): the DDL is pasted by hand, and
+            // a pull that runs before the paste must still decode the row the
+            // server has always served. nil reads as the default, and
+            // `encodeIfPresent` keeps the column out of a push body until the
+            // server grows it — the `sleep_inaccurate` rule (v20).
+            func add(_ table: String, _ columns: [(String, Database.ColumnType)]) throws {
+                let existing = Set(try db.columns(in: table).map(\.name))
+                let missing = columns.filter { !existing.contains($0.0) }
+                guard !missing.isEmpty else { return }
+                try db.alter(table: table) { t in
+                    for (name, type) in missing { t.add(column: name, type) }
+                }
+            }
+
+            try add("exercises", [
+                ("slug", .text), ("rest_sec", .integer),
+                ("rep_floor", .integer), ("rep_ceiling", .integer),
+                ("archived_at", .datetime),
+            ])
+            try add("cardio_logs", [("elevation_m", .double)])
+            try add("plans", [("blurb", .text), ("is_legacy", .boolean), ("sort", .integer)])
+            try add("plan_phase_goals", [
+                ("label", .text), ("fiber_g", .integer), ("body_fat_ceiling_pct", .double),
+            ])
+            try add("target_profiles", [("kind", .text)])
+            try add("personal_records", [("floor_value", .double)])
+            try add("custom_supplements", [
+                ("dose_amount", .double), ("dose_unit", .text), ("sort_order", .integer),
+            ])
+        }
+
         return migrator
     }
 }
@@ -1154,8 +1218,8 @@ extension AppDatabase {
             // ── AND THE DECK ORDER, WHICH IS THE ONE THING THE SETS CARRY
             // AND THE NEXT SESSION DID NOT ────────────────────────────────
             // `moveExercise` writes `exercise_order` on the rows, so a reorder
-            // reached the session report and stopped there: the next deck is
-            // built from `Program.onyx5`, which is a constant. `save.ts` has
+            // reached the session report and stopped there: the next deck was
+            // built from a compiled constant (rows since W2). `save.ts` has
             // upserted `routine_templates` on every web commit since the day it
             // was written, and this is the phone's half of it. In the same
             // transaction as the close, for the reason the ledger is.

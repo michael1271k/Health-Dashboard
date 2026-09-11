@@ -14,6 +14,10 @@
  * `gen-atlas-swift.mjs` already enforces on the body atlas, and for the same
  * reason: two copies of one fact, and only one of them is looked at.
  *
+ * `since: N` on a table puts its CREATE TABLE in `migrateMirrorV<N>`; a column
+ * added to an older table goes in `cols` (fresh installs) AND in a guarded
+ * `alter` migration in AppDatabase (existing stores) — see `v21.genericModel`.
+ *
  *   node scripts/gen-mirror-swift.mjs           # write
  *   node scripts/gen-mirror-swift.mjs --check   # fail if the output would differ
  *
@@ -231,7 +235,15 @@ function generate() {
   out.push('    /// to this one, because an edited migration runs on a fresh install and')
   out.push('    /// not on yours.')
   out.push('    static func migrateMirrorV1(_ db: Database) throws {')
-  for (const [table, def] of generated) out.push(migrationFor(table, def))
+  for (const [table, def] of generated.filter(([, d]) => (d.since ?? 1) === 1)) out.push(migrationFor(table, def))
+  out.push('    }')
+  out.push('')
+  // Tables the fixture marks `since: 2` (W2, 2026-09-10). A store that already
+  // ran v9 gets them from `v21.genericModel`; a fresh install runs V1 then V2.
+  // Append-only like V1: the next schema change is a V3, never an edit here.
+  out.push('    /// The tables added at `since: 2`, registered by `v21.genericModel`.')
+  out.push('    static func migrateMirrorV2(_ db: Database) throws {')
+  for (const [table, def] of generated.filter(([, d]) => (d.since ?? 1) === 2)) out.push(migrationFor(table, def))
   out.push('    }')
   out.push('}')
   out.push('')

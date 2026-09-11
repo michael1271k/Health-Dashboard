@@ -226,7 +226,7 @@ struct SessionSummaryHotfixTests {
 
         let session = try #require(try database.session(id: "s-pair"))
         let model = LoggerModel(
-            day: Program.onyx5.day(key: "arms")!, phase: .cut,
+            day: PlanTemplates.day("onyx5", "arms"), phase: .cut,
             store: database, userId: Self.userId, startedAt: session.startedAt ?? Date()
         )
         model.attach(editing: session)

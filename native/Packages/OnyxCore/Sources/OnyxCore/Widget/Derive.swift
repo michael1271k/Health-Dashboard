@@ -255,25 +255,17 @@ public enum WidgetDerive {
 
     // MARK: Records
 
-    static func floorValue(_ floor: PrFloor, axis: String) -> Double? {
-        switch axis {
-        case "weight": return floor.weight
-        case "e1rm": return floor.e1rm
-        case "volume": return floor.volume
-        case "reps": return floor.reps
-        default: return nil
-        }
-    }
-
-    /// The most recent genuine records, newest first. Rows below the asserted
-    /// book's floor are DROPPED, not clamped.
+    /// The most recent genuine records, newest first.
+    ///
+    /// Until W2 rows below the compiled record book's floor were dropped here.
+    /// The floors are `personal_records` rows themselves now (session-less,
+    /// dated the day the book was asserted), so every row in the ledger is at
+    /// or above its floor by construction and the filter is gone.
     public static func topRecords(_ rows: [LedgerRow], limit: Int = 3) -> [WidgetRecord] {
         let kept = rows
             .filter { r in
                 guard let v = r.value, v.isFinite, r.achievedOn != nil else { return false }
-                guard ["weight", "e1rm", "volume", "reps"].contains(r.axis) else { return true }
-                guard let floor = PrTruth.floor(for: r.exerciseKey), let f = floorValue(floor, axis: r.axis) else { return true }
-                return v >= f
+                return true
             }
         let sorted = kept.enumerated().sorted { a, b in
             let x = a.element.achievedOn!, y = b.element.achievedOn!

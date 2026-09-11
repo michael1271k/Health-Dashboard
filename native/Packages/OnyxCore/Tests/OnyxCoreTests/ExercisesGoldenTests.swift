@@ -139,9 +139,9 @@ struct ExercisePredicateGoldenTests {
 struct DeckMoverParityTests {
 
     /// Every prescribed movement, both phases, duplicates included — the same
-    /// 37 rows the deck literal holds.
+    /// 37 rows the founder's Onyx-5 routine rows hold.
     private var allExercises: [ProgramExercise] {
-        Program.onyx5.days.flatMap(\.exercises)
+        FounderTables.deck.days.flatMap(\.exercises)
     }
 
     @Test("all 37 movements resolve, and carry exactly what the map says")

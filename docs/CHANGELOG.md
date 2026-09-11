@@ -47,6 +47,61 @@ _Nothing yet._
 
 ---
 
+## [1.7.0] — 2026-09-11 · The Generic Model
+
+W2 of the epic sprint (`docs/EPIC_SPRINT_PLAN.md` D1–D6). No new screens; the
+app stops being one athlete's plan compiled into a binary. Every reader —
+the logger deck, the muscle targets, the phase label, the nutrition lever, the
+supplement stack, the PR floors — now takes rows, and a second account starts
+empty instead of inheriting the founder's.
+
+### Added
+- **Four tables** (`docs/sql/w2-generic-model.sql`, founder pastes): `routines`
+  (one row per program day, exercises in a jsonb payload), `plan_phases` (the
+  dated blocks), `lever_periods` (when each nutrition rung came into force),
+  `stress_logs` (the psych self-report W4 writes). Columns W4/W5 need on
+  `exercises` (`slug`, `secondary_muscles`, `rep_floor`, `rep_ceiling`,
+  `archived_at`), `custom_supplements` (`dose_amount`, `dose_unit`,
+  `sort_order`, `archived_at`), `cardio_logs.elevation_m`, `plans` (`blurb`,
+  `is_legacy`, `sort`), `plan_phase_goals` (`label`, `fiber_g`,
+  `body_fat_ceiling_pct`), `target_profiles.kind`. The schema is frozen from
+  here to W5.
+- **The founder's seed** (`docs/sql/w2-seed-founder.sql`), generated from the
+  constants before they were deleted — 3 plans, 14 routine rows with catalogue
+  uuids, 8 phases, 4 rungs, 5 lever periods, 6 phase-goal rows, 96 weekly set
+  targets, the netted PR floors — scoped to one account and never overwriting
+  an edit.
+- **Stress index** — the `self` term reads the day's `stress_logs` mean beside
+  the fatigue mean (mean of the two that answered, weights unchanged);
+  `docs/STRESS_MODEL.md` §2.3.
+- **Levers screen** — changing the rung records a `lever_periods` row, so the
+  schedule of rungs maintains itself from now on.
+- `plan-templates.json` in the app bundle: the same three decks as the
+  template W5's onboarding seeds a new account from.
+
+### Changed
+- `ScheduleContext` carries the decks, the plan entries and the phases; the
+  plan that owns a date is the one whose block covers it, else the latest
+  `started_on` before it (the compiled era boundary is gone). The watch reads
+  the deck from the context the phone sends.
+- Legacy `helix5-…` set ids resolve through `exercises.slug` (data), not through
+  the deck; new sets carry the catalogue uuid from the routine payload.
+- PR floors are `personal_records` rows with no session; a replay never
+  deletes them. A record that beats a floor carries it in `floor_value`
+  (`docs/sql/w2-pr-floor-value.sql`, founder pastes third), and deleting
+  that session hands the axis back to the floor instead of emptying it.
+- The weekly export's programme line names the plan from its row
+  ("Onyx-5 Cut").
+
+### Removed
+- From OnyxCore: `Program.onyx5/onyx4/pplLegacy`, `Programs.all/goals/
+  weeklySetTargets`, `PhaseGoals.cut/bulk`, `NutritionPresets`, `Phases.all`,
+  `Levers.all/schedule`, `LeverId`, `PrSeed`, `PrTruth.book`,
+  `Supplements.protocolSeed`, `TargetProfiles.builtin`, `Week.week0Start`,
+  `Era`, and the golden fixtures that pinned them.
+
+---
+
 ## [1.6.0] — 2026-09-10 · The Truth Wave
 
 W1 of the epic sprint (`docs/EPIC_SPRINT_PLAN.md`). No new screens; six things

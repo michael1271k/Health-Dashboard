@@ -74,7 +74,9 @@ final class WorkoutWeek {
         var weekTonnageKg = 0.0
         /// Today's day key, or nil for a rest day.
         var todayKey: String?
-        var programId = Program.onyx5.id
+        /// The active plan's deck — `routines` rows (W2). Empty until loaded.
+        var program = Program(id: "", label: "", days: [])
+        var programId: String { program.id }
         var state: State = .none
         var progression: [ProgressionRow] = []
         /// This week's tonnage minus last week's. Nil until there is a week
@@ -126,7 +128,7 @@ final class WorkoutWeek {
     /// Today's deck, phase applied. nil on a rest day.
     var todayDay: ProgramDay? {
         guard let key = snapshot.todayKey else { return nil }
-        return (Program.byId(snapshot.programId) ?? .onyx5).day(key: key)
+        return snapshot.program.day(key: key)
     }
 
     func setPhase(_ next: ProgramPhase) {
@@ -190,19 +192,14 @@ final class WorkoutWeek {
         let goals: UserGoalRow? = (try? database.read { db in
             try UserGoalRow.fetchOne(db)
         }) ?? nil
-        let programId = goals?.activePlan ?? Program.onyx5.id
-        out.programId = programId
-        let overrides: [String: String] = (try? database.read { db in
-            let rows = try ScheduleOverrideRow.fetchAll(db)
-            return Dictionary(rows.map { ($0.date, $0.dayKey) }, uniquingKeysWith: { _, last in last })
-        }) ?? [:]
-        let layoutRow: ProgramDayLayoutRow? = (try? database.read { db in
-            try ProgramDayLayoutRow.filter(Column("program_id") == programId).fetchOne(db)
-        }) ?? nil
-        let layout = ScheduleLayout.parseLayout(
-            layoutRow.flatMap { try? JSONSerialization.jsonObject(with: Data($0.layout.raw.utf8)) }
-        )
-        let context = ScheduleContext(programId: programId, phase: phase, overrides: overrides, layout: layout)
+        // The catalogue with the selection applied — one assembly, shared with
+        // every other reader (`AppDatabase.scheduleContext`). The user is the
+        // goals row's own, for the reason stated above.
+        var context = (try? database.scheduleContext(userId: database.localUserId())) ?? ScheduleContext(programId: "", phase: phase)
+        context.phase = phase
+        let overrides = context.overrides
+        out.program = context.activeProgram
+        let analysis = SessionAnalysis.context(database: database)
         out.sessionTarget = Schedule.sessionTargetIn(context)
         out.todayKey = seededDayKey ?? Schedule.scheduleDayIn(context, today)?.dayKey
         out.isOverridden = overrides[today] != nil
@@ -251,7 +248,7 @@ final class WorkoutWeek {
                 date: date,
                 initial: WeekWindow.initial(date),
                 dayKey: key,
-                label: logged.flatMap { SessionAnalysis.dayLabel($0.dayKey) } ?? planned?.label,
+                label: logged.flatMap { SessionAnalysis.dayLabel($0.dayKey, in: out.program) } ?? planned?.label,
                 sessionId: logged?.id,
                 hasCardio: cardioDates.contains(date),
                 isToday: date == today,
@@ -331,8 +328,7 @@ final class WorkoutWeek {
         // UNDER TODAY'S DAY KEY — not the lift's whole history, which graded
         // Legs A's ceiling against Legs B's sets.
         if let key = out.todayKey {
-            let program = Program.byId(programId) ?? .onyx5
-            let alerts = (try? database.progressionQueue(dayKey: key, program: program, phase: phase, today: today)) ?? []
+            let alerts = (try? database.progressionQueue(dayKey: key, program: out.program, phase: phase, today: today)) ?? []
             out.progression = alerts.compactMap { alert in
                 switch alert.state {
                 case .ready:
@@ -392,7 +388,7 @@ final class WorkoutWeek {
                 // "none" for any session whose records have since been beaten.
                 let prior = ((try? database.historySets(exerciseIds: groups.map(\.exerciseId))) ?? [])
                     .filter { $0.sessionId != closed.id }
-                let pr = SessionAnalysis.detect(groups: groups, prior: prior, dayKey: closed.dayKey, date: closed.date)
+                let pr = SessionAnalysis.detect(groups: groups, prior: prior, dayKey: closed.dayKey, date: closed.date, in: analysis)
                 out.state = .done(
                     id: closed.id,
                     sets: SessionDetail.toRows(working.map(SessionAnalysis.detailSet)).filter { $0.num != nil }.count,

@@ -76,7 +76,7 @@ struct BodyTargetsView: View {
 
     private var defaultLine: String {
         let preset = model.preset
-        let weight = preset.targetWeightKg.formatted(.number.precision(.fractionLength(0...1)))
+        let weight = preset.targetWeightKg.map { $0.formatted(.number.precision(.fractionLength(0...1))) } ?? "—"
         let fat = preset.targetBodyFatPct.map { $0.formatted(.number.precision(.fractionLength(0...1))) } ?? "—"
         let muscle = preset.targetMuscleMassKg.map { $0.formatted(.number.precision(.fractionLength(0...1))) } ?? "—"
         return "\(weight) kg · \(fat)% · \(muscle) kg"

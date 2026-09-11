@@ -53,7 +53,7 @@ struct WorkoutWeekTests {
     @Test("finishing a session leaves the tab on `.done`, with the week and the ledger carrying it")
     func finishFeedsTheTab() async throws {
         let database = try AppDatabase.inMemory(deviceId: "test")
-        let day = Program.onyx5.day(key: "cb_a")!
+        let day = PlanTemplates.day("onyx5", "cb_a")
         let today = LogicalDay.today()
 
         // The tab before: nothing logged, nothing to show.
@@ -104,7 +104,7 @@ struct WorkoutWeekTests {
     @Test("the library's rows and sparklines come out of the same finished session")
     func finishFeedsTheLibrary() async throws {
         let database = try AppDatabase.inMemory(deviceId: "test")
-        let day = Program.onyx5.day(key: "cb_a")!
+        let day = PlanTemplates.day("onyx5", "cb_a")
         let name = day.exercises(for: .cut)[0].name
         // Resolved on the main actor and captured as a plain `String`:
         // `seedRows` takes a `@Sendable` closure and `LoggerModel` is isolated.
@@ -136,7 +136,7 @@ struct WorkoutWeekTests {
     @Test("ready to progress fires only after the ceiling is cleared twice")
     func progressionNeedsTwoSessions() async throws {
         let database = try AppDatabase.inMemory(deviceId: "test")
-        let day = Program.onyx5.day(key: "cb_a")!
+        let day = PlanTemplates.day("onyx5", "cb_a")
         let name = day.exercises(for: .cut)[0].name          // Incline DB Press, 8–12
         let exerciseId = LoggerModel.exerciseId(name)
         let user = Self.userId

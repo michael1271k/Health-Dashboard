@@ -10,9 +10,9 @@ import Foundation
 /// performing on purpose — and add it on BOTH sides, because the golden vector
 /// `exercise-aliases.json` requires this table to equal the TypeScript one.
 ///
-/// `PrSeed` keys its record book on the canonical name, so a port that does
-/// not resolve `Cable Lateral Raise` to `Single Arm Lateral Raise (Cable)`
-/// drops two asserted records on the floor.
+/// The PR ledger (`personal_records.exercise_key`) is keyed on the canonical
+/// name, so a port that does not resolve `Cable Lateral Raise` to `Single Arm
+/// Lateral Raise (Cable)` files that lift's records under two keys.
 public enum ExerciseAliases {
     public static let table: [String: String] = [
         // Hevy has no neutral-grip lat pulldown — close grip is the stand-in.

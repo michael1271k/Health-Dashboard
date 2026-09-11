@@ -68,9 +68,9 @@ struct MuscleFocusTests {
             overrides: ["Chest": 20]
         )
         #expect(focus.rows.first { $0.muscle == .chest }?.target == 20)
-        // Untouched neighbours keep the phase's number.
-        #expect(focus.rows.first { $0.muscle == .quads }?.target
-                == Int(Programs.weeklySetTargets(.cut)[.quads] ?? 0))
+        // A muscle with no row has no target since W2 — 0, not another
+        // athlete's MEV.
+        #expect(focus.rows.first { $0.muscle == .quads }?.target == 0)
     }
 
     @Test("work past the target is done, never negative")

@@ -82,8 +82,15 @@ final class SettingsModel {
         }
         today = LogicalDay.today()
         do {
-            for try await row in database.userGoalsStream(userId: userId) {
-                goals = row
+            // The target snapshot, not the goals row alone: it carries the
+            // goals row AND the catalogue (decks, plans, phases) AND the
+            // ladder (rungs, periods), and it ticks when any of them changes —
+            // a plan switched here, a routine edited on the web, a rung
+            // pulled from another device.
+            for try await snap in database.targetSnapshotStream(userId: userId) {
+                goals = snap.goals
+                schedule = snap.schedule
+                ladder = snap.ladder
                 // The plan and phase can change under us — from this screen, or
                 // from a realtime push of an edit made on the web — and the
                 // override rows are KEYED on them, so their subscriptions are
@@ -94,6 +101,10 @@ final class SettingsModel {
             report(error)
         }
     }
+
+    /// The live catalogue with the selection applied, and the rungs.
+    private(set) var schedule = ScheduleContext(programId: "", phase: .cut)
+    private(set) var ladder = LeverLadder.empty
 
     private var phaseGoalsTask: Task<Void, Never>?
     private var volumeTask: Task<Void, Never>?
@@ -162,13 +173,17 @@ final class SettingsModel {
     /// The active plan, normalised. Unknown and absent both land on the live
     /// block rather than on nothing — a settings screen with no plan selected
     /// can offer no correct answer at all.
-    var planId: String {
-        Programs.normalizePlanId(goals?.activePlan ?? goals?.activeProgram) ?? Programs.defaultPlanId
-    }
+    var planId: String { schedule.programId }
 
     var plan: PlanInfo {
-        Programs.plan(id: planId) ?? Programs.all[0]
+        schedule.plans.first { $0.id == planId } ?? PlanInfo(id: planId, label: planId, blurb: "")
     }
+
+    /// The picker's list — live plans first, legacy last.
+    var plans: [PlanInfo] { Programs.pickerOrder(schedule.plans) }
+
+    /// The ladder's ordered rungs — what the Levers screen lists.
+    var rungs: [NutritionLever] { ladder.deficit }
 
     /// `maintenance` is not a training phase and never was; a stored one reads
     /// back as cut, in one place, for the same reason the TypeScript narrows it
@@ -179,24 +194,25 @@ final class SettingsModel {
 
     /// The rung in force TODAY — schedule, stored selection, or an expired
     /// release falling back to the schedule.
-    var leverInForce: LeverId? {
-        Levers.leverForDate(
-            today,
-            stored: goals?.activeLever,
-            today: today,
-            releaseEndsOn: goals?.maintenanceUntil
-        )
+    var leverInForce: String? {
+        Levers.leverForDate(today, today: today, in: ladder)
     }
 
     /// Non-nil when a rung HOLDS the five numbers, which is what makes the
     /// targets read-only. `custom` and no selection are both nil.
     var heldBy: NutritionLever? {
-        Levers.lever(byId: leverInForce?.rawValue)
+        Levers.lever(byId: leverInForce, in: ladder)
     }
 
-    /// Is the release rung on, and not yet expired?
+    /// Is a release rung on, and not yet expired?
     var isMaintenanceOn: Bool {
-        leverInForce == .maintenanceWeek
+        heldBy?.kind == .release
+    }
+
+    /// The release rung this account has, if any — what "Maintenance week"
+    /// switches on. Nil means the ladder has no release and the toggle hides.
+    var releaseRung: NutritionLever? {
+        ladder.rungs.first { $0.kind == .release }
     }
 
     /// The five numbers the user's own row holds, before any rung.
@@ -213,7 +229,7 @@ final class SettingsModel {
     /// The five numbers actually in force — the rung's when one holds, yours
     /// otherwise. This is what every screen displays.
     var shownGoals: LeverGoals {
-        Levers.applyLever(ownGoals, leverInForce?.rawValue)
+        Levers.applyLever(ownGoals, leverInForce, in: ladder)
     }
 
     /// Atwater energy of the shown triple, and its distance from the shown
@@ -232,17 +248,28 @@ final class SettingsModel {
     var targetBodyFatPct: Double? { phaseGoals?.targetBodyFatPct ?? preset.targetBodyFatPct }
     var targetMuscleMassKg: Double? { phaseGoals?.targetMuscleMassKg ?? preset.targetMuscleMassKg }
 
-    var preset: PhaseGoals { Programs.goals(planId: planId, phase: phase) }
+    /// The phase's goals — the `plan_phase_goals` row, as a value. No compiled
+    /// preset since W2: a plan with no row aims at nothing until one is written.
+    var preset: PhaseGoals { phaseGoals.map(PhaseGoals.init) ?? .empty(phase) }
 
-    /// The weekly set target for a muscle: the user's override, else the
-    /// program's default for this phase.
+    /// The weekly set target for a muscle — the `plan_phase_volume` row, or 0.
     func volumeTarget(_ muscle: LandmarkMuscle) -> Int {
-        if let stored = volumeOverrides[muscle.rawValue] { return stored }
-        return Int(Programs.weeklySetTargets(phase)[muscle] ?? 0)
+        volumeOverrides[muscle.rawValue] ?? 0
     }
 
     var volumeTotal: Int {
         LandmarkMuscle.allCases.reduce(0) { $0 + volumeTarget($1) }
+    }
+
+    /// The goals row of ANOTHER plan and phase — what the picker previews
+    /// before the switch. A plain read: the picker is a transient sheet.
+    func goals(for planId: String, phase: ProgramPhase) -> PhaseGoals {
+        ((try? database.phaseGoals(userId: userId, planId: planId, phase: phase)) ?? nil) ?? .empty(phase)
+    }
+
+    /// The weekly set total another plan and phase prescribe.
+    func volumeTotal(for planId: String, phase: ProgramPhase) -> Double {
+        ((try? database.volumeTargets(userId: userId, planId: planId, phase: phase)) ?? [:]).values.reduce(0, +)
     }
 
     /// Re-read the logical day.
@@ -253,15 +280,11 @@ final class SettingsModel {
         today = LogicalDay.today()
     }
 
-    /// The deck a plan trains, when one has been ported.
-    ///
-    /// Only ONYX-5 has been: it is the live block, and the other two are a
-    /// legacy PPL nobody runs and a four-day variant that was never started.
-    /// Returning `nil` rather than falling back to ONYX-5 is deliberate — a
-    /// screen that shows the wrong plan's sessions is worse than one that says
-    /// it does not have them.
+    /// The deck a plan trains — its `routines` rows. Nil when the rows do not
+    /// describe one, and deliberately not another plan's: a screen that shows
+    /// the wrong plan's sessions is worse than one that says it has none.
     func deck(for planId: String) -> Program? {
-        planId == "onyx5" ? Program.onyx5 : nil
+        schedule.program(id: planId).flatMap { $0.days.isEmpty ? nil : $0 }
     }
 
     // MARK: - Writing
@@ -323,20 +346,30 @@ final class SettingsModel {
     /// they were, which is what lets "My own numbers" put them back untouched.
     /// The web app wrote the rung's figures INTO the goals row as well, so a
     /// release destroyed the deficit numbers it was a break from.
-    func pickLever(_ id: LeverId) {
+    /// `nil` is "my own numbers" — stored as `custom`, never as NULL: NULL
+    /// means "no selection", which falls through to the schedule, and the
+    /// schedule may well be the rung the user just turned off.
+    func pickLever(_ id: String?) {
+        let stored = id ?? "custom"
+        let isRelease = Levers.lever(byId: id, in: ladder)?.kind == .release
+        let own = ownGoals
         write(patch: { row in
-            row.activeLever = id.rawValue
-            if id != .maintenanceWeek { row.maintenanceUntil = nil }
-        }) { [database, userId] in
+            row.activeLever = stored
+            if !isRelease { row.maintenanceUntil = nil }
+        }) { [database, userId, today] in
             try database.editUserGoals(userId: userId) { row in
-                row.activeLever = id.rawValue
+                row.activeLever = stored
                 // Selecting a deficit rung while a release is still dated would
                 // leave an expiry hanging over a rung that cannot expire. The
                 // web app has this exact gap and gets away with it because the
                 // expiry check reads `kind == .release`; leaving it set is still
                 // a lie in the row.
-                if id != .maintenanceWeek { row.maintenanceUntil = nil }
+                if !isRelease { row.maintenanceUntil = nil }
             }
+            // The schedule is rows now (`lever_periods`), and a rung coming on
+            // — or off — is an event the past must keep. The live numbers pin
+            // whichever keyless stretch this change closes.
+            try database.recordLeverChange(userId: userId, profileKey: id, ownGoals: own, today: today)
         }
     }
 
@@ -346,21 +379,25 @@ final class SettingsModel {
     /// through to the SCHEDULE — and the schedule may well be the rung the user
     /// just turned off.
     func setMaintenance(on: Bool, endsOn: String?) {
+        guard let release = releaseRung else { return }
+        let stored = on ? release.id : "custom"
+        let own = ownGoals
         write(patch: { row in
-            row.activeLever = on ? LeverId.maintenanceWeek.rawValue : LeverId.custom.rawValue
+            row.activeLever = stored
             row.maintenanceUntil = on ? endsOn : nil
-        }) { [database, userId] in
+        }) { [database, userId, today] in
             try database.editUserGoals(userId: userId) { row in
-                row.activeLever = on ? LeverId.maintenanceWeek.rawValue : LeverId.custom.rawValue
+                row.activeLever = stored
                 row.maintenanceUntil = on ? endsOn : nil
             }
+            try database.recordLeverChange(userId: userId, profileKey: on ? release.id : nil, ownGoals: own, today: today)
         }
     }
 
     /// The default end date offered when the release is switched on: the end of
     /// the deload block the date falls in, or the Saturday of its week.
     func defaultMaintenanceEnd() -> String {
-        if let span = Maintenance.span(for: today) { return span.end }
+        if let span = Maintenance.span(for: today, phases: schedule.phases) { return span.end }
         guard let date = LogicalDay.date(fromISO: today) else { return today }
         let weekday = Calendar.current.component(.weekday, from: date) - 1  // 0 = Sunday
         return ISODate.addDays(today, 6 - weekday) ?? today
@@ -376,14 +413,14 @@ final class SettingsModel {
     /// Typing a number IS choosing "my own numbers" — a figure you typed that a
     /// rung then overrode would be a control that does nothing.
     func saveGoals(kcal: Double?, protein: Double?, carbs: Double?, fat: Double?, steps: Double?) {
-        write(patch: { $0.activeLever = LeverId.custom.rawValue }) { [database, userId, planId, phase] in
+        write(patch: { $0.activeLever = "custom" }) { [database, userId, planId, phase] in
             try database.editUserGoals(userId: userId) { row in
                 row.calorieGoal = kcal.map { Int($0) }
                 row.proteinGoalG = protein.map { Int($0) }
                 row.carbsGoalG = carbs.map { Int($0) }
                 row.fatGoalG = fat.map { Int($0) }
                 row.stepsGoal = steps.map { Int($0) }
-                row.activeLever = LeverId.custom.rawValue
+                row.activeLever = "custom"
             }
             try database.editPlanPhaseGoals(userId: userId, planId: planId, phase: phase.rawValue) { row in
                 row.kcal = kcal.map { Int($0) }
@@ -444,9 +481,11 @@ final class SettingsModel {
     /// date the phase started, and the dated plan registry the charts label eras
     /// from. All five, or the app and the charts describe different weeks.
     func activate(planId newPlanId: String, phase newPhase: ProgramPhase) {
-        let goals = Programs.goals(planId: newPlanId, phase: newPhase)
         let startedOn = today
         write { [database, userId] in
+            // The phase's own row, if the plan has one; an empty goal set
+            // otherwise, which writes zeros the screens already read as unset.
+            let goals = try database.phaseGoals(userId: userId, planId: newPlanId, phase: newPhase) ?? .empty(newPhase)
             try database.editUserGoals(userId: userId) { row in
                 row.calorieGoal = Int(goals.calorieGoal)
                 row.proteinGoalG = goals.proteinGoalG.map { Int($0) }

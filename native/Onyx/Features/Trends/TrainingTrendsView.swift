@@ -51,7 +51,7 @@ struct TrainingTrendsView: View {
                     // to the window would make two cards answer the same
                     // question at two scales.
                     let visible = sessions.filter { resolved.contains($0.date) }
-                    VolumeStreamCard(sessions: visible, era: resolved.era, today: today, lens: lens)
+                    VolumeStreamCard(sessions: visible, era: resolved.era(cutStartISO: input.planStartISO), today: today, lens: lens, schedule: environment.targets?.schedule ?? ScheduleContext(programId: "", phase: .cut))
                     IntensityCard(sessions: visible, today: today)
                     StrengthTrendsCard(sessions: visible, today: today)
                     MuscleFocusCard(sessions: visible, today: today)
@@ -102,6 +102,8 @@ private struct VolumeStreamCard: View {
     let era: String
     let today: String
     let lens: MaintenanceLens
+    /// Which plan owned a date — the legacy era tag `VolumeSplit` keys on.
+    let schedule: ScheduleContext
 
     /// `nil` is every split, stacked.
     @State private var split: String?
@@ -126,7 +128,7 @@ private struct VolumeStreamCard: View {
         var kg: [String: Double] = [:]
         for s in sessions {
             let key = s.session.dayKey
-            let bucket = VolumeSplit.resolve(dateISO: s.date, split: key ?? "", era: Era.forDate(s.date).rawValue, dayKey: key)
+            let bucket = VolumeSplit.resolve(dateISO: s.date, split: key ?? "", era: Schedule.legacyEra(schedule, s.date), dayKey: key)
             guard splits.contains(bucket), activeSplit == nil || bucket == activeSplit else { continue }
             let id = Week.start(of: s.date) + "|" + bucket
             if kg[id] == nil { order.append(id) }

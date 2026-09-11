@@ -28,22 +28,42 @@ public struct TargetProfile: Codable, Equatable, Sendable {
     public var fatG: Double?
     /// Steps, when the profile has an opinion. Usually it does not.
     public var stepsGoal: Double?
+    /// `day` (a one-tap shape) or a rung of the cut (`deficit` / `release`).
+    /// The levers screen lists the rungs; the day picker lists the days.
+    public var kind: ProfileKind
 
-    public init(key: String, label: String, summary: String, sort: Int, kcal: Double, proteinG: Double, carbsG: Double?, fatG: Double?, stepsGoal: Double?) {
+    public init(key: String, label: String, summary: String, sort: Int, kcal: Double, proteinG: Double, carbsG: Double?, fatG: Double?, stepsGoal: Double?, kind: ProfileKind = .day) {
         self.key = key; self.label = label; self.summary = summary; self.sort = sort
         self.kcal = kcal; self.proteinG = proteinG; self.carbsG = carbsG; self.fatG = fatG; self.stepsGoal = stepsGoal
+        self.kind = kind
+    }
+
+    /// A fixture written before `kind` existed decodes as a day profile.
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        key = try c.decode(String.self, forKey: .key)
+        label = try c.decode(String.self, forKey: .label)
+        summary = try c.decode(String.self, forKey: .summary)
+        sort = try c.decode(Int.self, forKey: .sort)
+        kcal = try c.decode(Double.self, forKey: .kcal)
+        proteinG = try c.decode(Double.self, forKey: .proteinG)
+        carbsG = try c.decodeIfPresent(Double.self, forKey: .carbsG)
+        fatG = try c.decodeIfPresent(Double.self, forKey: .fatG)
+        stepsGoal = try c.decodeIfPresent(Double.self, forKey: .stepsGoal)
+        kind = try c.decodeIfPresent(ProfileKind.self, forKey: .kind) ?? .day
     }
 }
 
 public enum TargetProfiles {
-    /// The profiles the app ships with — a FALLBACK when `target_profiles`
-    /// cannot be read, not the source of record.
-    public static let builtin: [TargetProfile] = [
-        TargetProfile(key: "home", label: "Home", summary: "Cooked and weighed — every macro is a real target.",
-                      sort: 0, kcal: 2150, proteinG: 170, carbsG: 244, fatG: 55, stepsGoal: nil),
-        TargetProfile(key: "restaurant", label: "Restaurant", summary: "Eating out — hit the protein, let the split go.",
-                      sort: 1, kcal: 2400, proteinG: 170, carbsG: nil, fatG: nil, stepsGoal: nil),
-    ]
+    /// The one-tap DAY shapes — the rungs are `LeverLadder`'s.
+    ///
+    /// There is no built-in list any more (W2): `home` and `restaurant` were
+    /// the founder's rows compiled in as a fallback, and a second account
+    /// would have been offered a 2,150 kcal "Home" it never wrote. An empty
+    /// table is an empty picker until W5's onboarding seeds one.
+    public static func days(_ profiles: [TargetProfile]) -> [TargetProfile] {
+        profiles.filter { $0.kind == .day }
+    }
 
     /// The profile a day is stamped with, or nil. A key that names nothing
     /// resolves to nil rather than to the first profile.

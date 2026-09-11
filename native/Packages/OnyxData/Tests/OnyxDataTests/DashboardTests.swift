@@ -61,7 +61,9 @@ struct TodayFeedBuilderTests {
         #expect(feed.goalBoard.ratePerWeekKg == nil)
         #expect(feed.goalBoard.pace == .unknown)
         #expect(feed.goalBoard.weekDaysCounted == 0)
-        #expect(feed.goalBoard.targetWeightKg == PhaseGoals.cut.targetWeightKg)
+        // No `plan_phase_goals` row in this store, so no destination (W2: the
+        // compiled preset no longer fills in).
+        #expect(feed.goalBoard.targetWeightKg == nil)
         #expect(feed.weekSoFar.current == .empty)
         #expect(feed.weekSoFar.change == nil)
         #expect(!feed.weeklySummaryReady)

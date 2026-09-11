@@ -29,6 +29,8 @@ struct WidgetSnapshotBuilderTests {
                 // stored calorie goal survives whatever lever the calendar holds.
                 activeLever: "custom"
             ).insert(conn)
+            // The catalogue as rows (W2): plans, the ONYX-5 routines, phases.
+            try SampleDeck.seedCatalogue(conn, userId: user)
             // A swap: Wednesday (rest) trains Delts & Arms.
             try ScheduleOverrideRow(userId: user, date: "2026-09-02", dayKey: "arms", updatedAt: t).insert(conn)
 
@@ -85,6 +87,8 @@ struct WidgetSnapshotBuilderTests {
     func slugSetsCountTowardsMuscleCredit() throws {
         let db = try seeded()
         try db.writer.write { conn in
+            // The slug resolves through the catalogue's `slug` column (W2).
+            try Exercise(id: "ex-lat", name: "Single Arm Lateral Raise", slug: ExerciseSlug.id("Single Arm Lateral Raise")).save(conn)
             try WorkoutSet(
                 id: "t-lat", sessionId: "s-today", exerciseId: ExerciseSlug.id("Single Arm Lateral Raise"),
                 setIndex: 1, weightKg: 5, reps: 15
@@ -185,7 +189,8 @@ struct WidgetSnapshotBuilderTests {
         #expect(s.body?.smmKg == 27)
         #expect(s.body?.fatPct == 18)
         #expect(s.body?.fatPctDelta == -0.2)
-        #expect(s.streak?.current == Streak.programDayCount(today))
+        // The active plan's `started_on` row (seeded 2026-07-15) is day 1.
+        #expect(s.streak?.current == Streak.programDayCount(today, startISO: "2026-07-15"))
         #expect(s.context == nil)
 
         // Recomputed locally, not read from a (missing) daily_scores row.
@@ -269,7 +274,9 @@ struct WidgetSnapshotBuilderTests {
         let s = try build(db, .full)
         #expect(s.macros.kcal == nil && s.water.ml == nil && s.steps.count == nil)
         #expect(s.weight.kg == nil && s.today == nil && s.week.sessions == 0)
-        #expect(s.workout.label == "Upper B")
+        // No `routines` rows, no deck: an empty store is a rest day everywhere
+        // (W2 — the compiled Upper B used to answer here).
+        #expect(s.workout.label == "Rest")
         #expect(s.readiness == nil, "no battery, no verdict")
     }
 

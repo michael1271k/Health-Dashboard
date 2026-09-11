@@ -734,7 +734,7 @@ struct LiveLoggerView: View {
 #Preview("Live Logger — Legs & Core A, bulk, fresh") {
     NavigationStack {
         LiveLoggerView(model: LoggerModel(
-            day: Program.onyx5.day(key: "legs_a")!, phase: .bulk
+            day: PlanTemplates.day("onyx5", "legs_a"), phase: .bulk
         ))
     }
     .preferredColorScheme(.dark)

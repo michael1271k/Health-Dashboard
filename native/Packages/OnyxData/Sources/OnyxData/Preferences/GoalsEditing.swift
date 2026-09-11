@@ -165,20 +165,32 @@ public extension AppDatabase {
     /// still labelling this week with the previous program's name — a divergence
     /// nothing would surface until a report was read weeks later.
     ///
-    /// Does nothing when no active plan row exists: the registry is created by
-    /// the web app today, and inventing a row here would race it into two.
+    /// ── ONE ROW PER PROGRAM SINCE W2 ────────────────────────────────────────
+    /// `plans` used to hold one row per user whose `program_id` was rewritten
+    /// on every switch. It holds one row per program now (the seed wrote the
+    /// founder's three), and `Schedule.planId(owning:)` reads `started_on`
+    /// across all of them to decide which plan a DATE belongs to. So a switch
+    /// flips `active` — off the old row, on the new — and dates the new row
+    /// only on its FIRST activation: a plan re-selected keeps the day it
+    /// originally began, or every session under it would move to today.
+    ///
+    /// Does nothing when the registry has no row for the program: inventing
+    /// one here would race the web's registry into two.
     func activatePlanRow(
         userId: String, programId: String, startedOn: String
     ) throws {
         try writer.write { db in
-            guard var row = try PlanRow
-                .filter(Column("user_id") == userId && Column("active") == true)
-                .fetchOne(db)
-            else { return }
-            row.programId = programId
-            row.startedOn = startedOn
-            try row.save(db)
-            try Self.enqueueRowUpsert(table: PlanRow.databaseTableName, id: row.id, in: db)
+            let rows = try PlanRow.filter(Column("user_id") == userId).fetchAll(db)
+            guard rows.contains(where: { $0.programId == programId }) else { return }
+            for var row in rows {
+                let wants = row.programId == programId
+                var changed = false
+                if (row.active ?? false) != wants { row.active = wants; changed = true }
+                if wants, row.startedOn == nil { row.startedOn = startedOn; changed = true }
+                guard changed else { continue }
+                try row.save(db)
+                try Self.enqueueRowUpsert(table: PlanRow.databaseTableName, id: row.id, in: db)
+            }
         }
     }
 }

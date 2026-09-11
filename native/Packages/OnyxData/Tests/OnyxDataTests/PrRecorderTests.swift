@@ -18,13 +18,14 @@ struct PrRecorderTests {
     private func store() throws -> AppDatabase { try AppDatabase.inMemory(deviceId: "device-a") }
 
     /// `helix5-hack-squat` is the slug the logger mints, so every case here is
-    /// also the not-yet-synced path — the one where no catalogue row claims the
-    /// id and the name has to come from the program deck.
+    /// also the not-yet-synced path — the one where the catalogue row claims
+    /// the id through its `slug` column (W2), never through a compiled deck.
     private func log(
         _ db: AppDatabase, id: String, date: String, weights: [Double], reps: Int = 8,
         exercise: String = "helix5-hack-squat", dayKey: String = "legs_a"
     ) throws {
         try db.writer.write { conn in
+            try Exercise(id: "ex-hack", name: "Hack Squat", slug: "helix5-hack-squat").save(conn)
             try WorkoutSession(id: id, userId: user, dayKey: dayKey, date: date, startedAt: Date()).insert(conn)
             for (i, w) in weights.enumerated() {
                 try WorkoutSet(
@@ -119,6 +120,33 @@ struct PrRecorderTests {
         _ = try db.closeSession(id: "s3")
         let unchanged = try #require(try records(db).first { $0.axis == "weight" })
         #expect(unchanged.value == 120 && unchanged.sessionId == "s2", "a lighter day must not overwrite the record")
+    }
+
+    /// The natural key holds one row per axis, so a session's record REPLACES
+    /// the floor row it beats. Without `floor_value` the floor died with that
+    /// row, and deleting the session dropped the bar to whatever the remaining
+    /// sets could account for — 100 here, below the 110 the book asserts.
+    @Test("a beaten floor survives the deletion of the session that beat it")
+    func floorSurvivesRetract() throws {
+        let db = try store()
+        try db.writer.write { conn in
+            try PersonalRecordRow(userId: user, exerciseKey: "Hack Squat", axis: "weight", value: 110, achievedOn: "2026-08-10").insert(conn)
+        }
+        try log(db, id: "s1", date: "2026-09-01", weights: [100])
+        try log(db, id: "s2", date: "2026-09-04", weights: [120])
+        try db.writer.write { conn in _ = try PrRecorder.recomputeAll(conn, userId: user) }
+
+        let beaten = try #require(try records(db).first { $0.axis == "weight" })
+        #expect(beaten.value == 120 && beaten.sessionId == "s2", "120 beats the 110 floor")
+        #expect(beaten.floorValue == 110, "the record carries the floor it replaced")
+
+        try db.writer.write { conn in
+            _ = try WorkoutSet.filter(Column("session_id") == "s2").deleteAll(conn)
+            _ = try WorkoutSession.filter(Column("id") == "s2").deleteAll(conn)
+            _ = try PrRecorder.replay(conn, userId: user, exerciseKey: "Hack Squat")
+        }
+        let floor = try #require(try records(db).first { $0.axis == "weight" })
+        #expect(floor.value == 110 && floor.sessionId == nil && floor.floorValue == nil, "the floor is the bar again")
     }
 
     @Test("replaying every session lands the same ledger, twice over")

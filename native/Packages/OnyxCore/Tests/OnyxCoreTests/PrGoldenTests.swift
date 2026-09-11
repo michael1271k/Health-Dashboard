@@ -3,7 +3,7 @@ import Testing
 @testable import OnyxCore
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PR engine, truth and seed — `src/lib/training/pr*.ts` + `exercises/aliases.ts`,
+// PR engine — `src/lib/training/pr*.ts` + `exercises/aliases.ts`,
 // replayed from `npm run golden`.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -25,80 +25,6 @@ struct AliasGoldenTests {
         #expect(fixture.cases.count > 80)
         for c in fixture.cases {
             #expect(ExerciseAliases.canonicalName(c.input.raw) == c.expected, "canonicalExerciseName — \(c.name)")
-        }
-    }
-}
-
-@Suite("PR truth — the asserted book and the excess floor")
-struct PrTruthGoldenTests {
-    struct Book: Decodable { let asOf: String; let truth: [String: TruthRecord]; let logged: [String: LoggedBest] }
-
-    @Test("the book and the logged snapshot equal the TypeScript, field for field")
-    func bookMatches() throws {
-        let e = try #require(try GoldenFixture<Empty, Book>.load("pr-truth-book").cases.first).expected
-        #expect(PrTruth.asOf == e.asOf)
-        #expect(PrTruth.book.count == e.truth.count)
-        for (name, rec) in e.truth { #expect(PrTruth.book[name] == rec, "PR_TRUTH — \(name)") }
-        #expect(PrTruth.logged.count == e.logged.count)
-        for (name, rec) in e.logged { #expect(PrTruth.logged[name] == rec, "PR_LOGGED — \(name)") }
-    }
-
-    struct NameIn: Decodable { let name: String? }
-
-    @Test("prFloorFor matches on every exercise — only the excess floors")
-    func floorMatches() throws {
-        let fixture = try GoldenFixture<NameIn, PrFloor?>.load("pr-floor")
-        #expect(fixture.cases.count > 30)
-        for c in fixture.cases {
-            #expect(PrTruth.floor(for: c.input.name) == c.expected, "prFloorFor — \(c.name)")
-        }
-    }
-
-    struct AxisIn: Decodable { let name: String; let axis: PrAxis }
-
-    @Test("truthAxisValue matches")
-    func axisValueMatches() throws {
-        let fixture = try GoldenFixture<AxisIn, Double?>.load("pr-truth-axis-value")
-        for c in fixture.cases {
-            expectClose(PrTruth.axisValue(PrTruth.book[c.input.name], c.input.axis), c.expected, "truthAxisValue — \(c.name)")
-        }
-    }
-}
-
-@Suite("PR seed — the asserted era")
-struct PrSeedGoldenTests {
-    struct Seed: Decodable { let cutoff: String; let assertedDates: [String]; let seeded: [SeededPr] }
-
-    @Test("the seeded list, the cutoff and the asserted dates equal the TypeScript")
-    func seedMatches() throws {
-        let e = try #require(try GoldenFixture<Empty, Seed>.load("pr-seed-book").cases.first).expected
-        #expect(PrSeed.cutoff == e.cutoff)
-        #expect(PrSeed.assertedDates == e.assertedDates)
-        #expect(PrSeed.records == e.seeded)
-    }
-
-    struct SeedIn: Decodable { let date: String?; let exercise: String?; let setNumber: Int?; let weightKg: Double; let reps: Double }
-
-    @Test("seededAxesFor matches — strict on every field, tolerant of a missing one")
-    func seededAxesMatch() throws {
-        let fixture = try GoldenFixture<SeedIn, [PrAxis]>.load("pr-seeded-axes")
-        #expect(fixture.cases.count > 150)
-        for c in fixture.cases {
-            let i = c.input
-            #expect(
-                PrSeed.seededAxes(date: i.date, exercise: i.exercise, setNumber: i.setNumber, weightKg: i.weightKg, reps: i.reps) == c.expected,
-                "seededAxesFor — \(c.name)"
-            )
-        }
-    }
-
-    struct DateIn: Decodable { let date: String? }
-
-    @Test("isAssertedSession matches on the boundary")
-    func assertedMatches() throws {
-        let fixture = try GoldenFixture<DateIn, Bool>.load("pr-asserted-session")
-        for c in fixture.cases {
-            #expect(PrSeed.isAssertedSession(c.input.date) == c.expected, "isAssertedSession — \(c.name)")
         }
     }
 }
@@ -149,7 +75,7 @@ struct PrEngineGoldenTests {
             let actual = PrEngine.buildBaselines(
                 c.input.rows,
                 isTimed: { timed.contains($0) },
-                floorFor: c.input.floor ? { PrTruth.floor(for: $0) } : nil
+                floorFor: c.input.floor ? { FounderTables.floors[$0] } : nil
             )
             #expect(actual == c.expected, "buildBaselines — \(c.name)")
         }
@@ -167,6 +93,10 @@ struct PrEngineGoldenTests {
         let fixture = try GoldenFixture<SessIn, SessOut>.load("pr-session")
         #expect(fixture.cases.count > 150)
         for c in fixture.cases {
+            // `PrSeed` — the July 2026 record book asserted by hand and the
+            // detection it suppressed — is `personal_records` rows now; the
+            // engine has no asserted era to replay these against.
+            if c.name.hasPrefix("seed — ") || c.name.contains(" asserted — ") { continue }
             let r = PrEngine.detectSessionPrs(c.input.sets, c.input.baselines)
             let e = c.expected
 

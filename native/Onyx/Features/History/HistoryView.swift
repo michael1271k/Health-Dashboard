@@ -202,6 +202,7 @@ struct HistoryView: View {
 
 /// `Week 7 · Cut W7 · 30 Aug – 5 Sep`, its numbers, and seven dots.
 struct WeekCapsuleRow: View {
+    @Environment(AppEnvironment.self) private var environment
     let capsule: HistoryWeeks.Capsule
 
     @Environment(\.dynamicTypeSize) private var typeSize
@@ -253,7 +254,7 @@ struct WeekCapsuleRow: View {
         }
         .padding(.vertical, OnyxSpace.xs)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(capsule.window.label), \(capsule.window.rangeLabel).\(spokenTags) \(meta)")
+        .accessibilityLabel("\(capsule.window.label(in: environment.targets?.schedule)), \(capsule.window.rangeLabel).\(spokenTags) \(meta)")
     }
 
     /// What the week WAS, in at most three pills: which phase, whether the food
@@ -285,7 +286,7 @@ struct WeekCapsuleRow: View {
     }
 
     private var title: some View {
-        Text(capsule.window.label)
+        Text(capsule.window.label(in: environment.targets?.schedule))
             .onyxType(.display)
             .foregroundStyle(Color.onyx.textPrimary)
             .fixedSize(horizontal: false, vertical: true)

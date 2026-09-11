@@ -240,9 +240,11 @@ struct SessionDetailView: View {
     private func editorDay(_ report: SessionAnalysis.Report) -> ProgramDay? {
         guard !report.exercises.isEmpty else { return nil }
         let key = report.session.dayKey ?? ""
-        var day = Program.onyx5.day(key: key) ?? ProgramDay(
+        // The deck that owned the session's date — its plan's `routines` rows.
+        let program = (environment.targets?.schedule).map { Schedule.programForContext($0, report.session.date).program }
+        var day = program?.day(key: key) ?? ProgramDay(
             key: key,
-            label: SessionAnalysis.dayLabel(report.session.dayKey) ?? "Session",
+            label: SessionAnalysis.dayLabel(report.session.dayKey, in: program) ?? "Session",
             accent: 0x8A8A8E, weekday: 0, exercises: []
         )
         func normalised(_ name: String) -> String {
@@ -366,7 +368,7 @@ struct SessionDetailView: View {
     private func band(_ page: SessionAnalysis.Page) -> some View {
         let session = page.report.session
         return VStack(alignment: .leading, spacing: OnyxSpace.s) {
-            Text(SessionAnalysis.dayLabel(session.dayKey) ?? "Session")
+            Text(SessionAnalysis.dayLabel(session.dayKey, in: environment.targets?.schedule.activeProgram) ?? "Session")
                 .onyxType(.hero)
                 .foregroundStyle(Color.onyx.dayLabel(session.dayKey))
             Text(meta(page))
@@ -1029,7 +1031,7 @@ struct SessionDetailView: View {
 
     /// What the atlas's share sheet calls this session.
     private func shareLabel(_ report: SessionAnalysis.Report) -> String {
-        let day = SessionAnalysis.dayLabel(report.session.dayKey) ?? "Session"
+        let day = SessionAnalysis.dayLabel(report.session.dayKey, in: environment.targets?.schedule.activeProgram) ?? "Session"
         guard let date = LogicalDay.date(fromISO: report.session.date) else { return day }
         return "\(day) · \(date.formatted(.dateTime.day().month(.abbreviated)))"
     }

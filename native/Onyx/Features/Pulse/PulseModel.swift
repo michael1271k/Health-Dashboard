@@ -109,6 +109,10 @@ final class DayModel {
         do {
             for try await row in database.userGoalsStream(userId: userId) {
                 goals = row
+                // The catalogue — decks, plans, phases — with the selection
+                // this row names applied. Re-read on every goals tick, which
+                // is every plan or phase change made anywhere.
+                schedule = (try? database.scheduleContext(userId: userId)) ?? schedule
                 // The layout row is keyed on the plan, which this row names.
                 restartLayoutStream()
             }
@@ -256,6 +260,8 @@ final class DayModel {
     private nonisolated static let trendDays = 7
 
     private nonisolated static func readWindow(database: AppDatabase, userId: String, from: String, to: String) -> Window {
+        // The deck that names a session's day key — the active plan's rows.
+        let program = (try? database.scheduleContext(userId: userId))?.activeProgram
         // Unfiltered on `user_id`, like every other read in the app: the local
         // store is one user's mirror and the id is `""` until auth resolves.
         // See the long note in `WorkoutWeek.build`.
@@ -283,7 +289,7 @@ final class DayModel {
                 return WorkoutSummary(
                     id: session.id,
                     dayKey: session.dayKey,
-                    label: SessionAnalysis.dayLabel(session.dayKey),
+                    label: SessionAnalysis.dayLabel(session.dayKey, in: program),
                     sets: SessionDetail.toRows(rows.map(SessionAnalysis.detailSet)).filter { $0.num != nil }.count,
                     tonnageKg: SessionVolume.sessionVolumeKg(rows.map(SessionAnalysis.volumeSet)),
                     durationMin: session.durationMin
@@ -357,14 +363,20 @@ final class DayModel {
 
     // MARK: - Schedule
 
-    var planId: String {
-        Programs.normalizePlanId(goals?.activePlan ?? goals?.activeProgram) ?? Programs.defaultPlanId
-    }
+    /// The catalogue with the selection applied (`AppDatabase.scheduleContext`);
+    /// the overrides and layout are streamed live and laid over it below.
+    private(set) var schedule = ScheduleContext(programId: "", phase: .cut)
+
+    var planId: String { schedule.programId }
 
     var phase: ProgramPhase { ProgramPhase.stored(goals?.activePhase ?? goals?.goalPreset) }
 
     var context: ScheduleContext {
-        ScheduleContext(programId: planId, phase: phase, overrides: overrides, layout: layout)
+        var ctx = schedule
+        ctx.phase = phase
+        ctx.overrides = overrides
+        ctx.layout = layout
+        return ctx
     }
 
     /// The plan that owns the selected date (era-aware), and its layout.

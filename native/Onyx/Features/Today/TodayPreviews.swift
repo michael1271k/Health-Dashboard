@@ -14,6 +14,8 @@ enum TodayPreviews {
     @MainActor
     static func model(editing: Bool = false, sheet: TodaySheet? = nil) -> TodayModel {
         let database = try! AppDatabase.inMemory(deviceId: "shot")
+        // The catalogue as rows (W2): decks, plans, phases, rungs.
+        PreviewCatalogue.seed(database)
         var layout = Dashboard.defaultLayout(.phone)
         // One stack, so the shot shows the page dots: Sleep over Vitals.
         layout = Dashboard.stackSlots(layout, fromId: "sl-vitals", ontoId: "sl-sleep")

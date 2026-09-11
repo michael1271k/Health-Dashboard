@@ -77,19 +77,25 @@ public struct StressInputs: Codable, Sendable, Equatable {
     public var sleepOnsetTrouble: Bool?
     /// Mean of the DAY's fatigue slots, 1 (Fresh) … 5 (Empty). Nil when none logged.
     public var fatigueDayMean: Double?
+    /// Mean of the DAY's `stress_logs` levels, 1 (calm) … 5 (overwhelmed).
+    /// Nil when none logged. The second input of the `self` term (D6): Hooper
+    /// treats fatigue and stress as one self-report, so the term averages the
+    /// two that answered and the weights are unchanged.
+    public var stressDayMean: Double?
     /// From `Readiness.signals.load`.
     public var acwr: Double?
     public var strainZ: Double?
 
     public init(
         hrvZ: Double? = nil, rhrZ: Double? = nil, fragZ: Double? = nil, sleepOnsetTrouble: Bool? = nil,
-        fatigueDayMean: Double? = nil, acwr: Double? = nil, strainZ: Double? = nil
+        fatigueDayMean: Double? = nil, stressDayMean: Double? = nil, acwr: Double? = nil, strainZ: Double? = nil
     ) {
         self.hrvZ = hrvZ
         self.rhrZ = rhrZ
         self.fragZ = fragZ
         self.sleepOnsetTrouble = sleepOnsetTrouble
         self.fatigueDayMean = fatigueDayMean
+        self.stressDayMean = stressDayMean
         self.acwr = acwr
         self.strainZ = strainZ
     }
@@ -171,6 +177,13 @@ public enum Stress {
         public var weight: Double
         public var answered: Int
         public var fatigueDayMean: Double?
+        /// Absent from vectors written before D6; decodes as nil.
+        public var stressDayMean: Double?
+
+        public init(z: Double?, weight: Double, answered: Int, fatigueDayMean: Double?, stressDayMean: Double? = nil) {
+            self.z = z; self.weight = weight; self.answered = answered
+            self.fatigueDayMean = fatigueDayMean; self.stressDayMean = stressDayMean
+        }
     }
     public struct LoadTerm: Codable, Sendable, Equatable {
         public var z: Double?
@@ -262,8 +275,16 @@ public enum Stress {
         let onset: Double? = inputs.sleepOnsetTrouble.map { $0 ? 1 : 0 }
         let sleep = meanOfAnswered([frag, onset])
 
+        // Two self-reports on one 1–5 scale, each centred on 3 and clamped,
+        // then the mean of those that answered — so a day with only fatigue
+        // logged reads exactly as it did before `stress_logs` existed.
         let fatigue = finite(inputs.fatigueDayMean)
-        let selfZ = fatigue.map { clamp($0 - c.fatigueNeutral, -r.zClamp, r.zClamp) }
+        let stress = finite(inputs.stressDayMean)
+        let selfParts = meanOfAnswered([
+            fatigue.map { clamp($0 - c.fatigueNeutral, -r.zClamp, r.zClamp) },
+            stress.map { clamp($0 - c.fatigueNeutral, -r.zClamp, r.zClamp) },
+        ])
+        let selfZ = selfParts.z
 
         let load = loadParts(acwr: inputs.acwr, strainZ: inputs.strainZ)
         let loadZ: Double? = load.answered > 0 ? clamp(0.5 * (load.strainTerm + load.acwrTerm), 0, r.zClamp) : nil
@@ -271,7 +292,7 @@ public enum Stress {
         let terms = Terms(
             auto: AutoTerm(z: auto.z, weight: w.auto, answered: auto.answered, hrv: hrv, rhr: rhr),
             sleep: SleepTerm(z: sleep.z, weight: w.sleep, answered: sleep.answered, frag: frag, onset: onset),
-            selfReport: SelfTerm(z: selfZ, weight: w.selfReport, answered: selfZ == nil ? 0 : 1, fatigueDayMean: fatigue),
+            selfReport: SelfTerm(z: selfZ, weight: w.selfReport, answered: selfParts.answered, fatigueDayMean: fatigue, stressDayMean: stress),
             load: LoadTerm(z: loadZ, weight: w.load, answered: load.answered, acwrTerm: load.acwrTerm, strainTerm: load.strainTerm)
         )
 

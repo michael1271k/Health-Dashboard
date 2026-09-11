@@ -1,8 +1,8 @@
 {
-  "introspected": "2026-09-03",
+  "introspected": "2026-09-10",
   "why": [
     "The GRDB mirror is generated from THIS file, and this file is written from a live",
-    "introspection of Supabase (information_schema + pg_catalog) \u2014 never from",
+    "introspection of Supabase (information_schema + pg_catalog) — never from",
     "src/lib/supabase/types.ts, which declares 17 tables while the app queries 29 and",
     "has fourteen call sites silently typed `any`.",
     "",
@@ -12,20 +12,32 @@
     "that gets to erase the distinction.",
     "",
     "FOUR live tables are deliberately absent:",
-    "  \u00b7 body_measurements \u2014 the tape table. HELIX does not do manual waist/limb",
+    "  · body_measurements — the tape table. HELIX does not do manual waist/limb",
     "    measuring; it has been removed from the product twice. Mirroring it would",
     "    put the fields back within reach of the next screen that goes looking.",
-    "  \u00b7 notion_credentials, notion_exports \u2014 the Notion integration was deleted on",
+    "  · notion_credentials, notion_exports — the Notion integration was deleted on",
     "    2026-08-22 and these two are waiting on drop-SQL.",
-    "  \u00b7 widget_tokens \u2014 dies with the token-authenticated snapshot endpoint the",
+    "  · widget_tokens — dies with the token-authenticated snapshot endpoint the",
     "    moment the App Group exists.",
     "That leaves the 29 the app actually reads.",
     "",
     "`bespoke: true` means the table is NOT generated. Three of them already exist",
-    "locally in a DIFFERENT shape that the logger owns \u2014 `workout_sets.set_index` is",
-    "`set_number` here, `workout_sessions.date` does not exist here at all \u2014 so they",
+    "locally in a DIFFERENT shape that the logger owns — `workout_sets.set_index` is",
+    "`set_number` here, `workout_sessions.date` does not exist here at all — so they",
     "are pulled through SyncTranslation into the tables that are already there,",
-    "rather than mirrored beside them under a second name."
+    "rather than mirrored beside them under a second name.",
+    "",
+    "`since: 2` marks a table added by W2 (2026-09-10). The generator emits those into",
+    "`migrateMirrorV2` so a store that already ran v9 creates them at v21 and a fresh",
+    "install creates both sets in order. Columns W2 added to OLDER tables are listed in",
+    "`cols` (so a fresh install gets them at v9) AND altered in by `v21.genericModel`",
+    "for stores that already exist -- the same guarded shape `v13.supplementArchive` uses.",
+    "",
+    "The W2 columns on OLDER tables are nullable HERE even where Postgres declares them",
+    "NOT NULL DEFAULT: the DDL is pasted by hand, and a pull of `plans` that ran before",
+    "the paste must not fail to decode a row the server has always served. nil reads as",
+    "the default (`is_legacy` false, `sort` 0, `kind` day) and `encodeIfPresent` keeps the",
+    "column out of a push body until Postgres grows it -- the `sleep_inaccurate` rule."
   ],
   "strategies": {
     "cursor": "Delta by a monotonic timestamp column. Only trustworthy on a table whose updated_at is maintained by the server-side trigger; a client-written timestamp from a slow phone lands in the past and is skipped forever.",
@@ -102,7 +114,7 @@
         "id"
       ],
       "full": true,
-      "cols": "id:uuid,user_id:uuid,name:text,dose:text,color:text?,form:text?,time:text?,schedule:jsonb?,micros:jsonb?,created_at:timestamptz?,archived_at:timestamptz?"
+      "cols": "id:uuid,user_id:uuid,name:text,dose:text,color:text?,form:text?,time:text?,schedule:jsonb?,micros:jsonb?,created_at:timestamptz?,archived_at:timestamptz?,dose_amount:numeric?,dose_unit:text?,sort_order:int2?"
     },
     "fatigue_logs": {
       "group": "daily",
@@ -112,6 +124,16 @@
       ],
       "window": "date",
       "cols": "id:uuid,user_id:uuid,date:date,slot:text,level:int2,note:text?,created_at:timestamptz?"
+    },
+    "stress_logs": {
+      "group": "daily",
+      "conflict": "user_id,date,slot",
+      "pk": [
+        "id"
+      ],
+      "window": "date",
+      "since": 2,
+      "cols": "id:uuid,user_id:uuid,date:date,slot:text,level:int2,tags:_text,note:text?,created_at:timestamptz,updated_at:timestamptz"
     },
     "doms_logs": {
       "group": "daily",
@@ -144,7 +166,7 @@
         "id"
       ],
       "window": "date",
-      "cols": "id:uuid,user_id:uuid,date:date,kind:text,distance_m:numeric?,duration_min:numeric?,kcal:numeric?,from_healthkit:bool?,created_at:timestamptz?,active_kcal:numeric?,total_kcal:numeric?,avg_hr:numeric?,effort:numeric?,session_id:uuid?,incline_pct:numeric?"
+      "cols": "id:uuid,user_id:uuid,date:date,kind:text,distance_m:numeric?,duration_min:numeric?,kcal:numeric?,from_healthkit:bool?,created_at:timestamptz?,active_kcal:numeric?,total_kcal:numeric?,avg_hr:numeric?,effort:numeric?,session_id:uuid?,incline_pct:numeric?,elevation_m:numeric?"
     },
     "personal_records": {
       "group": "training",
@@ -154,7 +176,7 @@
         "axis"
       ],
       "cursor": "updated_at",
-      "cols": "user_id:uuid,exercise_key:text,axis:text,value:numeric,reps:int4?,weight_kg:numeric?,session_id:uuid?,achieved_on:date,updated_at:timestamptz?"
+      "cols": "user_id:uuid,exercise_key:text,axis:text,value:numeric,reps:int4?,weight_kg:numeric?,session_id:uuid?,achieved_on:date,updated_at:timestamptz?,floor_value:numeric?"
     },
     "routine_templates": {
       "group": "training",
@@ -164,6 +186,17 @@
       ],
       "cursor": "updated_at",
       "cols": "user_id:uuid,day_key:text,payload:jsonb,source_session_id:uuid?,updated_at:timestamptz"
+    },
+    "routines": {
+      "group": "training",
+      "pk": [
+        "user_id",
+        "program_id",
+        "day_key"
+      ],
+      "cursor": "updated_at",
+      "since": 2,
+      "cols": "user_id:uuid,program_id:text,day_key:text,label:text,sub:text?,weekday:int2,accent:int4,sort:int2,payload:jsonb,updated_at:timestamptz"
     },
     "workout_sessions": {
       "group": "training",
@@ -190,7 +223,7 @@
       ],
       "full": true,
       "bespoke": true,
-      "cols": "id:uuid,user_id:uuid,name:text,name_he:text?,split_day:text,muscle_groups:_text?,is_compound:bool?,created_at:timestamptz"
+      "cols": "id:uuid,user_id:uuid,name:text,name_he:text?,split_day:text,muscle_groups:_text?,is_compound:bool?,created_at:timestamptz,equipment:_text,rest_sec:int4?,slug:text?,secondary_muscles:_text?,rep_floor:int2?,rep_ceiling:int2?,archived_at:timestamptz?"
     },
     "user_goals": {
       "group": "plan",
@@ -208,7 +241,7 @@
         "key"
       ],
       "cursor": "updated_at",
-      "cols": "user_id:uuid,key:text,label:text,summary:text?,sort:int4,kcal:int4?,protein_g:int4?,carbs_g:int4?,fat_g:int4?,steps_goal:int4?,updated_at:timestamptz"
+      "cols": "user_id:uuid,key:text,label:text,summary:text?,sort:int4,kcal:int4?,protein_g:int4?,carbs_g:int4?,fat_g:int4?,steps_goal:int4?,updated_at:timestamptz,kind:text?"
     },
     "plans": {
       "group": "plan",
@@ -216,7 +249,7 @@
         "id"
       ],
       "full": true,
-      "cols": "id:uuid,user_id:uuid,name:text,program_id:text?,active:bool?,started_on:date?,created_at:timestamptz?"
+      "cols": "id:uuid,user_id:uuid,name:text,program_id:text?,active:bool?,started_on:date?,created_at:timestamptz?,blurb:text?,is_legacy:bool?,sort:int2?"
     },
     "plan_phase_goals": {
       "group": "plan",
@@ -226,7 +259,7 @@
         "phase"
       ],
       "cursor": "updated_at",
-      "cols": "user_id:uuid,plan_id:text,phase:text,kcal:int4?,protein_g:int4?,carbs_g:int4?,fat_g:int4?,fiber_min:int4?,fiber_max:int4?,updated_at:timestamptz?,steps_goal:int4?,target_weight_kg:numeric?,target_body_fat_pct:numeric?,target_muscle_mass_kg:numeric?,rate_min_kg_wk:numeric?,rate_max_kg_wk:numeric?"
+      "cols": "user_id:uuid,plan_id:text,phase:text,kcal:int4?,protein_g:int4?,carbs_g:int4?,fat_g:int4?,fiber_min:int4?,fiber_max:int4?,updated_at:timestamptz?,steps_goal:int4?,target_weight_kg:numeric?,target_body_fat_pct:numeric?,target_muscle_mass_kg:numeric?,rate_min_kg_wk:numeric?,rate_max_kg_wk:numeric?,label:text?,fiber_g:int4?,body_fat_ceiling_pct:numeric?"
     },
     "plan_phase_volume": {
       "group": "plan",
@@ -247,6 +280,27 @@
       ],
       "cursor": "updated_at",
       "cols": "user_id:uuid,program_id:text,layout:jsonb,updated_at:timestamptz"
+    },
+    "plan_phases": {
+      "group": "plan",
+      "pk": [
+        "user_id",
+        "plan_id",
+        "start"
+      ],
+      "full": true,
+      "since": 2,
+      "cols": "user_id:uuid,plan_id:text,start:date,kind:text,name:text,short:text?,weeks:int2,numbered:bool,first_week:int2?,era:text?,era_tag:text?,updated_at:timestamptz"
+    },
+    "lever_periods": {
+      "group": "plan",
+      "pk": [
+        "user_id",
+        "starts_on"
+      ],
+      "full": true,
+      "since": 2,
+      "cols": "user_id:uuid,starts_on:date,profile_key:text?,goals:jsonb?,updated_at:timestamptz"
     },
     "schedule_overrides": {
       "group": "plan",

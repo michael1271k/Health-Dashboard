@@ -18,6 +18,8 @@ enum HistoryPreviews {
     @MainActor
     static func environment() -> AppEnvironment {
         let database = try! AppDatabase.inMemory(deviceId: "shot")
+        // The catalogue as rows (W2): decks, plans, phases, rungs.
+        PreviewCatalogue.seed(database)
         try! database.seedRows(seed)
         return AppEnvironment(
             database: database,
@@ -70,7 +72,7 @@ enum HistoryPreviews {
             // Thursday of the seeded week: three sessions behind it, Upper B
             // ahead, and a cardio bout on the Tuesday.
             NavigationStack {
-                WorkoutTabView(seededDay: Program.onyx5.day(key: "cb_b"), seededToday: "2026-09-03")
+                WorkoutTabView(seededDay: PlanTemplates.program("onyx5")?.day(key: "cb_b"), seededToday: "2026-09-03")
             }
             .environment(environment())
         case "train-empty":

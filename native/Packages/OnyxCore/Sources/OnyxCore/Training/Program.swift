@@ -1,12 +1,14 @@
 import Foundation
 
-/// ONYX-5, the active training program, ported from `src/lib/programs.ts`.
+/// A training program — the SHAPE of a deck. The decks themselves are rows.
 ///
-/// ── WHY THE DECK IS DOMAIN AND NOT A FIXTURE ────────────────────────────────
-/// It decides what the logger shows, what the muscle sheet counts and what the
-/// phase toggle changes. All three have to agree, and the way they agree is by
-/// reading one value — the same argument `programs.ts` makes for living beside
-/// `setsForPhase` rather than inside a component.
+/// ── WHY THERE IS NO `Program.onyx5` ANY MORE (W2, 2026-09-10) ───────────────
+/// Until W2 the founder's three decks were compiled into this package, and a
+/// second account inherited all of them. They live in `routines` now — one
+/// row per program day, the exercises in a jsonb payload — and `Routines.swift`
+/// turns those rows into these values. Everything downstream still reads one
+/// `Program`, so the logger, the muscle sheet and the phase toggle agree the
+/// way they always did; what changed is where the value comes from.
 ///
 /// ── AND WHY THE MOVERS ARE NO LONGER SPELLED OUT HERE ───────────────────────
 /// Every lift used to carry its own resolved `primary:` / `secondary:` answer,
@@ -58,8 +60,13 @@ public enum ProgramPhase: String, CaseIterable, Codable, Sendable {
 
 // MARK: - Exercise
 
-public struct ProgramExercise: Identifiable, Sendable, Equatable {
+public struct ProgramExercise: Identifiable, Sendable, Equatable, Codable {
     public var name: String
+    /// The catalogue row (`exercises.id`) this prescription names, when the
+    /// routine payload carries one. The logger stamps it on every set it logs
+    /// (D3); nil is a template movement the catalogue has not resolved yet,
+    /// and the set falls back to the legacy slug.
+    public var exerciseId: String?
     /// BULK (base) working-set count.
     public var sets: Int
     /// CUT working-set count. `nil` → same as `sets`; `0` → dropped entirely on
@@ -90,6 +97,7 @@ public struct ProgramExercise: Identifiable, Sendable, Equatable {
 
     public init(
         _ name: String,
+        exerciseId: String? = nil,
         sets: Int,
         cutSets: Int? = nil,
         wk1Kg: Double?,
@@ -100,6 +108,7 @@ public struct ProgramExercise: Identifiable, Sendable, Equatable {
         note: String? = nil
     ) {
         self.name = name
+        self.exerciseId = exerciseId
         self.sets = sets
         self.cutSets = cutSets
         self.wk1Kg = wk1Kg
@@ -136,7 +145,7 @@ public struct ProgramExercise: Identifiable, Sendable, Equatable {
 
 // MARK: - Day
 
-public struct ProgramDay: Identifiable, Sendable, Equatable {
+public struct ProgramDay: Identifiable, Sendable, Equatable, Codable {
     public var key: String
     public var label: String
     /// The split sub-type shown under the name, e.g. "Quad Focus".
@@ -193,11 +202,15 @@ public struct ProgramDay: Identifiable, Sendable, Equatable {
 
 // MARK: - Program
 
-public struct Program: Sendable, Equatable {
+public struct Program: Sendable, Equatable, Codable {
     public var id: String
     public var label: String
     public var blurb: String
     public var days: [ProgramDay]
+
+    public init(id: String, label: String, blurb: String = "", days: [ProgramDay]) {
+        self.id = id; self.label = label; self.blurb = blurb; self.days = days
+    }
 
     public func day(key: String) -> ProgramDay? {
         days.first { $0.key == key }
@@ -206,86 +219,4 @@ public struct Program: Sendable, Equatable {
     public func day(weekday: Int) -> ProgramDay? {
         days.first { $0.weekday == weekday }
     }
-}
-
-public extension Program {
-
-    /// ONYX-5 — Sun/Mon/Tue/Thu/Fri, with Wed & Sat as Zone-2 rest.
-    ///
-    /// `id` is `onyx5` and stays that way: it is the key 24 `localStorage`
-    /// entries and a season of Supabase rows were written under.
-    static let onyx5 = Program(
-        id: "onyx5",
-        label: "Onyx-5",
-        blurb: "5-day antagonist hybrid — Sun/Mon/Tue/Thu/Fri, Wed & Sat Zone-2 rest.",
-        days: [
-            ProgramDay(
-                key: "cb_a", label: "Upper A", sub: "Chest + Back",
-                accent: 0xE0703C, weekday: 0,
-                exercises: [
-                    ProgramExercise("Incline DB Press", sets: 3, cutSets: 3, wk1Kg: 32, reps: "8–12", restSec: 120, compound: true),
-                    ProgramExercise("Lat Pulldown", sets: 3, cutSets: 3, wk1Kg: 45, reps: "8–12", restSec: 135, compound: true),
-                    ProgramExercise("Chest Press", sets: 3, cutSets: 2, wk1Kg: 34, reps: "10–12", restSec: 135, compound: true),
-                    ProgramExercise("Seated Cable Row (V-Grip)", sets: 3, cutSets: 2, wk1Kg: 38.5, reps: "10–12", restSec: 120, compound: true, note: "V-grip"),
-                    ProgramExercise("Pec Deck", sets: 2, cutSets: 2, wk1Kg: 47.5, reps: "12–15", restSec: 120),
-                    ProgramExercise("Straight-Arm Pulldown", sets: 3, cutSets: 3, wk1Kg: 15, reps: "12–15", restSec: 105),
-                    ProgramExercise("Face Pull", sets: 3, cutSets: 3, wk1Kg: 13.75, reps: "12–15", restSec: 105),
-                ]
-            ),
-            ProgramDay(
-                key: "legs_a", label: "Legs & Core A", sub: "Quad Focus",
-                accent: 0x3D7AB8, weekday: 1,
-                exercises: [
-                    ProgramExercise("Leg Press", sets: 4, cutSets: 3, wk1Kg: 70, reps: "8–12", restSec: 135, compound: true, note: "1 warm-up @40kg"),
-                    ProgramExercise("Hack Squat", sets: 3, cutSets: 2, wk1Kg: nil, reps: "10–12", restSec: 135, compound: true),
-                    ProgramExercise("Leg Extension", sets: 3, cutSets: 3, wk1Kg: 37.5, reps: "12–15", restSec: 120),
-                    ProgramExercise("Seated Leg Curl", sets: 3, cutSets: 3, wk1Kg: 40, reps: "10–15", restSec: 105),
-                    ProgramExercise("Calf Press", sets: 4, cutSets: 3, wk1Kg: 65, reps: "10–15", restSec: 90),
-                    ProgramExercise("Crunch Machine", sets: 3, cutSets: 3, wk1Kg: 52.5, reps: "10–12", restSec: 90),
-                    ProgramExercise("Reverse Crunch", sets: 3, cutSets: 3, wk1Kg: nil, reps: "12–15", restSec: 75),
-                ]
-            ),
-            ProgramDay(
-                key: "arms", label: "Delts & Arms", sub: nil,
-                accent: 0x8A6FA8, weekday: 2,
-                exercises: [
-                    ProgramExercise("Shoulder Press", sets: 3, cutSets: 3, wk1Kg: 28, reps: "8–10", restSec: 105, compound: true),
-                    ProgramExercise("Single Arm Lateral Raise", sets: 5, cutSets: 4, wk1Kg: 5, reps: "12–20", restSec: 105, note: "per side"),
-                    ProgramExercise("Seated Incline DB Curl", sets: 3, cutSets: 3, wk1Kg: 14, reps: "8–12", restSec: 105),
-                    ProgramExercise("Overhead Triceps Extension", sets: 3, cutSets: 3, wk1Kg: 9, reps: "10–15", restSec: 90),
-                    ProgramExercise("Hammer Curl", sets: 3, cutSets: 3, wk1Kg: 16, reps: "10–12", restSec: 105),
-                    ProgramExercise("Rope Triceps Pushdown", sets: 2, cutSets: 2, wk1Kg: 13.5, reps: "12–15", restSec: 90),
-                    ProgramExercise("Reverse EZ-Bar Curl", sets: 2, cutSets: 2, wk1Kg: 15, reps: "12–15", restSec: 90),
-                    ProgramExercise("Seated DB Wrist Curl", sets: 2, cutSets: 0, wk1Kg: 16, reps: "15–20", restSec: 90),
-                ]
-            ),
-            ProgramDay(
-                key: "cb_b", label: "Upper B", sub: "Chest + Back",
-                accent: 0xB4522A, weekday: 4,
-                exercises: [
-                    ProgramExercise("Chest Press", sets: 3, cutSets: 3, wk1Kg: 35, reps: "10–12", restSec: 120, compound: true),
-                    ProgramExercise("Neutral-Grip Lat Pulldown", sets: 3, cutSets: 2, wk1Kg: 45, reps: "10–12", restSec: 120, compound: true),
-                    ProgramExercise("Single Arm Cable Crossover", sets: 2, cutSets: 2, wk1Kg: 7.5, reps: "12–15", restSec: 105, note: "per arm"),
-                    ProgramExercise("Seated Cable Row (Wide Grip)", sets: 3, cutSets: 2, wk1Kg: 35, reps: "10–12", restSec: 120, compound: true, note: "wide bar"),
-                    ProgramExercise("Single Arm Lateral Raise", sets: 4, cutSets: 3, wk1Kg: 3.75, reps: "15–20", restSec: 90, note: "per side"),
-                    ProgramExercise("Preacher Curl", sets: 3, cutSets: 3, wk1Kg: 15, reps: "8–12", restSec: 105),
-                    ProgramExercise("Single Arm Triceps Pushdown", sets: 3, cutSets: 3, wk1Kg: 5, reps: "12–15", restSec: 90, note: "per arm"),
-                ]
-            ),
-            ProgramDay(
-                key: "legs_b", label: "Legs & Core B", sub: "Posterior Focus",
-                accent: 0x2E5C8A, weekday: 5,
-                exercises: [
-                    ProgramExercise("Romanian Deadlift", sets: 4, cutSets: 3, wk1Kg: 30, reps: "8–12", restSec: 120, compound: true),
-                    ProgramExercise("Hip Thrust", sets: 3, cutSets: 3, wk1Kg: 25, reps: "8–15", restSec: 135, compound: true),
-                    ProgramExercise("Leg Press", sets: 2, cutSets: 2, wk1Kg: 70, reps: "12–15", restSec: 135, compound: true, note: "horizontal sled"),
-                    ProgramExercise("Hip Adduction", sets: 2, cutSets: 0, wk1Kg: 50, reps: "12–15", restSec: 90),
-                    ProgramExercise("Seated Leg Curl", sets: 2, cutSets: 2, wk1Kg: 45, reps: "10–15", restSec: 105),
-                    ProgramExercise("Calf Press", sets: 4, cutSets: 3, wk1Kg: 67.5, reps: "10–15", restSec: 105),
-                    ProgramExercise("Hanging Knee Raise", sets: 3, cutSets: 3, wk1Kg: nil, reps: "10–15", restSec: 90),
-                    ProgramExercise("Side Plank", sets: 2, cutSets: 2, wk1Kg: nil, reps: "55s", restSec: 90, note: "per side"),
-                ]
-            ),
-        ]
-    )
 }

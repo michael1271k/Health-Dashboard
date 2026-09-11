@@ -5,8 +5,8 @@ import Foundation
 ///
 /// This is the source of truth for the Freshness Map, Muscle Analytics, the
 /// weekly MEV/MAV accumulator, the per-muscle tonnage breakdown and the
-/// markdown export. `Program.onyx5` resolves its movers through it too, so the
-/// deck and the analytics cannot disagree about anatomy.
+/// markdown export. A `routines` row resolves its movers through it too, so
+/// the deck and the analytics cannot disagree about anatomy.
 ///
 /// ── PRIMARY vs SECONDARY IS A DISTINCTION, NOT A RANKING ────────────────────
 /// A primary mover is the muscle the movement is CHOSEN to train. A secondary

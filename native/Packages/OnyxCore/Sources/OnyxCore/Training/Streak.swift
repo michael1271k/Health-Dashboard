@@ -15,8 +15,6 @@ public struct StreakResult: Codable, Sendable, Equatable {
 
 public enum Streak {
     public static let windowDays = 42
-    /// 2026-07-15 is day 1 — the day the Onyx Cut block opened.
-    public static let onyxCutStart = "2026-07-15"
 
     /// Counted over SCHEDULED days only; an unlogged today and any future day owe nothing.
     public static func from(_ days: [StreakDay], todayISO: String) -> StreakResult {
@@ -38,9 +36,10 @@ public enum Streak {
         return StreakResult(current: current, best: best)
     }
 
-    /// How deep into the cut you are, inclusive of both ends; 0 before it opened.
-    public static func programDayCount(_ todayISO: String, startISO: String = onyxCutStart) -> Int {
-        guard let start = ISODate.dayNumber(startISO), let today = ISODate.dayNumber(todayISO), today >= start else { return 0 }
+    /// How deep into the block you are, inclusive of both ends; 0 before it
+    /// opened and 0 for a plan with no start (`plans.started_on`).
+    public static func programDayCount(_ todayISO: String, startISO: String?) -> Int {
+        guard let startISO, let start = ISODate.dayNumber(startISO), let today = ISODate.dayNumber(todayISO), today >= start else { return 0 }
         return today - start + 1
     }
 }

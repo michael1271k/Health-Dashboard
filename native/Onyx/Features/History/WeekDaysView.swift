@@ -61,12 +61,12 @@ struct WeekDaysView: View {
         .scrollContentBackground(.hidden)
         .onyxScreen(.train)
         .tint(OnyxDomain.train.accent)
-        .navigationTitle(window.label)
+        .navigationTitle(window.label(in: environment.targets?.schedule))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
                 VStack(spacing: 0) {
-                    Text(window.label).onyxType(.body).foregroundStyle(Color.onyx.textPrimary)
+                    Text(window.label(in: environment.targets?.schedule)).onyxType(.body).foregroundStyle(Color.onyx.textPrimary)
                     Text(window.rangeLabel).onyxType(.micro).foregroundStyle(Color.onyx.textSecondary)
                 }
                 .accessibilityElement(children: .combine)
@@ -106,8 +106,8 @@ struct WeekDaysView: View {
                 // wants a document rather than a payload.
                 ShareLink(
                     item: exportText,
-                    subject: Text("\(window.label) · \(window.rangeLabel)"),
-                    preview: SharePreview("\(window.label) export")
+                    subject: Text("\(window.label(in: environment.targets?.schedule)) · \(window.rangeLabel)"),
+                    preview: SharePreview("\(window.label(in: environment.targets?.schedule)) export")
                 ) {
                     LabeledContent("Export week", value: "JSON")
                 }

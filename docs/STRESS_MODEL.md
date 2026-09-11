@@ -30,7 +30,9 @@ z_sleep = mean of answered { fragZ, onset }
             fragZ = z( awake_min / asleep_min  vs the 42-day baseline, SWC 0.5·SD ), clamped ±2
                     MISSING for a duration-only row (awake = deep = rem = 0)
             onset = 1 if sleep_onset_trouble else 0        one-sided: a calm night does not de-stress
-z_self  = clamp( mean of the DAY's fatigue slots − 3, −2, 2 )     the 1–5 scale; ALL slots, not the latest
+z_self  = mean of answered { clamp(fatigueDayMean − 3, −2, 2), clamp(stressDayMean − 3, −2, 2) }
+            fatigueDayMean = the DAY's fatigue slots, ALL of them, not the latest (1–5)
+            stressDayMean  = the DAY's stress_logs levels, all of them (1–5; W2, decision 3)
 z_load  = clamp( ½ · ( max(0, strainZ) + 2 · max(0, min(ACWR, 2.0) − 1.3) / 0.7 ), 0, 2 )
 
 S       = round( clamp( 50 + 20 · Σ wᵢ zᵢ / Σ wᵢ  over ANSWERED terms, 10, 90 ) )
@@ -57,6 +59,8 @@ A **duration-only row** — the Shortcut-era and manual web nights, and any nigh
 
 Hooper & Mackinnon (1995) found that athletes' daily ratings of fatigue, sleep, stress and soreness track overtraining ahead of the physiology. Onyx's fatigue scale is five words with definitions (Fresh · Fine · Worn · Heavy · Empty, stored 1–5), logged up to three times a day. The battery reads the **latest** slot, the tracker's rule for the day's one figure. The index reads the **day mean of every slot logged** (`fatigueDayMean` / `Fatigue.dayMean`): how heavy the whole day felt, which is the question stress asks. "Worn" (3) is neutral; the scale's own range is exactly ±2, so the clamp is a guard, not a shape.
 
+**Since W2 the term has a second input — psychological stress.** `stress_logs` (founder decision 3, 2026-09-10) holds a 1 (calm) … 5 (overwhelmed) level per slot per day with optional tag chips; the index reads the **day mean of every row** (`stressDayMean`), centred on 3 and clamped exactly as fatigue is, and the term is the **mean of the two that answered**. Hooper treats fatigue and stress as one self-report, so the weights are unchanged (self stays 0.25): a day with only fatigue logged reads exactly as it did before the table existed, and a day with both averages them rather than doubling the self-report's say. `answered` on the term is 0, 1 or 2. Psych stress is NOT a Battery input — `ScoringInputs` still carries no stress field (§3, §7). Three hand-computed vectors in `stress-breakdown.json` pin the arithmetic.
+
 ### 2.4 Load — Foster 1998, Williams 2017
 
 Both inputs are `Readiness.signals.load`'s: the EWMA acute:chronic ratio (Williams 2017) and this week's Foster strain against your own rolling strains (Foster 1998; see `READINESS_MODEL.md` §3). The term rises from an ACWR of 1.3 (the top of the "sweet spot") to saturation at 2.0 and reads any positive strain z; both pieces are floored at zero and the sum halved into the ±2 grammar. **A light week de-stresses nothing** — the same drain-only argument the battery makes — so `z_load ≥ 0` always, and the term is unanswered only when both inputs are missing.
@@ -79,6 +83,7 @@ What is genuinely new to the index is **fragmentation** and **the day's whole fa
 | sleep | `fragZ` | `fragmentationZ(history.awakeMin, history.asleepMin)` — the 49-day series `readinessHistoryFor` lays from `sleep_sessions` (longest row per night window, filed under `nightOf(start_time)`) | `Stress.fragmentationZ` over the same two series from `AppDatabase.readinessHistory` |
 | sleep | `onset` | `daily_logs.sleep_onset_trouble` | `DailyLogRow.sleepOnsetTrouble` |
 | self | `fatigueDayMean` | `fatigueDayMean(foldFatigueRows(rows))` | `Fatigue.dayMean(Fatigue.foldRows(rows))` |
+| self | `stressDayMean` | — (web has no stress log; dies with W6) | mean of `stress_logs.level` for the day (`StressInputsBuilder`) |
 | load | `acwr`, `strainZ` | `signals.load` | `signals.load` |
 
 `fetchReadinessHistory` gained one narrow select (`sleep_sessions.start_time, duration_min, deep_min, rem_min, awake_min` over the union of the 49 night windows); `ReadinessHistoryBuilder` gained the same two arrays. `ReadinessHistory.awakeMin`/`asleepMin` are optional on both sides — the battery never reads them and the `readiness-signals` vectors predate them.
