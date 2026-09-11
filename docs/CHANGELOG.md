@@ -47,6 +47,59 @@ _Nothing yet._
 
 ---
 
+## [2.1.0] — 2026-09-12 · Which Side, Which Part, Which Joint
+
+Soreness stops being ten numbers. You can now say WHICH part of a muscle is
+sore, WHICH side, and that the complaint is a joint and not a muscle at all —
+and none of it changes what the battery reads, because one muscle still
+contributes exactly one number however many ways you describe it.
+
+### Added
+- **Day → Soreness** — a Left / Both / Right control in the rating sheet, and
+  sub-region rows under the four groups that have them: Back splits into traps,
+  rhomboids, lats and erectors; Shoulders into the three delt heads; Arms into
+  biceps, triceps and forearms; Inner thighs into adductors and **abductors**.
+  Rating a muscle whole stays a complete answer — the parent and its parts are
+  different rows, not alternatives.
+- **Day → Soreness → Joints & tendons** — flag a knee, hip, ankle, wrist, elbow,
+  AC joint, lumbar junction or neck, with an optional note. Presence is the
+  whole datum: there is no severity, and nothing about it reaches your readiness
+  score or gates a workout. It is history, and it is in the export.
+- **The figure** — joint rings on the body, filled when flagged, and sixteen new
+  tendon, fibre and seam lines in ivory. The rings never take a tap and never
+  add a keyboard stop; a joint is chosen in the sheet, on a full-size row.
+- **Weekly export** — every side and sub-region is serialised. A whole-muscle,
+  both-sides rating is spelled exactly as it always was, so old weeks re-export
+  unchanged; a qualified one reads `Arms/Biceps@L:3` or
+  `Inner thighs/Abductors@R:1:Legs & Core B:2026-09-02`. Flagged joints get
+  their own `joints` column: `Knee@L;Wrist@R:tight after pressing`.
+
+### Fixed
+- **Readiness** — a day's soreness is now the mean over distinct RECOGNISED
+  muscles, taking the worst of a muscle's sides and sub-regions, where it was
+  the mean over rows present. Two consequences, both real: rating both biceps
+  no longer moves a score that rating one did, and rows whose muscle name is not
+  one of the ten — the demo account has been writing `Quadriceps` and `Lats` —
+  stop counting toward a number they could never be read back into. Historical
+  batteries change only for accounts that hold such rows.
+- **Day → Soreness** — the tracker's own description had listed nine muscles
+  since `Inner thighs` became the tenth on 2026-09-08.
+
+### Changed
+- `npm run check` now runs `check:atlas`, `check:mirror` and the new
+  `check:doms`. The first two existed and were never in the gate, so a
+  hand-edited generated file could ship green. `DomsMap.swift` is generated from
+  the TypeScript vocabulary and can no longer drift from it — before this, a new
+  soreness muscle could land on the web, be invisible on iOS, and leave both
+  test suites passing.
+
+### Migration
+- Run `docs/sql/soreness-v2.sql` in the Supabase SQL editor. Until it is run the
+  app degrades quietly: ratings still save, they just cannot carry a side or a
+  sub-region.
+
+---
+
 ## [2.0.1] — 2026-09-11 · The Ceiling That Was the Wrong Muscle
 
 ### Fixed

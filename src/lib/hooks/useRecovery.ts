@@ -22,7 +22,7 @@ import { programDayByKey } from '@/lib/programs'
 import type { SorenessSide } from '@/lib/body/subRegions'
 export { DOMS_MUSCLES, DOMS_LEVELS, isDomsMuscle } from '@/lib/recovery/soreness'
 export type { DomsMuscle } from '@/lib/recovery/soreness'
-import { DOMS_MUSCLES, type DomsMuscle } from '@/lib/recovery/soreness'
+import type { DomsMuscle } from '@/lib/recovery/soreness'
 
 /** Fold a program muscle token into one of the tracked DOMS muscles (or null). */
 export function domsMuscleOf(token: string): DomsMuscle | null {
