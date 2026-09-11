@@ -96,12 +96,19 @@ export function musclesOnSide(side: AtlasView): DomsMuscle[] {
   return DOMS_MUSCLES.filter((m) => present.has(m))
 }
 
-export function SorenessMap({ side, doms, onPick, className = '' }: {
+export function SorenessMap({ side, doms, onPick, flaggedJoints, className = '' }: {
   side: AtlasView
   /** muscle → severity 0–3. Missing means unrated, drawn as the empty fill. */
   doms: Partial<Record<DomsMuscle, number>> | undefined
   /** Fired with the tapped region's group so the host can open its picker. */
   onPick: (group: SorenessGroup) => void
+  /**
+   * Joint rings, and which of them are raised. Passing it turns the layer on.
+   *
+   * Rings never take a tap — see `JOINT_POINTS`. A joint is flagged in the
+   * group sheet, on a 44px row; the figure only has to show that it was.
+   */
+  flaggedJoints?: ReadonlySet<string>
   className?: string
 }) {
   // Severity 0–3 → intensity 0–1. The atlas draws intensity and has no opinion
@@ -121,6 +128,7 @@ export function SorenessMap({ side, doms, onPick, className = '' }: {
       interactive
       className={className}
       label={`Soreness map, ${side} view`}
+      flaggedJoints={flaggedJoints}
       onPick={(muscle) => onPick(groupOfLandmark(muscle))}
     />
   )

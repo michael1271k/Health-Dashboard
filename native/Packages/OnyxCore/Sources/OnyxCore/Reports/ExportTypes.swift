@@ -188,6 +188,24 @@ public struct ExportDoms: Codable, Equatable, Sendable {
     public var severity: Double
     public var sourceLabel: String?
     public var sourceDate: String?
+    /// Which side, and which part of the muscle. Both optional and both absent
+    /// on every row written before 2026-09-12 — which is why the token for a
+    /// whole-muscle bilateral rating is byte-identical to the one v1 produced.
+    public var side: String?
+    public var subRegion: String?
+}
+
+/// One joint or connective-tissue complaint. Binary: the row IS the flag.
+///
+/// Rides in the DAYS row beside `doms` rather than in a section of its own,
+/// because it is a per-day list of short tokens and that is exactly what
+/// `fatigue`, `doms` and `tags` already are. A section would need a parser.
+public struct ExportJoint: Codable, Equatable, Sendable {
+    public var date: String
+    public var joint: String
+    public var side: String?
+    /// The wearer's own words. Sanitised at the render boundary — see `phrase`.
+    public var note: String?
 }
 
 public struct ExportBodyComp: Codable, Equatable, Sendable {
@@ -258,6 +276,8 @@ public struct WeeklyExportInput: Codable, Equatable, Sendable {
     public var volumeByMuscle: [VolumeByMuscle]
     public var tonnageByMuscle: [TonnageByMuscle]?
     public var doms: [ExportDoms]
+    /// Flagged joints. Optional: a payload built before v2 simply has none.
+    public var joints: [ExportJoint]?
     public var fatigue: [ExportFatigue]?
     public var bodyComp: [ExportBodyComp]?
     public var cardio: [ExportCardio]?

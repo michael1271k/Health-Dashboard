@@ -2,11 +2,14 @@
 
 import { useState } from 'react'
 import { Dumbbell, ChevronRight } from 'lucide-react'
-import { useDoms, useLogDoms, useDomsSources, DOMS_MUSCLES, DOMS_LEVELS, type DomsMuscle } from '@/lib/hooks/useRecovery'
+import { useDoms, useLogDoms, useDomsSources, DOMS_MUSCLES, DOMS_LEVELS, type DomsMuscle, useDomsRows } from '@/lib/hooks/useRecovery'
 import { EMBER, MUTED, HAIRLINE } from '@/lib/theme/palette'
 import { Sheet } from '@/components/ui/Sheet'
 import { ZoneRow } from '@/components/ui/Zone'
 import { Segmented } from '@/components/ui/Segmented'
+import { useJointFlags, useToggleJoint } from '@/lib/hooks/useJoints'
+import { jointKey } from '@/components/body/MuscleAtlas'
+import { JOINTS_BY_GROUP, subRegionsOf, type SorenessSide } from '@/lib/body/subRegions'
 import { SorenessMap, GROUP_MUSCLES, GROUP_LABEL, type SorenessGroup } from '@/components/day/SorenessMap'
 import { SEVERITY_COLOR, SEVERITY_WORD } from '@/components/day/severity'
 
@@ -63,17 +66,30 @@ function SeverityBar({ severity }: { severity: number }) {
   )
 }
 
-/** The 4-way severity picker for one muscle, plus its attribution chip. */
-function MuscleRow({ muscle, current, source, onRate }: {
+/**
+ * The 4-way severity picker for one rateable thing, plus its attribution chip.
+ *
+ * `label` is what the row says and `name` is what a screen reader hears — they
+ * differ for a sub-region, where the row reads "Erectors" under a "Back"
+ * heading but must announce "Back Erectors, moderate" on its own.
+ */
+function MuscleRow({ muscle, label, name, current, source, onRate, indent = false }: {
   muscle: DomsMuscle
+  label?: string
+  name?: string
   current: number | undefined
   source: { label: string; dayOffset: number } | undefined
   onRate: (severity: number) => void
+  indent?: boolean
 }) {
+  const text = label ?? muscle
+  const spoken = name ?? text
   return (
     <div className="space-y-1">
       <div className="flex items-center gap-2">
-        <span className="text-fluid-sm text-text w-[84px] shrink-0 truncate">{muscle}</span>
+        <span
+          className={`text-fluid-sm w-[84px] shrink-0 truncate ${indent ? 'pl-3 text-muted' : 'text-text'}`}
+        >{text}</span>
         <div className="flex gap-1.5 flex-1">
           {DOMS_LEVELS.map((lv) => {
             const on = current === lv.v
@@ -84,7 +100,7 @@ function MuscleRow({ muscle, current, source, onRate }: {
                 type="button"
                 onClick={() => onRate(lv.v)}
                 aria-pressed={on}
-                aria-label={`${muscle}: ${lv.label}`}
+                aria-label={`${spoken}: ${lv.label}`}
                 className="flex-1 rounded-lg min-h-[44px] text-[10px] font-bold uppercase tracking-wide transition-colors"
                 style={{
                   color: on ? c : MUTED,
@@ -114,9 +130,25 @@ function MuscleRow({ muscle, current, source, onRate }: {
 /**
  * DOMS tracker — rate delayed-onset soreness in the 72h AFTER a session, which is
  * when it actually shows up and fades. Whole-body (Chest · Back · Arms ·
- * Shoulders · Abs · Glutes · Quads · Hamstrings · Calves); each muscle's rating
- * is auto-attributed to the most recent session that TRAINED it, so "sore chest"
- * ties to the last Upper day and "sore glutes" to the last leg day.
+ * Shoulders · Abs · Glutes · Quads · Hamstrings · Inner thighs · Calves); each
+ * muscle's rating is auto-attributed to the most recent session that TRAINED it,
+ * so "sore chest" ties to the last Upper day and "sore glutes" to the last leg
+ * day.
+ *
+ * (`Inner thighs` became the tenth on 2026-09-08 and this list said nine until
+ * 2026-09-12 — four days in which the only record of the vocabulary disagreed
+ * with the vocabulary. `check:doms` now generates the native copy from the
+ * TypeScript so the same drift cannot happen across platforms.)
+ *
+ * ── WHAT v2 ADDED, AND WHERE ─────────────────────────────────────────────────
+ * A side, a sub-region and a joint flag — all three chosen HERE, in the sheet,
+ * on 44px rows. None of them are chosen on the figure. At the size the map
+ * actually renders (110px wide) the smallest muscle path is under 3px across,
+ * so splitting it per side and per sub-region would make a mis-tap a wrong
+ * RATING rather than the free mis-tap it is today. And on the front view the
+ * figure's left is the viewer's right, which nothing on the figure can label:
+ * side chosen by tapping geometry would mis-log silently, with nothing in the
+ * data able to detect it.
  *
  * THE MAP IS THE INTERFACE. Nine muscles as a list of nine 4-button rows was a
  * form you scrolled; as a silhouette it is a glance. Tapping a region opens that
@@ -129,11 +161,26 @@ function MuscleRow({ muscle, current, source, onRate }: {
  */
 export function DomsTracker({ date }: { date: string }) {
   const { data: doms } = useDoms(date)
+  const { data: rows } = useDomsRows(date)
   const { data: sources } = useDomsSources(date)
+  const { data: jointFlags } = useJointFlags(date)
   const log = useLogDoms(date)
+  const toggleJoint = useToggleJoint(date)
   const [side, setSide] = useState<'front' | 'back'>('front')
+  // Which side of the BODY a rating is about — unrelated to `side` above, which
+  // is which side of the FIGURE is showing. Defaults to `both`, and is echoed
+  // in the sheet header, because an invisible mode is the failure case.
+  const [lateral, setLateral] = useState<SorenessSide>('both')
   const [picking, setPicking] = useState<SorenessGroup | null>(null)
   const [open, setOpen] = useState(false)
+
+  /** The severity stored for one exact row, or undefined if it has none. */
+  const severityOf = (muscle: DomsMuscle, subRegion = '') =>
+    (rows ?? []).find((r) =>
+      r.muscle_group === muscle && r.sub_region === subRegion && r.side === lateral)?.severity
+
+  const flagged = new Set((jointFlags ?? []).map((f) => jointKey(f.joint, f.side)))
+  const isFlagged = (joint: string) => flagged.has(jointKey(joint, lateral))
 
   const { sore, clear, peak } = sorenessSummary(doms)
 
@@ -205,7 +252,7 @@ export function DomsTracker({ date }: { date: string }) {
           <div className="flex items-center gap-3">
             {/* The map. Fixed aspect so the two views can't jump height on flip. */}
             <div className="shrink-0 w-[110px] sm:w-[130px]" style={{ aspectRatio: '120 / 260' }}>
-              <SorenessMap side={side} doms={doms} onPick={setPicking} />
+              <SorenessMap side={side} doms={doms} onPick={setPicking} flaggedJoints={flagged} />
             </div>
 
             {/* The exact reading, worst first. */}
@@ -251,16 +298,92 @@ export function DomsTracker({ date }: { date: string }) {
         <p className="text-[11px] text-muted leading-snug mb-3">
           Rate 24–72h after training — that&apos;s when soreness peaks. Each muscle links to the workout that caused it.
         </p>
+
+        {/* Which side the ratings below are about.
+            The one segmented control, at its qualifying size — it already
+            supplies role="group", a required name, aria-pressed per segment and
+            haptic feedback on pointer-DOWN, and it clears 44px through the
+            track's own padding. It sits beside the rows it qualifies rather
+            than over the figure, so the mode cannot be forgotten across a
+            scroll, and it lands in the lower third of a bottom-anchored sheet —
+            the easy-reach zone for a one-handed thumb. */}
+        <Segmented<SorenessSide>
+          label="Which side"
+          className="mb-3"
+          size="sm"
+          fluid
+          accent={EMBER}
+          value={lateral}
+          onChange={setLateral}
+          options={[
+            { value: 'left', label: 'Left' },
+            { value: 'both', label: 'Both' },
+            { value: 'right', label: 'Right' },
+          ]}
+        />
+
         <div className="space-y-3">
           {(picking ? GROUP_MUSCLES[picking] : []).map((m) => (
-            <MuscleRow
-              key={m}
-              muscle={m}
-              current={doms?.[m]}
-              source={sources?.[m]}
-              onRate={(severity) => log.mutate({ muscle: m, severity, source: sources?.[m] })}
-            />
+            <div key={m} className="space-y-1.5">
+              <MuscleRow
+                muscle={m}
+                name={`${m}, ${lateral}`}
+                current={severityOf(m)}
+                source={sources?.[m]}
+                onRate={(severity) => log.mutate({ muscle: m, severity, source: sources?.[m], side: lateral })}
+              />
+              {/* A parent and its parts are different ROWS, not alternatives:
+                  "Back: 2" stays a complete answer, and the fold that feeds the
+                  battery takes the worst of whatever was said. */}
+              {subRegionsOf(m).map((sub) => (
+                <MuscleRow
+                  key={sub}
+                  muscle={m}
+                  label={sub}
+                  name={`${m} ${sub}, ${lateral}`}
+                  indent
+                  current={severityOf(m, sub)}
+                  source={undefined}
+                  onRate={(severity) => log.mutate({
+                    muscle: m, severity, source: sources?.[m], side: lateral, subRegion: sub,
+                  })}
+                />
+              ))}
+            </div>
           ))}
+
+          {/* Joints. Not muscles, never scored — the flag is the whole datum,
+              so the control is a toggle and not a severity row. */}
+          {picking && JOINTS_BY_GROUP[picking].length > 0 && (
+            <div className="pt-1 space-y-1.5">
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
+                Joints &amp; tendons
+              </p>
+              {JOINTS_BY_GROUP[picking].map((joint) => {
+                const on = isFlagged(joint)
+                return (
+                  <button
+                    key={joint}
+                    type="button"
+                    onClick={() => toggleJoint.mutate({ joint, side: lateral, on: !on })}
+                    aria-pressed={on}
+                    aria-label={`${joint}, ${lateral}`}
+                    className="w-full flex items-center gap-2 rounded-lg min-h-[44px] px-2.5 text-left transition-colors"
+                    style={{
+                      background: on ? `${EMBER}1f` : 'rgba(255,255,255,0.03)',
+                      border: `1px solid ${on ? `${EMBER}66` : HAIRLINE}`,
+                    }}
+                  >
+                    <span className="text-fluid-sm" style={{ color: on ? EMBER : MUTED }}>{joint}</span>
+                    <span className="ml-auto text-[10px] uppercase tracking-wide"
+                      style={{ color: on ? EMBER : MUTED }}>
+                      {on ? 'Flagged' : 'Clear'}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
       </Sheet>
     </>

@@ -9,8 +9,7 @@ import { logicalTodayISO } from '@/lib/utils/day'
 import {
   buildWeeklyExport, trendTotals,
   type ExportDay, type ExportSession, type ExportExercise, type ExportDoms, type ExportFatigue, type ExportBodyComp,
-  type ExportCardio, type WeeklyExportInput, type LedgerWeek, type ExportSupplement,
-} from '@/lib/reports/weeklyExport'
+  type ExportCardio, type WeeklyExportInput, type LedgerWeek, type ExportSupplement, type ExportJoint } from '@/lib/reports/weeklyExport'
 import { weekLabelOf, WEEK0_START } from '@/lib/reports/weekNumber'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
 import { restTargetFor, programRestSec } from '@/lib/training/restTargets'
@@ -99,7 +98,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
   // history window starts 48 days before the week does.
   const historyFrom = isoAddDays(weekStart, -(READINESS.historyDays - 1))
   const historyStartInstant = `${historyFrom}T00:00:00Z`
-  const [logs, nutrition, sessions, sets, water, supps, doms, fatigue, bodyComp, cardio, rpe, bodyLedger, skips, prAxes, whr, exceptions, priorCount, sleepStages, onset, shapes, scores, historyLogs, historyMetrics, historySessions, historyCardio] = await Promise.all([
+  const [logs, nutrition, sessions, sets, water, supps, doms, jointFlags, fatigue, bodyComp, cardio, rpe, bodyLedger, skips, prAxes, whr, exceptions, priorCount, sleepStages, onset, shapes, scores, historyLogs, historyMetrics, historySessions, historyCardio] = await Promise.all([
     // `active_energy` and `bmr` join the main select rather than getting their
     // own isolated slot: both are long-standing columns (verified live), and the
     // isolation convention exists for columns whose paste-SQL may not have run.
@@ -141,7 +140,20 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // that were actually swallowed. Absence now means TAKEN, so the only thing
     // worth reading is the exception, and `taken` has to come back to find it.
     supabase.from('supplement_log').select('date, item_key, taken, taken_at').gte('date', weekStart).lte('date', weekEnd),
-    supabase.from('doms_logs').select('date, muscle_group, severity, source_session_id, source_day_key').gte('date', weekStart).lte('date', weekEnd),
+    // Two shapes, tried widest first. A single wide select would fail whole
+    // against an unmigrated database and `doms.error` is read as "no rows" —
+    // which would quietly drop every soreness rating from the week's export
+    // rather than dropping the two columns it could not read.
+    (async () => {
+      const wide = await supabase.from('doms_logs')
+        .select('date, muscle_group, severity, side, sub_region, source_session_id, source_day_key')
+        .gte('date', weekStart).lte('date', weekEnd)
+      if (!wide.error) return wide
+      return supabase.from('doms_logs')
+        .select('date, muscle_group, severity, source_session_id, source_day_key')
+        .gte('date', weekStart).lte('date', weekEnd)
+    })(),
+    supabase.from('joint_flags').select('date, joint, side, note').gte('date', weekStart).lte('date', weekEnd),
     supabase.from('fatigue_logs').select('date, slot, level').gte('date', weekStart).lte('date', weekEnd),
     // Body composition — its own query so an un-migrated column can't take down
     // the daily-logs fetch above; on error it's simply omitted.
@@ -254,7 +266,12 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // doms_logs may not be migrated yet — an error just means no soreness rows.
     doms: (doms.error ? [] : (doms.data ?? [])) as Array<{
       date: string; muscle_group: string; severity: number
+      side?: string | null; sub_region?: string | null
       source_session_id?: string | null; source_day_key?: string | null
+    }>,
+    // joint_flags may not be migrated yet — same courtesy as doms_logs.
+    jointFlags: (jointFlags.error ? [] : (jointFlags.data ?? [])) as Array<{
+      date: string; joint: string; side?: string | null; note?: string | null
     }>,
     // sleep_sessions may hold nothing for a week the watch was not worn — an
     // empty list means the stage lines print em-dashes, not that sleep is absent
@@ -1028,8 +1045,34 @@ export function weekPayload(
         ? domsProgram.days.find((x) => x.key === r.source_day_key)?.label ?? r.source_day_key
         : null,
       sourceDate: r.source_session_id ? sessionDateById.get(r.source_session_id) ?? null : null,
+      // Absent on a pre-migration row, which is why the token for one is
+      // byte-identical to what v1 rendered.
+      side: (r.side ?? 'both') as 'left' | 'right' | 'both',
+      subRegion: r.sub_region ?? '',
     }))
-    .sort((a, b) => a.date.localeCompare(b.date) || a.muscle.localeCompare(b.muscle))
+    // Muscle, then sub-region, then side — so the two halves of one complaint
+    // sit beside each other in the cell instead of at opposite ends of it.
+    .sort((a, b) => a.date.localeCompare(b.date)
+      || a.muscle.localeCompare(b.muscle)
+      || (a.subRegion ?? '').localeCompare(b.subRegion ?? '')
+      || (a.side ?? '').localeCompare(b.side ?? ''))
+
+  /* Flagged joints, date then joint then side — the same stable order, for the
+     same reason: a diff between two weekly exports should show what CHANGED,
+     not what the database happened to return first. */
+  // `?? []` for the reason the fatigue block one screen down gives: a caller may
+  // predate the field, and the payload fixtures do. A builder that throws on an
+  // absent optional array is more fragile than the data it defends against.
+  const joints: ExportJoint[] = (range.jointFlags ?? [])
+    .map((r) => ({
+      date: r.date,
+      joint: r.joint,
+      side: (r.side ?? 'both') as 'left' | 'right' | 'both',
+      note: r.note ?? null,
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date)
+      || a.joint.localeCompare(b.joint)
+      || (a.side ?? '').localeCompare(b.side ?? ''))
 
   // Sorted by date, then by SLOT ORDER rather than alphabetically — "eod,
   // evening, morning, noon" is the order a string sort gives and the reverse of
@@ -1108,7 +1151,7 @@ export function weekPayload(
       },
       { releaseEndsOn: goals?.maintenance_until ?? null, dailyTargets },
     ),
-    days, sessions, volumeByMuscle, doms, fatigue,
+    days, sessions, volumeByMuscle, doms, joints, fatigue,
     tonnageByMuscle: weeklyTonnageByMuscle(tonnageRows(range.sets))
       .map((t) => ({ muscle: t.muscle, volumeKg: t.volumeKg })),
     bodyComp: toBodyComp(range),

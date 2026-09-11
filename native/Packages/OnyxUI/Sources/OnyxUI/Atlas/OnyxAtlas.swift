@@ -594,6 +594,46 @@ public enum OnyxAtlas {
     p.closeSubpath()
   },
   OnyxAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(48, 62, in: rect))
+    p.addCurve(to: pt(59, 68, in: rect), control1: pt(53, 65, in: rect), control2: pt(57, 67, in: rect))
+  },
+  OnyxAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(72, 62, in: rect))
+    p.addCurve(to: pt(61, 68, in: rect), control1: pt(67, 65, in: rect), control2: pt(63, 67, in: rect))
+  },
+  OnyxAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(34, 104, in: rect))
+    p.addCurve(to: pt(40, 110, in: rect), control1: pt(36, 107, in: rect), control2: pt(38, 109, in: rect))
+  },
+  OnyxAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(86, 104, in: rect))
+    p.addCurve(to: pt(80, 110, in: rect), control1: pt(84, 107, in: rect), control2: pt(82, 109, in: rect))
+  },
+  OnyxAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(31, 120, in: rect))
+    p.addCurve(to: pt(37, 144, in: rect), control1: pt(33, 128, in: rect), control2: pt(35, 136, in: rect))
+  },
+  OnyxAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(89, 120, in: rect))
+    p.addCurve(to: pt(83, 144, in: rect), control1: pt(87, 128, in: rect), control2: pt(85, 136, in: rect))
+  },
+  OnyxAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(46, 186, in: rect))
+    p.addCurve(to: pt(49, 192, in: rect), control1: pt(47, 189, in: rect), control2: pt(48, 191, in: rect))
+  },
+  OnyxAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(74, 186, in: rect))
+    p.addCurve(to: pt(71, 192, in: rect), control1: pt(73, 189, in: rect), control2: pt(72, 191, in: rect))
+  },
+  OnyxAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(38, 160, in: rect))
+    p.addCurve(to: pt(38, 191, in: rect), control1: pt(37, 172, in: rect), control2: pt(37, 183, in: rect))
+  },
+  OnyxAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(82, 160, in: rect))
+    p.addCurve(to: pt(82, 191, in: rect), control1: pt(83, 172, in: rect), control2: pt(83, 183, in: rect))
+  },
+  OnyxAtlasDetail(view: .front) { rect, p in
     p.move(to: pt(44, 204, in: rect))
     p.addCurve(to: pt(46, 233, in: rect), control1: pt(43, 214, in: rect), control2: pt(44, 224, in: rect))
   },
@@ -668,6 +708,30 @@ public enum OnyxAtlas {
   OnyxAtlasDetail(view: .back) { rect, p in
     p.move(to: pt(81, 194, in: rect))
     p.addLine(to: pt(68, 194, in: rect))
+  },
+  OnyxAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(52, 63, in: rect))
+    p.addCurve(to: pt(60, 69, in: rect), control1: pt(56, 66, in: rect), control2: pt(58, 68, in: rect))
+  },
+  OnyxAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(68, 63, in: rect))
+    p.addCurve(to: pt(60, 69, in: rect), control1: pt(64, 66, in: rect), control2: pt(62, 68, in: rect))
+  },
+  OnyxAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(33, 86, in: rect))
+    p.addCurve(to: pt(36, 107, in: rect), control1: pt(34, 94, in: rect), control2: pt(35, 101, in: rect))
+  },
+  OnyxAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(87, 86, in: rect))
+    p.addCurve(to: pt(84, 107, in: rect), control1: pt(86, 94, in: rect), control2: pt(85, 101, in: rect))
+  },
+  OnyxAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(43, 228, in: rect))
+    p.addCurve(to: pt(43, 239, in: rect), control1: pt(43, 233, in: rect), control2: pt(43, 237, in: rect))
+  },
+  OnyxAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(77, 228, in: rect))
+    p.addCurve(to: pt(77, 239, in: rect), control1: pt(77, 233, in: rect), control2: pt(77, 237, in: rect))
   },
   OnyxAtlasDetail(view: .back) { rect, p in
     p.move(to: pt(44, 201, in: rect))

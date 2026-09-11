@@ -164,7 +164,7 @@ struct ScoringHolesTests {
             try DomsLogRow(id: "m3", userId: user, date: "2026-09-03", muscleGroup: "Chest", severity: 3).insert(conn)
         }
         let got = try #require(try inputs(db))
-        #expect(got.domsSeverity == 1, "the day's rows only, zeros included")
+        #expect(got.domsSeverity == 1, "the day's rows only, zeros included — Quads 2, Hamstrings 0")
         let hrvZ = try #require(got.hrvZ)
         let rhrZ = try #require(got.rhrZ)
         #expect(hrvZ < 0 && hrvZ >= -2)
@@ -207,5 +207,43 @@ struct ScoringHolesTests {
         #expect(try db.pendingOutbox().map(\.idempotencyKey).sorted() == ["row:daily_scores:\(today.id)", "row:daily_scores:\(yesterday.id)"].sorted())
         // An empty past day gets nothing — the ghost guard holds through the writer.
         #expect(try db.refreshDailyScore(userId: user, date: "2026-08-01", now: now, calendar: calendar) == nil)
+    }
+
+    /// The fold that made laterality free, pinned against the rule it replaced.
+    ///
+    /// These three vectors are the whole difference between "mean over rows" and
+    /// "mean over distinct recognised muscles, max within each". The web runs
+    /// the identical cases in `src/tests/doms.test.ts`.
+    @Test("soreness folds to one number per recognised muscle, max within")
+    func domsFold() {
+        func row(_ id: String, _ muscle: String, _ severity: Int) -> DomsLogRow {
+            DomsLogRow(id: id, userId: user, date: day, muscleGroup: muscle, severity: severity)
+        }
+
+        // Two sides of ONE muscle. Under the old row-mean this was 2 — a day
+        // nobody had. A severe left quad makes the quad severe.
+        #expect(AppDatabase.foldDomsSeverity([
+            row("a", "Quads", 1), row("b", "Quads", 3),
+        ]) == 3)
+
+        // Rating both sides must not move a score that rating one side gave.
+        // This is the property that keeps every historical battery invariant.
+        let oneSide = AppDatabase.foldDomsSeverity([row("a", "Quads", 2), row("c", "Chest", 0)])
+        let bothSides = AppDatabase.foldDomsSeverity([
+            row("a", "Quads", 2), row("b", "Quads", 2), row("c", "Chest", 0),
+        ])
+        #expect(oneSide == bothSides)
+        #expect(oneSide == 1)
+
+        // An unreadable muscle_group stops counting. seed-demo-account.mjs
+        // writes 'Quadriceps' and 'Lats', neither of which is a DOMS muscle,
+        // and both were in the denominator.
+        #expect(AppDatabase.foldDomsSeverity([
+            row("a", "Quads", 2), row("j", "Quadriceps", 0), row("k", "Lats", 0),
+        ]) == 2)
+
+        // No recognised row at all is NO ANSWER, not "no soreness".
+        #expect(AppDatabase.foldDomsSeverity([row("j", "Quadriceps", 3)]) == nil)
+        #expect(AppDatabase.foldDomsSeverity([]) == nil)
     }
 }

@@ -91,14 +91,27 @@ describe('every invalidated key prefix has a consumer', () => {
     expect(REGISTERED.has('routine_template')).toBe(true)
   })
 
-  it.each([
+  /**
+   * Named tuples, annotated.
+   *
+   * Inferred, this array mixes two shapes — a plain `[string, keys]` pair and
+   * the `as const` readonly tuple the spread produces — and `it.each` widens
+   * the union to "an array that might be shorter than two", so `keys` typed as
+   * `string | string[][]` and `tsc --noEmit` failed. The annotation is the
+   * whole fix; nothing about what is asserted changes.
+   */
+  const KEY_LISTS: ReadonlyArray<readonly [string, ReadonlyArray<readonly string[]>]> = [
     ['WORKOUT_QUERY_KEYS', WORKOUT_QUERY_KEYS],
     ['HEALTH_QUERY_KEYS', HEALTH_QUERY_KEYS],
     // The realtime fan-out is the third list of prefixes, and W4 more than
     // doubled it — from 13 tables to 29. It was outside this guard for as long
     // as it was short enough to eyeball.
-    ...Object.entries(TABLE_KEYS).map(([table, keys]) => [`TABLE_KEYS.${table}`, keys] as const),
-  ])('%s', (_name, keys) => {
+    ...Object.entries(TABLE_KEYS).map(
+      ([table, keys]) => [`TABLE_KEYS.${table}`, keys] as readonly [string, ReadonlyArray<readonly string[]>],
+    ),
+  ]
+
+  it.each(KEY_LISTS)('%s', (_name, keys) => {
     const orphans = keys.map(([root]) => root).filter((root) => !REGISTERED.has(root))
     expect(orphans).toEqual([])
   })

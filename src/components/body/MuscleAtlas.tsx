@@ -2,10 +2,14 @@
 
 import { memo, useId } from 'react'
 import {
-  ATLAS_VIEWBOX, BASE_SHAPES, DETAIL_SHAPES, MUSCLE_PATHS, type AtlasView,
+  ATLAS_VIEWBOX, BASE_SHAPES, DETAIL_SHAPES, MUSCLE_PATHS, jointsOnView, type AtlasView,
 } from '@/lib/body/atlas'
 import type { LandmarkMuscle } from '@/lib/training/landmarks'
-import { ATLAS_BLUE } from '@/lib/theme/palette'
+import { ATLAS_BLUE, BONE } from '@/lib/theme/palette'
+
+/** The key a flagged joint is looked up by. `both` carries no side. */
+export const jointKey = (joint: string, side: 'left' | 'right' | 'both' = 'both') =>
+  side === 'both' ? joint : `${joint}@${side}`
 
 /**
  * The one component that draws a body.
@@ -49,7 +53,8 @@ import { ATLAS_BLUE } from '@/lib/theme/palette'
  * painted four times.
  */
 export const MuscleAtlas = memo(function MuscleAtlas({
-  worked, view = 'front', color = ATLAS_BLUE, colorFor, interactive = false, onPick, className = '', label,
+  worked, view = 'front', color = ATLAS_BLUE, colorFor, interactive = false, onPick,
+  flaggedJoints, className = '', label,
 }: {
   /** muscle → 0–1. Missing or 0 draws as base greyscale. */
   worked?: Partial<Record<LandmarkMuscle, number>>
@@ -72,6 +77,15 @@ export const MuscleAtlas = memo(function MuscleAtlas({
   colorFor?: (muscle: LandmarkMuscle) => string | undefined
   interactive?: boolean
   onPick?: (muscle: LandmarkMuscle) => void
+  /**
+   * Draw the joint rings, and fill the ones in this set.
+   *
+   * Keys are `joint` or `joint@left` / `joint@right` — `jointKey` below builds
+   * them. Absent means the layer is not drawn at all, which is every caller but
+   * the soreness sheet: a 24 px dashboard thumbnail has no room for rings and
+   * nothing to say with them.
+   */
+  flaggedJoints?: ReadonlySet<string>
   className?: string
   /** Accessible name. Defaults to naming the view. */
   label?: string
@@ -80,8 +94,8 @@ export const MuscleAtlas = memo(function MuscleAtlas({
   if (view === 'both') {
     return (
       <div className={`flex items-stretch gap-1 ${className}`}>
-        <MuscleAtlas worked={worked} view="front" color={color} colorFor={colorFor} interactive={interactive} onPick={onPick} className="flex-1" />
-        <MuscleAtlas worked={worked} view="back" color={color} colorFor={colorFor} interactive={interactive} onPick={onPick} className="flex-1" />
+        <MuscleAtlas worked={worked} view="front" color={color} colorFor={colorFor} interactive={interactive} onPick={onPick} flaggedJoints={flaggedJoints} className="flex-1" />
+        <MuscleAtlas worked={worked} view="back" color={color} colorFor={colorFor} interactive={interactive} onPick={onPick} flaggedJoints={flaggedJoints} className="flex-1" />
       </div>
     )
   }
@@ -201,10 +215,36 @@ export const MuscleAtlas = memo(function MuscleAtlas({
           Stroked, never filled — several of these are open paths, and a filled
           open path is a wedge rather than a line. `pointer-events: none` so a
           hairline over the quad can never eat the quad's own tap. */}
-      <g aria-hidden="true" fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="0.55"
+      <g aria-hidden="true" fill="none" stroke={`${BONE}38`} strokeWidth="0.55"
         strokeLinecap="round" strokeLinejoin="round" style={{ pointerEvents: 'none' }}>
         {details.map((p, i) => <path key={i} d={p.d} />)}
       </g>
+
+      {/* ── Layer 4: the joints ──
+          Open ivory rings, filled when flagged. `pointer-events: none` for the
+          same reason layer 3 has it, and a stronger one: at 110px the smallest
+          muscle path is under 3px across, so a second set of targets over the
+          top would make the figure unusable. A joint is chosen in the sheet,
+          on a 44px row. These only have to be legible. */}
+      {flaggedJoints && (
+        <g aria-hidden="true" fill="none" style={{ pointerEvents: 'none' }}>
+          {jointsOnView(view).map((j) => {
+            const on = flaggedJoints.has(jointKey(j.joint, j.side))
+            return (
+              <circle
+                key={`${j.joint}-${j.side}`}
+                cx={j.cx} cy={j.cy} r={2.8}
+                stroke={BONE}
+                strokeWidth={on ? 1.1 : 0.7}
+                strokeOpacity={on ? 0.95 : 0.4}
+                fill={on ? BONE : 'none'}
+                fillOpacity={on ? 0.55 : 0}
+                style={{ transition: 'fill-opacity 220ms ease, stroke-opacity 220ms ease' }}
+              />
+            )
+          })}
+        </g>
+      )}
     </svg>
   )
 })

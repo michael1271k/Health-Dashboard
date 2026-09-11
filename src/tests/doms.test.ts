@@ -3,6 +3,7 @@ import { DOMS_MUSCLES, domsMuscleOf, type DomsMuscle } from '@/lib/hooks/useReco
 import { sorenessSummary, SEVERITY_COLOR, SEVERITY_WORD } from '@/components/day/RecoveryTrackers'
 import { GROUP_MUSCLES, groupOf, groupOfLandmark, musclesOnSide, type SorenessGroup } from '@/components/day/SorenessMap'
 import { MUSCLE_PATHS, DOMS_TO_LANDMARK, landmarkToDoms, domsToWorked } from '@/lib/body/atlas'
+import { foldDomsSeverity } from '@/lib/recovery/soreness'
 
 describe('DOMS_MUSCLES', () => {
   it('tracks Glutes as its own muscle', () => {
@@ -172,5 +173,52 @@ describe('the severity ramp', () => {
     expect(SEVERITY_COLOR).toHaveLength(4)
     expect(new Set(SEVERITY_COLOR).size).toBe(4)
     expect(SEVERITY_WORD).toEqual(['none', 'mild', 'moderate', 'severe'])
+  })
+})
+
+describe('the soreness fold the battery reads', () => {
+  /**
+   * The whole difference between "mean over rows" and "mean over distinct
+   * recognised muscles, max within each". `ScoringHolesTests.domsFold` runs the
+   * identical vectors on the native side.
+   */
+  const row = (muscle_group: string, severity: number) => ({ muscle_group, severity })
+
+  it('takes the worst side, not the average of the two', () => {
+    // A severe left quad makes the quad severe. Averaging it to 2 reports a
+    // day nobody had.
+    expect(foldDomsSeverity([row('Quads', 1), row('Quads', 3)])).toBe(3)
+  })
+
+  it('scores the same whether one side or both were rated', () => {
+    // The property that keeps every historical battery number invariant when
+    // laterality ships: describing a complaint twice is not two complaints.
+    const oneSide = foldDomsSeverity([row('Quads', 2), row('Chest', 0)])
+    const bothSides = foldDomsSeverity([row('Quads', 2), row('Quads', 2), row('Chest', 0)])
+    expect(oneSide).toBe(bothSides)
+    expect(oneSide).toBe(1)
+  })
+
+  it('is unmoved by sub-regions of a muscle already rated', () => {
+    // 'Back' whole at 1 and its erectors at 3 is one sore back, at 3.
+    expect(foldDomsSeverity([row('Back', 1), row('Back', 3)])).toBe(3)
+  })
+
+  it('stops counting a muscle_group it cannot read', () => {
+    // seed-demo-account.mjs writes 'Quadriceps' and 'Lats'. Neither is a DOMS
+    // muscle, so neither can ever be read back as a rating — and both were in
+    // the denominator, dragging the mean toward zero.
+    expect(foldDomsSeverity([row('Quads', 2), row('Quadriceps', 0), row('Lats', 0)])).toBe(2)
+  })
+
+  it('keeps a zero, because "not sore" is an answer', () => {
+    expect(foldDomsSeverity([row('Quads', 2), row('Hamstrings', 0)])).toBe(1)
+  })
+
+  it('answers null when nothing recognised was rated', () => {
+    // No answer is not the same as no soreness, and the battery treats them
+    // differently.
+    expect(foldDomsSeverity([row('Quadriceps', 3)])).toBeNull()
+    expect(foldDomsSeverity([])).toBeNull()
   })
 })

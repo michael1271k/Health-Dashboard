@@ -489,6 +489,31 @@ export interface ExportDoms {
   sourceLabel?: string | null
   /** The source session's date, so the renderer can say how many days out. */
   sourceDate?: string | null
+  /**
+   * Which side, and which part of the muscle.
+   *
+   * Both optional and both absent on every row written before 2026-09-12, which
+   * is why the token for a whole-muscle bilateral rating is byte-identical to
+   * the one v1 produced — a week of old rows re-exports unchanged.
+   */
+  side?: 'left' | 'right' | 'both' | null
+  subRegion?: string | null
+}
+
+/**
+ * One joint or connective-tissue complaint. Binary: the row IS the flag.
+ *
+ * It rides in the DAYS row beside `doms` rather than in a section of its own,
+ * because it is a per-day list of short tokens and that is exactly what
+ * `fatigue`, `doms` and `tags` already are. A section would need a parser; a
+ * cell needs none.
+ */
+export interface ExportJoint {
+  date: string
+  joint: string
+  side?: 'left' | 'right' | 'both' | null
+  /** The wearer's own words. Sanitised at the render boundary — see `phrase`. */
+  note?: string | null
 }
 
 /** A day's full InBody / scale reading (only days with a measurement are passed). */
@@ -573,6 +598,8 @@ export interface WeeklyExportInput {
    */
   tonnageByMuscle?: Array<{ muscle: string; volumeKg: number; directKg?: number }>
   doms: ExportDoms[]
+  /** Flagged joints. Optional: a payload built before v2 simply has none. */
+  joints?: ExportJoint[]
   /**
    * Subjective fatigue, up to three readings a day.
    *
@@ -1375,6 +1402,49 @@ const SEP = ' · '
 const fields = (...cells: Array<string | number | null | undefined>): string =>
   cells.map((c) => (c == null || c === '' ? DASH : String(c))).join(SEP)
 
+/**
+ * Free text entering a separator-sensitive document.
+ *
+ * The grammar reserves ` · ` between fields, `;` between items and `:` between
+ * an item's parts; a note carrying any of them would split into cells that look
+ * like data. It is stripped rather than escaped because an escape needs a
+ * reader that knows about it, and the only thing downstream of this document is
+ * a person or a model reading plain text.
+ *
+ * 60 characters because this sits inside a day row that already carries forty
+ * columns — a paragraph in a cell is a paragraph nobody reads.
+ */
+export function phrase(text: string | null | undefined, max = 60): string {
+  if (!text) return ''
+  const flat = text.replace(/[·;:\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim()
+  return flat.length > max ? `${flat.slice(0, max - 1)}…` : flat
+}
+
+/**
+ * `muscle[/subRegion][@L|@R]` — the name half of a soreness token.
+ *
+ * `@` and `/` are used because neither can occur in a muscle or a sub-region
+ * name and neither is this column's separator. A leading `L`/`R` marker — which
+ * is how the SESSIONS section spells a unilateral set — was rejected here for
+ * one reason: `Lats` is a sub-region beginning with `L`, so a prefix rule makes
+ * the token ambiguous the first time anybody parses it back.
+ *
+ * A whole-muscle, both-sides rating renders as the bare muscle name, so every
+ * row written before v2 exports exactly as it always did.
+ */
+export function domsName(d: Pick<ExportDoms, 'muscle' | 'side' | 'subRegion'>): string {
+  const sub = d.subRegion ? `/${d.subRegion}` : ''
+  const side = d.side === 'left' ? '@L' : d.side === 'right' ? '@R' : ''
+  return `${d.muscle}${sub}${side}`
+}
+
+/** `Knee@L` or `Wrist@R:tight after pressing`. Absence is the "no". */
+export function jointToken(j: ExportJoint): string {
+  const side = j.side === 'left' ? '@L' : j.side === 'right' ? '@R' : ''
+  const note = phrase(j.note)
+  return note ? `${j.joint}${side}:${note}` : `${j.joint}${side}`
+}
+
 /** A list field: items joined by `;`. Empty renders `—`. */
 const items = (xs: readonly string[]): string => (xs.length ? xs.join(';') : DASH)
 
@@ -1513,7 +1583,7 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     'kcal', 'P', 'C', 'F', 'water_l',
     'supp', 'supp_log', 'supp_skipped',
     'weight_kg', 'fat_pct', 'smm_kg', 'bmr_kcal',
-    'fatigue', 'doms', 'tags',
+    'fatigue', 'doms', 'joints', 'tags',
   ].join(SEP))
   for (const day of days) {
     const bc = bodyByDate.get(day.date)
@@ -1528,8 +1598,11 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     // the whole point of the measurement: a symptom with no session attached is
     // not a dose-response reading.
     const doms = input.doms.filter((x) => x.date === day.date).map((x) =>
-      [x.muscle, String(x.severity), x.sourceLabel ?? '', x.sourceDate ?? '']
+      [domsName(x), String(x.severity), x.sourceLabel ?? '', x.sourceDate ?? '']
         .join(':').replace(/:+$/, ''))
+    // Joints are not muscles and never reach a score — this cell is the only
+    // place the week says a knee was complaining.
+    const joints = (input.joints ?? []).filter((x) => x.date === day.date).map(jointToken)
     // Flags that change how a number on this line should be READ — never flags
     // that discount it. Every aggregate keeps the real figure: a cut that shows
     // a stall must still show the intake that caused it.
@@ -1565,7 +1638,7 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
       items((day.supplementsLog ?? []).map((s) => `${s.key}@${s.time ?? DASH}`)),
       items(day.supplementsSkipped ?? []),
       n(day.weightKg, 1), n(bc?.bodyFatPct, 1), n(bc?.skeletalMuscleMassKg, 1), n(day.bmrKcal),
-      items(fatigue), items(doms), items(tags),
+      items(fatigue), items(doms), items(joints), items(tags),
     ))
   }
 

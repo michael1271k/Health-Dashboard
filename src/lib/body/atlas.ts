@@ -248,6 +248,20 @@ export const DETAIL_SHAPES: readonly AtlasDetail[] = [
   { view: 'front', d: 'M73,157 C75,169 76,180 76,190' },                               // right vastus sweep
   { view: 'front', d: 'M41,193 C39,197 39,202 42,204 C46,206 50,205 52,202 C53,198 52,194 50,192 Z' },  // left kneecap
   { view: 'front', d: 'M79,193 C81,197 81,202 78,204 C74,206 70,205 68,202 C67,198 68,194 70,192 Z' },  // right kneecap
+  // ── FRONT: tendon and fibre, added for v2 ──
+  // The brief wanted a lifelike figure. This is the layer where that is free:
+  // stroked, never filled, never tinted, never a hit target — so it cannot
+  // disturb the severity colour, the sixteen muscle hues, or a single tap.
+  { view: 'front', d: 'M48,62 C53,65 57,67 59,68' },                                   // left pec clavicular seam
+  { view: 'front', d: 'M72,62 C67,65 63,67 61,68' },                                   // right pec clavicular seam
+  { view: 'front', d: 'M34,104 C36,107 38,109 40,110' },                               // left biceps tendon into the elbow
+  { view: 'front', d: 'M86,104 C84,107 82,109 80,110' },                               // right biceps tendon
+  { view: 'front', d: 'M31,120 C33,128 35,136 37,144' },                               // left forearm flexor line
+  { view: 'front', d: 'M89,120 C87,128 85,136 83,144' },                               // right forearm flexor line
+  { view: 'front', d: 'M46,186 C47,189 48,191 49,192' },                               // left quadriceps tendon
+  { view: 'front', d: 'M74,186 C73,189 72,191 71,192' },                               // right quadriceps tendon
+  { view: 'front', d: 'M38,160 C37,172 37,183 38,191' },                               // left iliotibial line
+  { view: 'front', d: 'M82,160 C83,172 83,183 82,191' },                               // right iliotibial line
   { view: 'front', d: 'M44,204 C43,214 44,224 46,233' },                               // left tibia line
   { view: 'front', d: 'M76,204 C77,214 76,224 74,233' },                               // right tibia line
 
@@ -270,6 +284,13 @@ export const DETAIL_SHAPES: readonly AtlasDetail[] = [
   { view: 'back', d: 'M73,159 C75,170 75,181 75,191' },                                // right hamstring split
   { view: 'back', d: 'M39,194 L52,194' },                                              // left knee crease
   { view: 'back', d: 'M81,194 L68,194' },                                              // right knee crease
+  // ── BACK: tendon and fibre, added for v2 ──
+  { view: 'back', d: 'M52,63 C56,66 58,68 60,69' },                                    // left rhomboid seam
+  { view: 'back', d: 'M68,63 C64,66 62,68 60,69' },                                    // right rhomboid seam
+  { view: 'back', d: 'M33,86 C34,94 35,101 36,107' },                                  // left triceps long-head seam
+  { view: 'back', d: 'M87,86 C86,94 85,101 84,107' },                                  // right triceps long-head seam
+  { view: 'back', d: 'M43,228 C43,233 43,237 43,239' },                                // left achilles
+  { view: 'back', d: 'M77,228 C77,233 77,237 77,239' },                                // right achilles
   { view: 'back', d: 'M44,201 C43,212 44,222 46,231' },                                // left gastrocnemius split
   { view: 'back', d: 'M76,201 C77,212 76,222 74,231' },                                // right gastrocnemius split
   { view: 'back', d: 'M41,237 C39,242 38,247 40,251 L49,251 C50,245 50,241 50,237 Z' },  // left heel
@@ -343,6 +364,71 @@ export function domsToWorked(
     }
   }
   return out
+}
+
+/** A joint marker: a ring on the figure, in viewBox units. */
+export interface AtlasJoint {
+  /** The name in `JOINTS` (`lib/body/subRegions.ts`). Two entries share it when
+   *  the joint is paired, and `side` tells them apart. */
+  joint: string
+  side: 'left' | 'right' | 'both'
+  view: AtlasView
+  cx: number
+  cy: number
+}
+
+/**
+ * Where the joints sit on the body.
+ *
+ * ── A FOURTH LAYER, WITH NO HIT PLANE ────────────────────────────────────────
+ * Drawn above the definition layer as open rings, and — like that layer —
+ * `pointer-events: none`. A ring over the quad must never eat the quad's own
+ * tap, and on a figure rendered 110 px wide there is no room for a second set
+ * of targets: the smallest muscle path is already under 3 px across. Joints are
+ * chosen in the sheet, where a row is 44 px tall, so the rings only ever have to
+ * be legible, never tappable.
+ *
+ * Anchored to geometry that already exists (kneecaps, the deltoid cap seam, the
+ * fist/forearm junction, the erector groove terminus) so they read as landmarks
+ * on the body rather than stickers on top of it.
+ */
+export const JOINT_POINTS: readonly AtlasJoint[] = [
+  // Front
+  { joint: 'Neck', side: 'both', view: 'front', cx: 60, cy: 44 },
+  { joint: 'AC joint', side: 'left', view: 'front', cx: 40, cy: 56 },
+  { joint: 'AC joint', side: 'right', view: 'front', cx: 80, cy: 56 },
+  { joint: 'Elbow', side: 'left', view: 'front', cx: 33, cy: 108 },
+  { joint: 'Elbow', side: 'right', view: 'front', cx: 87, cy: 108 },
+  { joint: 'Wrist', side: 'left', view: 'front', cx: 36, cy: 147 },
+  { joint: 'Wrist', side: 'right', view: 'front', cx: 84, cy: 147 },
+  { joint: 'Hip', side: 'left', view: 'front', cx: 45, cy: 147 },
+  { joint: 'Hip', side: 'right', view: 'front', cx: 75, cy: 147 },
+  { joint: 'Knee', side: 'left', view: 'front', cx: 46, cy: 198 },
+  { joint: 'Knee', side: 'right', view: 'front', cx: 74, cy: 198 },
+  { joint: 'Ankle', side: 'left', view: 'front', cx: 43, cy: 236 },
+  { joint: 'Ankle', side: 'right', view: 'front', cx: 77, cy: 236 },
+  // Back. The lumbar junction only exists here, and it sits at the terminus of
+  // the erector groove rather than in the middle of the Lower back path — that
+  // path is 12 units wide, and a ring in its centre would read as a target.
+  { joint: 'Neck', side: 'both', view: 'back', cx: 60, cy: 44 },
+  { joint: 'Lumbar junction', side: 'both', view: 'back', cx: 60, cy: 137 },
+  { joint: 'AC joint', side: 'left', view: 'back', cx: 40, cy: 56 },
+  { joint: 'AC joint', side: 'right', view: 'back', cx: 80, cy: 56 },
+  { joint: 'Elbow', side: 'left', view: 'back', cx: 33, cy: 108 },
+  { joint: 'Elbow', side: 'right', view: 'back', cx: 87, cy: 108 },
+  { joint: 'Wrist', side: 'left', view: 'back', cx: 36, cy: 147 },
+  { joint: 'Wrist', side: 'right', view: 'back', cx: 84, cy: 147 },
+  { joint: 'Hip', side: 'left', view: 'back', cx: 45, cy: 147 },
+  { joint: 'Hip', side: 'right', view: 'back', cx: 75, cy: 147 },
+  { joint: 'Knee', side: 'left', view: 'back', cx: 46, cy: 195 },
+  { joint: 'Knee', side: 'right', view: 'back', cx: 74, cy: 195 },
+  { joint: 'Ankle', side: 'left', view: 'back', cx: 43, cy: 234 },
+  { joint: 'Ankle', side: 'right', view: 'back', cx: 77, cy: 234 },
+]
+
+/** The rings to draw on one view. */
+export function jointsOnView(view: AtlasView): readonly AtlasJoint[] {
+  return JOINT_POINTS.filter((j) => j.view === view)
 }
 
 /**

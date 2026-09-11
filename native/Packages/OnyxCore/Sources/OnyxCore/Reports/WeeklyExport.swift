@@ -431,6 +431,47 @@ public enum WeeklyExport {
         }
     }
 
+    /// Free text entering a separator-sensitive document.
+    ///
+    /// The grammar reserves ` · ` between fields, `;` between items and `:`
+    /// between an item's parts; a note carrying any of them would split into
+    /// cells that look like data. Stripped rather than escaped, because an
+    /// escape needs a reader that knows about it and the only thing downstream
+    /// of this document is a person or a model reading plain text.
+    ///
+    /// A 1:1 port of `phrase` in `src/lib/reports/weeklyExport.ts`.
+    static func phrase(_ text: String?, max: Int = 60) -> String {
+        guard let text, !text.isEmpty else { return "" }
+        let flat = text
+            .components(separatedBy: CharacterSet(charactersIn: "·;:\r\n\t"))
+            .joined(separator: " ")
+            .components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+        guard flat.count > max else { return flat }
+        return String(flat.prefix(max - 1)) + "…"
+    }
+
+    /// `muscle[/subRegion][@L|@R]` — the name half of a soreness token.
+    ///
+    /// `@` and `/` because neither can occur in a muscle or a sub-region name
+    /// and neither is this column's separator. A leading `L`/`R` marker — how
+    /// the SESSIONS section spells a unilateral set — is wrong here: `Lats` is
+    /// a sub-region beginning with an L, so a prefix rule makes the token
+    /// ambiguous to any parser.
+    static func domsName(_ d: ExportDoms) -> String {
+        let sub = (d.subRegion?.isEmpty == false) ? "/\(d.subRegion!)" : ""
+        let side = d.side == "left" ? "@L" : d.side == "right" ? "@R" : ""
+        return "\(d.muscle)\(sub)\(side)"
+    }
+
+    /// `Knee@L` or `Wrist@R:tight after pressing`. Absence is the "no".
+    static func jointToken(_ j: ExportJoint) -> String {
+        let side = j.side == "left" ? "@L" : j.side == "right" ? "@R" : ""
+        let note = phrase(j.note)
+        return note.isEmpty ? "\(j.joint)\(side)" : "\(j.joint)\(side):\(note)"
+    }
+
     /// `s.replace(/:+$/, '')` — a DOMS token drops the parts nothing filled.
     static func stripTrailingColons(_ s: String) -> String {
         var t = Substring(s)
@@ -502,7 +543,7 @@ public enum WeeklyExport {
             "kcal", "P", "C", "F", "water_l",
             "supp", "supp_log", "supp_skipped",
             "weight_kg", "fat_pct", "smm_kg", "bmr_kcal",
-            "fatigue", "doms", "tags",
+            "fatigue", "doms", "joints", "tags",
         ].joined(separator: sep))
         for day in days {
             let bc = bodyByDate[day.date]
@@ -515,8 +556,11 @@ public enum WeeklyExport {
             // Soreness carries its cause where the log recorded one — delayed
             // onset is the whole point of the measurement.
             let doms = input.doms.filter { $0.date == day.date }.map { x in
-                stripTrailingColons([x.muscle, js(x.severity), x.sourceLabel ?? "", x.sourceDate ?? ""].joined(separator: ":"))
+                stripTrailingColons([domsName(x), js(x.severity), x.sourceLabel ?? "", x.sourceDate ?? ""].joined(separator: ":"))
             }
+            // Joints are not muscles and never reach a score — this cell is the
+            // only place the week says a knee was complaining.
+            let joints = (input.joints ?? []).filter { $0.date == day.date }.map(jointToken)
             // Flags that change how a number on this line should be READ —
             // never flags that discount it. Every aggregate keeps the real figure.
             var tags: [String] = []
@@ -551,7 +595,7 @@ public enum WeeklyExport {
                 items((day.supplementsLog ?? []).map { "\($0.key)@\($0.time ?? dash)" }),
                 items(day.supplementsSkipped ?? []),
                 n(day.weightKg, 1), n(bc?.bodyFatPct, 1), n(bc?.skeletalMuscleMassKg, 1), n(day.bmrKcal),
-                items(fatigue), items(doms), items(tags),
+                items(fatigue), items(doms), items(joints), items(tags),
             ]))
         }
 
