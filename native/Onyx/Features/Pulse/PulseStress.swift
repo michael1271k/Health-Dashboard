@@ -65,7 +65,7 @@ extension StressTermKey {
         switch self {
         case .auto:       "HRV and resting heart rate against your own baseline"
         case .sleep:      "How broken the night was, and whether it was hard to fall into"
-        case .selfReport: "The mean of every fatigue slot logged today"
+        case .selfReport: "The mean of what you said today — the fatigue slots and the Head readings"
         case .load:       "Acute:chronic ratio and this week's strain — never negative"
         }
     }
@@ -308,8 +308,14 @@ private struct TermRow: View {
                 t.onset.map { $0 > 0 ? "hard to fall asleep" : "fell asleep normally" },
             ].compactMap { $0 }.joined(separator: " · ")
         case .selfReport:
+            // Two self-reports, averaged over whichever answered (D6). Naming
+            // only the one that did is what stops "fatigue 2.0 of 5" reading as
+            // the whole term on a day the Head row also spoke.
             let t = breakdown.terms.selfReport
-            return t.fatigueDayMean.map { "fatigue \(jsToFixed($0, 1)) of 5 across the day" } ?? ""
+            return [
+                t.fatigueDayMean.map { "fatigue \(jsToFixed($0, 1)) of 5" },
+                t.stressDayMean.map { "head \(jsToFixed($0, 1)) of 5" },
+            ].compactMap { $0 }.joined(separator: " · ")
         case .load:
             let t = breakdown.terms.load
             guard t.answered > 0 else { return "" }

@@ -47,6 +47,72 @@ _Nothing yet._
 
 ---
 
+## [1.10.0] — 2026-09-11 · What You Say About the Day
+
+Five of the six things this app asks you about yourself were behind a form. A
+fatigue reading took nine taps and a scroll; a weigh-in was on another tab; a
+glass of water was on a third; there was nowhere at all to say that the week was
+stressful, or that you slept badly because of a flight. This wave is the typed
+half of the app — the words, where they are said, and how long it takes.
+
+### Added
+- **Fatigue in five plain words** — **Amazing · Good · Okay · Tired ·
+  Exhausted** (Pulse). They were Fresh / Fine / Worn / Heavy / Empty, which are
+  precise and which nobody feels instantly at 7 a.m. The sheet is one row of
+  five equal targets on the slot the clock picks, one tap, and it closes. Stored
+  values are unchanged (1–5), so every reading you have ever logged still means
+  what it meant; the weekly export's battery notes print the new words.
+- **Head** — a new row beside Fatigue that asks what is on your mind, 1–5:
+  **Relaxed · Okay · Tense · Strained · Swamped**, with optional tags (work,
+  study, family, money, health, travel, other) and a note. It files under the
+  part of the day the clock is in, so a day can carry up to three answers, and
+  it feeds the Stress index's self-report term beside fatigue — the breakdown
+  sheet now names both inputs (`fatigue 2.5 of 5 · head 3.0 of 5`). It is
+  **not** a battery input and moves no score, like the index it feeds.
+- **Quick Log** behind the Onyx mark on the dashboard (top right). Six spokes on
+  a ring — water, weigh-in, fatigue, head, cardio, note — each opening the sheet
+  that already existed, each showing what the day says so far. Water is the one
+  that does not open anything: a tap is a 250 ml glass, added to the ledger, and
+  the ring stays up for the second one. "Done" still owns that slot while the
+  dashboard is in edit mode.
+- **A note on the day** (Quick Log → Note). `daily_logs.journal_md` has been in
+  the schema since the beginning with no way to write it. Nothing scores it,
+  nothing exports it and nothing reads it back at you — which is the point.
+- **The phone writes reports.** The Reports screen is now a list of WEEKS rather
+  than of rows: every week back to your oldest report, never fewer than a
+  quarter, each either a report to read or an **Add report** to paste one into
+  ("Paste your AI coach reports…"). Saving an empty body takes a report back,
+  which is the only way to undo a paste that went to the wrong week. Until now
+  the web was the only writer.
+- **Export PDF** from a report, next to Share text, straight into Files or Mail.
+  It renders the same bundled document the reader draws, on demand — the render
+  happens when you tap share, not every time a report opens.
+- **The stack knows what a thing IS** — pill, capsule, powder, liquid or gummy,
+  drawn as its own silhouette beside the name in your own item colour, and a
+  dose that is an **amount and a unit** (mg, g, mcg, IU, ml, tab, cap, scoop)
+  instead of free text. The editor says what the row will read before you save
+  it, and whether its micronutrients count once or per unit.
+
+### Fixed
+- **The stack editor could not reach half the row.** Add could set the weekdays
+  and "training days only"; Edit could not — so the only way to change an item's
+  schedule was to delete it and add it again, which takes the row's log key with
+  it and silently orphans every dose you have ever ticked for it. Edit reaches
+  every field now, and the schedule is **merged** rather than replaced, so the
+  key, the slot name, the notes and the per-day doses survive an edit.
+- **A training day logged off-plan asked the wrong questions** (Pulse). The
+  scorer has counted a day as training when a session exists OR the calendar
+  says so since 1.6.0; this screen still read the calendar alone. A session
+  trained on a scheduled rest day therefore offered Waking · Midday · Night
+  while the arithmetic behind your score folded Waking · Before · After — and
+  the stack dropped its training-only items out from under a session in
+  progress. Both now ask the same question, and they ask it mid-session rather
+  than at the end.
+- **A refused body reading said the phone was broken.** Typing 855 into the body
+  fat field produced "That change could not be saved on this device", which is
+  useless and untrue. It now says which field, what value, and what is wrong
+  with it.
+
 ## [1.9.0] — 2026-09-11 · Before, During and After the Workout
 
 A hotfix sprint against one real session (Legs & Core B, 11 Sep). Three screens

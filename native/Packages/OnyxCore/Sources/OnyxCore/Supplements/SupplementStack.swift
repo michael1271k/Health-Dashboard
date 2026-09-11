@@ -80,6 +80,12 @@ public struct CustomSupplement: Codable, Equatable, Sendable {
     public var schedule: CustomSchedule?
     /// Micronutrient payload per UNIT of the dose; nil = contributes none.
     public var micros: [String: Double]?
+    /// The number inside `dose`, when the row was written by the phone's own
+    /// list — `custom_supplements.dose_amount`. Nil on every row the web wrote,
+    /// which is why `dose` and not this pair is what every reader parses.
+    public var doseAmount: Double?
+    /// The unit inside `dose` — `mg | g | mcg | IU | ml | tab | cap | scoop`.
+    public var doseUnit: String?
     /// When the row left the stack, as an ISO instant — `custom_supplements.
     /// archived_at`. Nil is an item still in the protocol.
     ///
@@ -99,14 +105,96 @@ public struct CustomSupplement: Codable, Equatable, Sendable {
     public enum CodingKeys: String, CodingKey {
         case id, name, dose, color, form, time, schedule, micros
         case archivedAt = "archived_at"
+        case doseAmount = "dose_amount"
+        case doseUnit = "dose_unit"
     }
 
     public init(id: String, name: String, dose: String, color: String? = nil, form: String? = nil,
                 time: String? = nil, schedule: CustomSchedule? = nil, micros: [String: Double]? = nil,
-                archivedAt: String? = nil) {
+                archivedAt: String? = nil, doseAmount: Double? = nil, doseUnit: String? = nil) {
         self.id = id; self.name = name; self.dose = dose; self.color = color
         self.form = form; self.time = time; self.schedule = schedule; self.micros = micros
-        self.archivedAt = archivedAt
+        self.archivedAt = archivedAt; self.doseAmount = doseAmount; self.doseUnit = doseUnit
+    }
+}
+
+/// What the thing physically IS — `custom_supplements.form`.
+///
+/// Drawn as a silhouette beside the name, the way Apple Health draws a
+/// medication: five shapes a reader tells apart at a glance in a list of nine.
+/// The symbol name lives here rather than in the view because the mapping is a
+/// fact about the vocabulary, and a second copy of it in a second list is how
+/// two screens come to disagree about what a capsule looks like.
+public enum SupplementForm: String, Codable, Sendable, CaseIterable, Identifiable {
+    case pill, capsule, powder, liquid, gummy
+
+    public var id: String { rawValue }
+
+    public var title: String {
+        switch self {
+        case .pill:    "Pill"
+        case .capsule: "Capsule"
+        case .powder:  "Powder"
+        case .liquid:  "Liquid"
+        case .gummy:   "Gummy"
+        }
+    }
+
+    /// SF Symbols has no powder and no gummy. `circle.hexagongrid.fill` reads
+    /// as granules; `cube.fill` is the only solid in the set, so its silhouette
+    /// cannot be mistaken for the two round ones.
+    public var symbol: String {
+        switch self {
+        case .pill:    "pill.fill"
+        case .capsule: "capsule.fill"
+        case .powder:  "circle.hexagongrid.fill"
+        case .liquid:  "drop.fill"
+        case .gummy:   "cube.fill"
+        }
+    }
+
+    /// A row with no form, or one carrying a word this build does not know.
+    /// "Unspecified", never a guess.
+    public static let unspecifiedSymbol = "pills.fill"
+
+    public static func parse(_ raw: String?) -> SupplementForm? {
+        guard let raw, !raw.isEmpty else { return nil }
+        return SupplementForm(rawValue: raw.lowercased())
+    }
+}
+
+/// The unit half of a structured dose — `custom_supplements.dose_unit`.
+///
+/// ── COUNT UNITS AND MASS UNITS ARE NOT THE SAME FACT ────────────────────────
+/// `SupplementNutrients.doseUnits` decides whether a payload is multiplied by
+/// reading the dose STRING: a count of physical units ("2 tabs") delivers that
+/// multiple of the label, a mass ("300 mg") already IS the label. So the unit
+/// carries which kind it is, and `Supplements.doseText` spells a count in the
+/// plural the regex over there recognises. Get that wrong and every
+/// micronutrient total on the Nutrition tab moves without a word being said.
+public enum DoseUnit: String, Codable, Sendable, CaseIterable, Identifiable {
+    case mg, g, mcg, iu = "IU", ml, tab, cap, scoop
+
+    public var id: String { rawValue }
+
+    /// True for a unit that names a COUNT of physical objects.
+    public var isCount: Bool {
+        switch self {
+        case .tab, .cap, .scoop: true
+        case .mg, .g, .mcg, .iu, .ml: false
+        }
+    }
+
+    /// `tab` → `tabs`. Only count units pluralise; "300 mgs" is not a dose.
+    public func spelling(for amount: Double) -> String {
+        guard isCount, amount != 1 else { return rawValue }
+        return rawValue + "s"
+    }
+
+    public static func parse(_ raw: String?) -> DoseUnit? {
+        guard let raw, !raw.isEmpty else { return nil }
+        let trimmed = raw.trimmingCharacters(in: .whitespaces)
+        return allCases.first { $0.rawValue.caseInsensitiveCompare(trimmed) == .orderedSame }
     }
 }
 
@@ -347,6 +435,66 @@ public enum Supplements {
     /// The doses whose micronutrients count towards the day.
     public static func creditedDoses(slots: [SupplementSlot], log: [DoseLogEntry], clock: DayClock) -> [SupplementDose] {
         doses(slots: slots, log: log, clock: clock).filter(\.credited)
+    }
+
+    // MARK: - The structured dose
+
+    /// `2` + `tab` → `"2 tabs"`; `300` + `mg` → `"300 mg"`.
+    ///
+    /// The display string stays the source of truth for every reader — the
+    /// checklist, the export, and `SupplementNutrients.doseUnits`, whose regex
+    /// is what makes a count scale and a mass not. The structured pair exists
+    /// so the EDITOR does not have to re-parse prose; this is the one place the
+    /// two are allowed to disagree about, and they do not.
+    public static func doseText(amount: Double, unit: DoseUnit) -> String {
+        "\(number(amount)) \(unit.spelling(for: amount))"
+    }
+
+    /// `2`, `0.5`, `12.75` — never `2.0`, which reads as a measurement taken to
+    /// a decimal place that was not.
+    ///
+    /// ── AND NEVER `0,5`, WHICH WOULD DOUBLE A MICRONUTRIENT TOTAL ───────────
+    /// This is the one formatter in `OnyxCore` whose output is PARSED again.
+    /// `SupplementNutrients.doseUnits` matches a dot decimal to decide whether
+    /// a payload is multiplied; on a comma-decimal device the device locale
+    /// would write "0,5 scoops", the regex would not match it, `doseUnits`
+    /// would fall to its ×1 default — and half a scoop would be credited as a
+    /// whole one, silently, on the Nutrition tab. `parseDose`'s `Double(_:)` is
+    /// dot-only for the same reason. So the STORED string is POSIX and the
+    /// locale gets no say in it; a localised dose is a display concern and this
+    /// string is not one.
+    private static func number(_ value: Double) -> String {
+        value.formatted(
+            .number.precision(.fractionLength(0...2)).grouping(.never)
+                .locale(Locale(identifier: "en_US_POSIX"))
+        )
+    }
+
+    /// The stored pair, or a best effort read off the display string, so a row
+    /// the web wrote opens in the editor with its number in the number field.
+    ///
+    /// Deliberately narrow: leading whitespace, a number, optional whitespace,
+    /// a unit this build knows, and nothing else that matters. Anything else —
+    /// "2 tabs with food", "1-2 caps" — comes back nil and the editor asks,
+    /// which is better than silently rewriting a dose nobody typed.
+    public static func doseParts(_ c: CustomSupplement) -> (amount: Double, unit: DoseUnit)? {
+        if let amount = c.doseAmount, amount > 0, let unit = DoseUnit.parse(c.doseUnit) {
+            return (amount, unit)
+        }
+        return parseDose(c.dose)
+    }
+
+    /// `"300 mg"` → `(300, .mg)`. Plural count units are accepted; a trailing
+    /// word is not.
+    public static func parseDose(_ dose: String) -> (amount: Double, unit: DoseUnit)? {
+        let parts = dose.trimmingCharacters(in: .whitespaces).split(separator: " ", omittingEmptySubsequences: true)
+        guard parts.count == 2, let amount = Double(parts[0]), amount > 0 else { return nil }
+        var word = String(parts[1])
+        if word.count > 1, word.hasSuffix("s"), DoseUnit.parse(String(word.dropLast()))?.isCount == true {
+            word = String(word.dropLast())
+        }
+        guard let unit = DoseUnit.parse(word) else { return nil }
+        return (amount, unit)
     }
 
     private static func timeOrder(_ a: String, _ b: String) -> Bool {

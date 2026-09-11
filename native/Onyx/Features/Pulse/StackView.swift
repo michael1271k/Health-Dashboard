@@ -101,14 +101,36 @@ private struct DoseRow: View {
     let model: DayModel
     let onEdit: () -> Void
 
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var confirming = false
     @State private var frozen = false
 
     private var custom: CustomSupplement? { model.custom(for: dose) }
     private var skipped: Bool { dose.state == .skipped }
 
+    /// What the thing IS, as a silhouette — the way Health draws a medication.
+    ///
+    /// Five shapes a reader tells apart in a list of nine, tinted from the
+    /// item's own stored colour (`Color.onyx.supplement`). A skipped dose draws
+    /// it tertiary so the glyph does not contradict the struck-through name.
+    ///
+    /// Dropped at the accessibility sizes for the reason `PulseRow.glyph`
+    /// already gives: a 50 pt glyph beside a 50 pt word is a row with room for
+    /// neither.
+    @ViewBuilder
+    private var glyph: some View {
+        if !typeSize.isAccessibilitySize {
+            Image(systemName: SupplementForm.parse(custom?.form)?.symbol ?? SupplementForm.unspecifiedSymbol)
+                .imageScale(.medium)
+                .foregroundStyle(skipped ? Color.onyx.textTertiary : Color.onyx.supplement(custom?.color))
+                .frame(width: 24)
+                .accessibilityHidden(true)
+        }
+    }
+
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: OnyxSpace.m) {
+            glyph
             VStack(alignment: .leading, spacing: 2) {
                 Text(dose.name)
                     .onyxType(.body)
@@ -225,8 +247,20 @@ private struct ArchivedRow: View {
     let custom: CustomSupplement
     let model: DayModel
 
+    @Environment(\.dynamicTypeSize) private var typeSize
+
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: OnyxSpace.m) {
+            // The same glyph a live row draws, in the inactive ink — an
+            // archived row that is structurally unlike a live one is harder to
+            // read, and the tint already says which it is.
+            if !typeSize.isAccessibilitySize {
+                Image(systemName: SupplementForm.parse(custom.form)?.symbol ?? SupplementForm.unspecifiedSymbol)
+                    .imageScale(.medium)
+                    .foregroundStyle(Color.onyx.textTertiary)
+                    .frame(width: 24)
+                    .accessibilityHidden(true)
+            }
             VStack(alignment: .leading, spacing: 2) {
                 Text(custom.name)
                     .onyxType(.body)
@@ -260,24 +294,49 @@ private struct ArchivedRow: View {
 
 // MARK: - Add and edit
 
-/// One form for both. An add writes a new row; an edit changes the three fields
-/// a phone has any business changing — the schedule's own key is never touched,
-/// because it is the join to every log row the item ever wrote.
+/// One form for both, and it now reaches every field the row has.
+///
+/// ── THE ASYMMETRY THIS FIXES ────────────────────────────────────────────────
+/// Add could set the weekdays and the training-only flag; Edit could not. So
+/// the only way to change an item's schedule was to delete it and add it again
+/// — which takes the row's `schedule.key` with it, and that key is the join to
+/// every `supplement_log` row the item ever wrote. A year of ticked history
+/// stopped resolving, silently, because the item kept rendering under the
+/// `custom:<id>` fallback that now matched nothing.
+///
+/// ── AND WHY THE DOSE IS TWO FIELDS ──────────────────────────────────────────
+/// `dose` stays the display string every reader parses, because
+/// `SupplementNutrients.doseUnits` decides whether a payload is MULTIPLIED by
+/// regex-matching it: "2 tabs" delivers twice the label, "300 mg" already is
+/// the label. Typing that string by hand is how a dose becomes "2 tabs w/
+/// food" and the multiplier quietly goes to 1. An amount and a unit compose it
+/// (`Supplements.doseText`), and the pair is stored beside it so the editor
+/// never has to re-parse prose.
 struct SupplementEditSheet: View {
     let model: DayModel
     let editing: CustomSupplement?
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var typeSize
+
     @State private var name = ""
-    @State private var dose = ""
+    @State private var amount: Double?
+    @State private var unit: DoseUnit?
+    @State private var form: SupplementForm?
     @State private var time = ""
     @State private var days: Set<Int> = []
     @State private var trainingOnly = false
+    @State private var loaded = false
+    @FocusState private var focus: Field?
+
+    private enum Field: Hashable { case name, amount, time }
 
     private static let weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
+    private var cleanName: String { name.trimmingCharacters(in: .whitespaces) }
+
     private var valid: Bool {
-        !name.trimmingCharacters(in: .whitespaces).isEmpty && !dose.trimmingCharacters(in: .whitespaces).isEmpty
+        !cleanName.isEmpty && (amount ?? 0) > 0 && unit != nil
     }
 
     var body: some View {
@@ -287,38 +346,104 @@ struct SupplementEditSheet: View {
             primary: ("Save", valid, save)
         ) {
             Form {
-                Section {
-                    TextField("Name", text: $name)
-                    TextField("Dose", text: $dose)
-                        .accessibilityHint("For example, 2 tabs or 300 mg")
-                    TextField("Time", text: $time)
-                        .accessibilityHint("Twenty-four hour, for example 22:00. Leave blank for no set time.")
-                } footer: {
-                    Text("A counted dose — \"2 tabs\", \"2 caps\" — delivers that multiple of the label. A mass — \"300 mg\" — is the label itself.")
-                }
+                itemSection
+                daysSection
+            }
+        }
+        .onAppear(perform: load)
+    }
 
-                if editing == nil {
-                    Section {
-                        HStack(spacing: OnyxSpace.xs) {
-                            ForEach(Array(Self.weekdays.enumerated()), id: \.offset) { index, label in
-                                dayToggle(index, label)
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        Toggle("Training days only", isOn: $trainingOnly)
-                    } header: {
-                        OnyxSectionHeader("Days", .fuel)
-                    } footer: {
-                        Text("No day selected means every day.")
+    // MARK: The item
+
+    private var itemSection: some View {
+        Section {
+            TextField("Name", text: $name)
+                .focused($focus, equals: .name)
+
+            Picker("Form", selection: $form) {
+                Text("Not set").tag(SupplementForm?.none)
+                ForEach(SupplementForm.allCases) { form in
+                    Label(form.title, systemImage: form.symbol).tag(SupplementForm?.some(form))
+                }
+            }
+            // A menu, not a segmented control: five options across a phone is
+            // 60 pt each and "Capsule" truncates.
+            .pickerStyle(.menu)
+
+            // At an accessibility size a label plus two controls on one line
+            // collapses the number field to about 20 pt. Two rows instead.
+            if typeSize.isAccessibilitySize {
+                amountField
+                unitPicker
+            } else {
+                LabeledContent("Dose") {
+                    HStack(spacing: OnyxSpace.s) {
+                        amountField
+                        unitPicker.labelsHidden()
                     }
                 }
             }
+
+            TextField("Time", text: $time)
+                .focused($focus, equals: .time)
+                .accessibilityHint("Twenty-four hour, for example 22:00. Leave blank for no set time.")
+        } header: {
+            OnyxSectionHeader("Item", .fuel)
+        } footer: {
+            Text(dosePreview)
         }
-        .onAppear {
-            guard let editing else { return }
-            name = editing.name
-            dose = editing.dose
-            time = editing.time ?? ""
+    }
+
+    private var amountField: some View {
+        TextField("Amount", value: $amount, format: .number)
+            .keyboardType(.decimalPad)
+            .multilineTextAlignment(typeSize.isAccessibilitySize ? .leading : .trailing)
+            .focused($focus, equals: .amount)
+            .frame(minWidth: 64, minHeight: 44)
+            .onyxNumeral()
+            .accessibilityLabel("Amount")
+            .accessibilityHint("For example 300, or 2")
+    }
+
+    private var unitPicker: some View {
+        Picker("Unit", selection: $unit) {
+            Text("Unit").tag(DoseUnit?.none)
+            ForEach(DoseUnit.allCases) { unit in
+                Text(unit.rawValue).tag(DoseUnit?.some(unit))
+            }
+        }
+        .pickerStyle(.menu)
+        .frame(minHeight: 44)
+    }
+
+    /// What the row will read, said before it is saved. A count multiplies its
+    /// micronutrient payload and a mass does not, and this is the only place
+    /// that difference is visible before it starts moving the day's totals.
+    private var dosePreview: String {
+        guard let amount, amount > 0, let unit else {
+            return "An amount and a unit. \"2 tabs\" delivers twice the label; \"300 mg\" is the label itself."
+        }
+        let text = Supplements.doseText(amount: amount, unit: unit)
+        return unit.isCount
+            ? "Reads as \"\(text)\" — a count, so its micronutrients count that many times."
+            : "Reads as \"\(text)\" — a mass, counted once."
+    }
+
+    // MARK: The days
+
+    private var daysSection: some View {
+        Section {
+            HStack(spacing: OnyxSpace.xs) {
+                ForEach(Array(Self.weekdays.enumerated()), id: \.offset) { index, label in
+                    dayToggle(index, label)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            Toggle("Training days only", isOn: $trainingOnly)
+        } header: {
+            OnyxSectionHeader("Days", .fuel)
+        } footer: {
+            Text("No day selected means every day. Nothing here touches the days already logged — an item's history is keyed to the item, not to its schedule.")
         }
     }
 
@@ -329,7 +454,10 @@ struct SupplementEditSheet: View {
         } label: {
             Text(label.prefix(1))
                 .onyxType(.caption).fontWeight(.semibold)
-                .frame(minWidth: 32, minHeight: 32)
+                // 44, not 32: this row was add-only until W4 and is now on
+                // the common path, so it has to meet the minimum like
+                // everything else you tap twice a week.
+                .frame(minWidth: 40, minHeight: 44)
                 .background(Circle().fill(on ? Color.onyx.accent(.fuel).opacity(0.25) : Color.onyx.hairline))
                 .foregroundStyle(on ? Color.onyx.accent(.fuel) : Color.onyx.textSecondary)
         }
@@ -338,18 +466,55 @@ struct SupplementEditSheet: View {
         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
 
+    // MARK: Loading and saving
+
+    /// ── AN EXISTING ROW OPENS ON "NOT SET", A NEW ONE ON A PILL ─────────────
+    /// Defaulting the form on an EDIT would stamp "pill" on every untouched row
+    /// the first time its time was corrected — nine silent writes for one
+    /// intended change.
+    private func load() {
+        guard !loaded else { return }
+        loaded = true
+        guard let editing else {
+            form = .pill
+            unit = .mg
+            return
+        }
+        name = editing.name
+        time = editing.time ?? ""
+        form = SupplementForm.parse(editing.form)
+        days = Set(editing.schedule?.days ?? [])
+        trainingOnly = editing.schedule?.trainingOnly ?? false
+        // The stored pair first, the display string as a fallback — a row the
+        // web wrote has only the string, and a dose the parser cannot read
+        // leaves the fields empty rather than inventing a number.
+        if let parts = Supplements.doseParts(editing) {
+            amount = parts.amount
+            unit = parts.unit
+        }
+    }
+
     private func save() {
-        let cleanName = name.trimmingCharacters(in: .whitespaces)
-        let cleanDose = dose.trimmingCharacters(in: .whitespaces)
+        guard let amount, let unit, valid else { return }
+        let dose = Supplements.doseText(amount: amount, unit: unit)
         let cleanTime = time.trimmingCharacters(in: .whitespaces)
+        // The writers return whether the row landed. Dismissing regardless put
+        // the failure banner on the screen the reader had just left.
+        let landed: Bool
         if let editing {
-            model.editSupplement(editing, name: cleanName, dose: cleanDose, time: cleanTime)
+            landed = model.editSupplement(
+                editing,
+                name: cleanName, dose: dose, doseAmount: amount, doseUnit: unit.rawValue,
+                form: form?.rawValue, time: cleanTime,
+                days: days.sorted(), trainingOnly: trainingOnly
+            )
         } else {
-            model.addSupplement(
-                name: cleanName, dose: cleanDose, time: cleanTime, days: days.sorted(),
-                color: nil, form: nil, notes: nil, trainingOnly: trainingOnly
+            landed = model.addSupplement(
+                name: cleanName, dose: dose, doseAmount: amount, doseUnit: unit.rawValue,
+                time: cleanTime, days: days.sorted(),
+                color: nil, form: form?.rawValue, notes: nil, trainingOnly: trainingOnly
             )
         }
-        dismiss()
+        if landed { dismiss() }
     }
 }

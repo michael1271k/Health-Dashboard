@@ -214,6 +214,99 @@ public extension AppDatabase {
         }
     }
 
+    // MARK: - stress_logs
+
+    /// The day's psych-stress readings. Ordered by the stored slot string,
+    /// which is alphabetical rather than chronological — `stressReadings` on
+    /// the model is what puts them in the order the day happens.
+    ///
+    /// One row per (day, slot) and at most three slots, so this is a whole-day
+    /// read rather than a latest-row one: `StressInputsBuilder` takes the MEAN
+    /// of the rows for the index's `self` term (D6) and the sheet has to show
+    /// the reader the same set the term is built from.
+    func stressStream(userId: String, date: String) -> AsyncThrowingStream<[StressLogRow], any Error> {
+        stream(ValueObservation.tracking { db in
+            try StressLogRow
+                .filter(Column("user_id") == userId && Column("date") == date)
+                .order(Column("slot"))
+                .fetchAll(db)
+        })
+    }
+
+    /// Write one slot's reading, or clear it with a nil `level`.
+    ///
+    /// The slot is the time-of-day bucket the clock picked (`StressSlot.forClock`),
+    /// never a value the user typed: the server key is `(user_id, date, slot)`,
+    /// so a free-text slot would fork the row the next answer meant to replace.
+    ///
+    /// `tags` is stored as a JSON ARRAY of the raw tag strings. The column is a
+    /// Postgres `text[]`, not jsonb — a JSON array is what PostgREST coerces
+    /// into one, and an object written there would not coerce at all. The
+    /// reader (`PsychStress.tags`) drops anything it does not know, so a tag
+    /// added in a later version costs a chip and never a reading.
+    func setStress(
+        userId: String, date: String, slot: StressSlot, level: Int?,
+        tags: [StressTag] = [], note: String? = nil, now: Date = Date()
+    ) throws {
+        try writer.write { db in
+            let scope = StressLogRow
+                .filter(Column("user_id") == userId && Column("date") == date && Column("slot") == slot.rawValue)
+            guard let level else {
+                for row in try scope.fetchAll(db) {
+                    try row.delete(db)
+                    try Self.enqueueRowDelete(table: StressLogRow.databaseTableName, key: ["id": row.id], in: db)
+                }
+                return
+            }
+            let trimmed = (note ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            let existing = try scope.order(Column("created_at")).fetchAll(db)
+            var row = existing.first
+                ?? StressLogRow(
+                    id: newOnyxID(), userId: userId, date: date, slot: slot.rawValue,
+                    level: level, tags: Self.tagsJSON([]), note: nil,
+                    createdAt: now, updatedAt: now
+                )
+            row.level = level
+            row.tags = Self.tagsJSON(tags)
+            row.note = trimmed.isEmpty ? nil : trimmed
+            row.updatedAt = now
+            try row.save(db)
+            // ── A SECOND ROW FOR ONE SLOT IS A DOUBLE-COUNTED ANSWER ────────
+            // The local table's primary key is `id` and the pull upserts on it,
+            // so a row this device wrote offline and a row the server wrote for
+            // the SAME (user_id, date, slot) land side by side — Postgres holds
+            // the unique constraint, SQLite does not. `stressDayMean` is a flat
+            // mean over the day's rows, so the duplicate would weigh that slot
+            // twice in the index's `self` term, and the sheet would draw two
+            // answers under one heading. `setFatigue` has deleted its shadows
+            // since Wave 2 for exactly this reason; this does the same.
+            for shadow in existing.dropFirst() {
+                try shadow.delete(db)
+                try Self.enqueueRowDelete(table: StressLogRow.databaseTableName, key: ["id": shadow.id], in: db)
+            }
+            // `note` is the one nullable column here, and a note the user just
+            // cleared has to say its own name or the merge upsert leaves the
+            // old text standing on the server (`editCustomSupplement`'s note).
+            try Self.enqueueRowUpsert(
+                table: StressLogRow.databaseTableName, id: row.id,
+                nulls: row.note == nil ? ["note"] : [], in: db
+            )
+        }
+    }
+
+    /// `["work","money"]` — stored order, never `Set` order.
+    private static func tagsJSON(_ tags: [StressTag]) -> JSONText {
+        let items = StressTag.sorted(tags).map { "\"\($0.rawValue)\"" }
+        return JSONText(raw: "[\(items.joined(separator: ","))]")
+    }
+
+    /// One `stress_logs` row as a screen reads it.
+    static func reading(_ row: StressLogRow) -> StressReading? {
+        guard let slot = StressSlot(rawValue: row.slot) else { return nil }
+        let raw = (try? JSONDecoder().decode([String].self, from: Data(row.tags.raw.utf8))) ?? []
+        return StressReading(slot: slot, level: row.level, tags: PsychStress.tags(raw), note: row.note)
+    }
+
     // MARK: - doms_logs
 
     func domsStream(userId: String, date: String) -> AsyncThrowingStream<[DomsLogRow], any Error> {
@@ -738,6 +831,29 @@ public extension AppDatabase {
                 .fetchAll(db)
                 .map { LoggedSessionDay(date: $0.date, dayKey: $0.dayKey) }
         }
+    }
+
+
+    /// Whether the date carries a session at all — the UI half of the ONE day
+    /// rule (`AppDatabase.isTrainingDay`).
+    ///
+    /// ── WHY IT IS NOT `loggedDays` ──────────────────────────────────────────
+    /// That one filters `ended_at IS NOT NULL`, because a swap may not move a
+    /// day whose session is a FACT. This question is different: the fatigue
+    /// slots and the day's stack have to switch to the training shape the
+    /// moment a session starts, not when it is closed — the slot being asked
+    /// for is "Before training", and it is asked for mid-session. So this
+    /// counts sessions exactly as `ScheduleResolution.isTrainingDay` counts
+    /// them, and the screen and the scorer cannot disagree about the day's kind.
+    ///
+    /// A stream and not a read: `isTraining` is read from a view body on every
+    /// render, and a synchronous query there is a query per frame.
+    func sessionLoggedStream(userId: String, date: String) -> AsyncThrowingStream<Bool, any Error> {
+        stream(ValueObservation.tracking { db in
+            try WorkoutSession
+                .filter(Column("user_id") == userId && Column("date") == date)
+                .fetchCount(db) > 0
+        })
     }
 
     // MARK: - Helpers

@@ -87,6 +87,7 @@ public extension AppDatabase {
         userId: String, name: String, dose: String,
         color: String? = nil, form: String? = nil, time: String? = nil,
         schedule: CustomSchedule? = nil, micros: [String: Double]? = nil,
+        doseAmount: Double? = nil, doseUnit: String? = nil,
         now: Date = Date()
     ) throws -> String {
         let id = newOnyxID()
@@ -96,7 +97,8 @@ public extension AppDatabase {
             id: id, userId: userId, name: name, dose: dose,
             color: color, form: form, time: time,
             schedule: try Self.json(resolved), micros: try Self.json(micros),
-            createdAt: now, archivedAt: nil, sortOrder: 0
+            createdAt: now, archivedAt: nil,
+            doseAmount: doseAmount, doseUnit: doseUnit, sortOrder: 0
         )
         try writer.write { db in
             try row.insert(db)
@@ -124,12 +126,63 @@ public extension AppDatabase {
             //
             // The table is pulled WHOLE (`strategy: .full`), so the local row
             // is the truth about every one of these: naming each nil one makes
-            // the server match it exactly. `created_at` is not in the list
-            // because nothing clears it and a null there would be a lie.
+            // the server match it exactly.
+            //
+            // TWO columns are deliberately NOT in the list. `created_at`,
+            // because nothing clears it and a null there would be a lie. And
+            // `sort_order`, because it is nullable in the local mirror only —
+            // Postgres has it NOT NULL DEFAULT 0 (the W2 rule: a pull before
+            // the paste must still decode), so naming it would push a null into
+            // a column that refuses one.
             try Self.enqueueRowUpsert(
                 table: CustomSupplementRow.databaseTableName, id: id,
                 nulls: Self.clearedColumns(of: row), in: db
             )
+        }
+    }
+
+    /// Edit everything a phone has any business changing, in one write.
+    ///
+    /// ── WHY THE SCHEDULE IS MERGED AND NEVER REPLACED ───────────────────────
+    /// `custom_supplements.schedule` is a jsonb that carries FIVE facts the
+    /// editor has no field for — `key`, `slot`, `notes`, `trainingDose`,
+    /// `restDose` — and `key` is the join to every `supplement_log` row the
+    /// item ever wrote. Handing this a freshly built `CustomSchedule(days:
+    /// trainingOnly:)` would drop all five, and the day the key goes is the day
+    /// months of ticked history stops resolving — silently, because the item
+    /// keeps rendering under a `custom:<id>` fallback that matches nothing.
+    /// So the stored value is decoded, the two fields the form owns are set,
+    /// and the rest is written back exactly as it was found.
+    ///
+    /// The editor could not reach `days` or `trainingOnly` at all before this:
+    /// the only way to change an item's schedule was to delete it and add it
+    /// again, which is that same silent loss with an extra step.
+    func updateCustomSupplement(
+        id: String, userId: String,
+        name: String, dose: String, doseAmount: Double?, doseUnit: String?,
+        form: String?, time: String?, days: [Int], trainingOnly: Bool
+    ) throws {
+        try editCustomSupplement(id: id, userId: userId) { row in
+            row.name = name
+            row.dose = dose
+            row.doseAmount = doseAmount
+            row.doseUnit = doseUnit
+            row.form = (form ?? "").isEmpty ? nil : form
+            row.time = (time ?? "").isEmpty ? nil : time
+
+            var schedule = row.schedule
+                .flatMap { try? OnyxJSON.decoder.decode(CustomSchedule.self, from: Data($0.raw.utf8)) }
+                ?? CustomSchedule()
+            // An empty selection is "every day" and is stored as the ABSENCE of
+            // the key, which is what `customSlotsForDate` reads — an empty
+            // array would be a row scheduled on no day at all.
+            schedule.days = days.isEmpty ? nil : days.sorted()
+            schedule.trainingOnly = trainingOnly ? true : nil
+            // The key is fixed the moment the item exists; a row the web wrote
+            // may still have none, and this is the last safe moment to pin the
+            // `custom:<id>` fallback it has been resolving to all along.
+            if (schedule.key ?? "").isEmpty { schedule.key = "custom:\(id)" }
+            row.schedule = (try? Self.json(schedule)) ?? row.schedule
         }
     }
 
@@ -159,7 +212,8 @@ public extension AppDatabase {
             id: row.id, name: row.name, dose: row.dose, color: row.color, form: row.form, time: row.time,
             schedule: row.schedule.flatMap { try? OnyxJSON.decoder.decode(CustomSchedule.self, from: Data($0.raw.utf8)) },
             micros: row.micros.flatMap { try? OnyxJSON.decoder.decode([String: Double].self, from: Data($0.raw.utf8)) },
-            archivedAt: row.archivedAt.map(ISO8601.string)
+            archivedAt: row.archivedAt.map(ISO8601.string),
+            doseAmount: row.doseAmount, doseUnit: row.doseUnit
         )
     }
 
@@ -173,6 +227,10 @@ public extension AppDatabase {
         if row.schedule == nil { out.append("schedule") }
         if row.micros == nil { out.append("micros") }
         if row.archivedAt == nil { out.append("archived_at") }
+        // W4's pair. A user who blanks a unit and gets it handed back on the
+        // next pull is the same defect the `time` case above already records.
+        if row.doseAmount == nil { out.append("dose_amount") }
+        if row.doseUnit == nil { out.append("dose_unit") }
         return out
     }
 

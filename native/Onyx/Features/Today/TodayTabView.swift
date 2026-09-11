@@ -31,6 +31,15 @@ struct TodayTabView: View {
     /// Bumped when a PULL finishes — the only sync §3.4 gives a haptic, because
     /// it is the only one the user is waiting on.
     @State private var pulls = 0
+    /// Quick Log, behind the mark.
+    ///
+    /// The day's own model, built the first time the ring is opened rather than
+    /// with the screen: Today draws from `TodayFeed`, not from `DayModel`, and
+    /// standing a second set of eleven per-date streams up on every launch to
+    /// serve a sheet most launches never open is eleven observations for
+    /// nothing. `.task(id:)` starts it when it exists.
+    @State private var quickLog: DayModel?
+    @State private var showQuickLog = false
 
     var body: some View {
         Group {
@@ -121,10 +130,28 @@ struct TodayTabView: View {
                     }
                     .fontWeight(.bold)
                 } else {
-                    // The mark, not a control: it is the wordmark's other half
-                    // and the one place the ring appears at app scale.
-                    OnyxMark(size: 18, opacity: 1)
-                        .accessibilityHidden(true)
+                    // ── THE MARK IS THE CONTROL NOW (decision 5) ────────────
+                    // It was decoration — `.accessibilityHidden`, the
+                    // wordmark's other half — sitting on the most reachable
+                    // point of the busiest screen in the app and doing nothing,
+                    // while the six readings behind it were three or four taps
+                    // away on other tabs. "Done" still owns this slot in edit
+                    // mode: one control that both ends the jiggle and opens a
+                    // logger is a control you cannot tap in either state
+                    // without meaning the other.
+                    Button {
+                        if quickLog == nil {
+                            quickLog = DayModel(database: environment.database, userId: environment.userIdString)
+                        }
+                        showQuickLog = true
+                    } label: {
+                        OnyxMark(size: 18, opacity: 1)
+                            .frame(minWidth: 44, minHeight: 44)
+                            .contentShape(.rect)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Quick Log")
+                    .accessibilityHint("Log water, a weigh-in, fatigue, head, cardio or a note")
                 }
             }
         }
@@ -143,9 +170,22 @@ struct TodayTabView: View {
                     .presentationDragIndicator(.visible)
             }
         }
+        .sheet(isPresented: $showQuickLog) {
+            if let quickLog { QuickLogSheet(model: quickLog) }
+        }
+        // The ring's sheets read STREAMED state — the day's fatigue rows, its
+        // stress readings, its cardio — and a model nobody observes draws every
+        // one of them as "not rated" over a day that has them.
+        .task(id: quickLog.map(ObjectIdentifier.init)) { await quickLog?.observe() }
         .onChange(of: scenePhase) { _, phase in
             model.isActive = phase == .active
-            if phase == .active { model.refresh() }
+            if phase == .active {
+                model.refresh()
+                // Across midnight the ring's model is still pointed at
+                // yesterday, and the sheet has six writers on it.
+                quickLog?.refreshToday()
+                quickLog?.select(LogicalDay.today())
+            }
         }
     }
 

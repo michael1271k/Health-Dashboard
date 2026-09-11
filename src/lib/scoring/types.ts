@@ -135,7 +135,7 @@ export interface ScoringInputs {
    */
   sleepOnsetTrouble?: boolean | null
   /**
-   * The LATEST fatigue slot logged today, 1 (Fresh) .. 5 (Empty) — the same
+   * The LATEST fatigue slot logged today, 1 (Amazing) .. 5 (Exhausted) — the same
    * `latestFatigue` rule the tracker shows as the day's summary. Battery v9's
    * wellness drain reads it; the day score still does not, which is the
    * promise `useFatigue` makes. Absent when nothing was logged.

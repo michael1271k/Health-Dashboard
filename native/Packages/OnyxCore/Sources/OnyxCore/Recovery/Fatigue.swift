@@ -32,6 +32,20 @@ public enum FatigueSlot: String, Codable, Sendable, CaseIterable, CodingKeyRepre
         case .night:  "Night"
         }
     }
+
+    /// One word, for a segmented control — three segments across a phone give
+    /// "Before training" about 47 points and it truncates to "Before tr…".
+    /// Never used where the slot has to stand on its own; the full `label` is
+    /// what a row, a sheet header and VoiceOver say.
+    public var short: String {
+        switch self {
+        case .waking: "Waking"
+        case .midday: "Midday"
+        case .pre:    "Pre"
+        case .post:   "Post"
+        case .night:  "Night"
+        }
+    }
 }
 
 /// One level of the scale. The WORD is the control, the SENTENCE is the
@@ -121,11 +135,11 @@ public enum Fatigue {
 
     /// `FATIGUE_LEVELS`.
     public static let levels: [FatigueLevel] = [
-        FatigueLevel(value: 1, label: "Fresh", hint: "could add a rep", detail: "Could add a rep to everything today."),
-        FatigueLevel(value: 2, label: "Fine", hint: "nothing would stop a session", detail: "Normal. Nothing here would stop a planned session."),
-        FatigueLevel(value: 3, label: "Worn", hint: "the plan, not a PR", detail: "Could train the plan, would not chase a record."),
-        FatigueLevel(value: 4, label: "Heavy", hint: "stairs register", detail: "Stairs register. The warm-up would decide whether to train."),
-        FatigueLevel(value: 5, label: "Empty", hint: "would cancel", detail: "Would cancel."),
+        FatigueLevel(value: 1, label: "Amazing", hint: "could add a rep", detail: "Could add a rep to everything today."),
+        FatigueLevel(value: 2, label: "Good", hint: "nothing would stop a session", detail: "Normal. Nothing here would stop a planned session."),
+        FatigueLevel(value: 3, label: "Okay", hint: "the plan, not a PR", detail: "Could train the plan, would not chase a record."),
+        FatigueLevel(value: 4, label: "Tired", hint: "stairs register", detail: "Stairs register. The warm-up would decide whether to train."),
+        FatigueLevel(value: 5, label: "Exhausted", hint: "would cancel", detail: "Would cancel."),
     ]
 
     /// `fatigueLevel` — nil for an unlogged slot or a value off the scale.

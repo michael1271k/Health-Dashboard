@@ -61,6 +61,11 @@ enum PulsePreviews {
 
             try db.setFatigue(userId: userId, date: date, slot: FatigueSlot.waking.rawValue, level: 2)
             try db.setFatigue(userId: userId, date: date, slot: FatigueSlot.pre.rawValue, level: 3)
+            // Two of the three buckets, with tags on one and a note on neither:
+            // the Head row draws the LATEST word and the sheet's "today so far"
+            // line needs a day that is partly answered to say anything at all.
+            try db.setStress(userId: userId, date: date, slot: .morning, level: 2, tags: [.work])
+            try db.setStress(userId: userId, date: date, slot: .midday, level: 4, tags: [.work, .money], note: "Deadline moved to Friday.")
             try db.setDoms(userId: userId, date: date, muscleGroup: "Quads", severity: 2)
             try db.setDoms(userId: userId, date: date, muscleGroup: "Chest", severity: 1)
             try db.setSupplementSkipped(
@@ -246,18 +251,25 @@ enum PulsePreviews {
     @MainActor
     static func stackDay() -> DayModel {
         let model = model { db in
-            let add = { (name: String, dose: String, time: String, key: String, micros: [String: Double]?) in
+            // One of each FORM and one of each colour the token map knows:
+            // the whole point of the glyph is that five silhouettes are
+            // distinguishable in a list of nine, and a seed that left every
+            // `form` nil photographed the same default five times.
+            let add = { (name: String, dose: String, time: String, key: String,
+                         form: SupplementForm, colour: String, micros: [String: Double]?) in
                 _ = try db.addCustomSupplement(
-                    userId: userId, name: name, dose: dose, color: nil, form: nil, time: time,
+                    userId: userId, name: name, dose: dose, color: colour, form: form.rawValue, time: time,
                     schedule: CustomSchedule(key: key, slot: time == "10:30" ? "Morning" : "Before Bed"),
-                    micros: micros
+                    micros: micros,
+                    doseAmount: Supplements.parseDose(dose)?.amount,
+                    doseUnit: Supplements.parseDose(dose)?.unit.rawValue
                 )
             }
-            try add("Two Per Day Multivitamin", "2 tabs", "10:30", "multivitamin", nil)
-            try add("Vitamin D3 + K2", "125 mcg", "10:30", "d3k2", nil)
-            try add("Creatine Monohydrate", "5 g", "10:30", "creatine", nil)
-            try add("Magnesium Glycinate", "300 mg", "22:00", "magnesium", nil)
-            try add("L-Theanine", "200 mg", "22:00", "theanine", nil)
+            try add("Two Per Day Multivitamin", "2 tabs", "10:30", "multivitamin", .pill, "amber", nil)
+            try add("Vitamin D3 + K2", "125 mcg", "10:30", "d3k2", .capsule, "green", nil)
+            try add("Creatine Monohydrate", "5 g", "10:30", "creatine", .powder, "blue", nil)
+            try add("Magnesium Glycinate", "300 mg", "22:00", "magnesium", .gummy, "purple", nil)
+            try add("L-Theanine", "200 mg", "22:00", "theanine", .liquid, "teal", nil)
 
             let retired = try db.addCustomSupplement(
                 userId: userId, name: "Ashwagandha", dose: "600 mg", time: "22:00",
@@ -268,6 +280,15 @@ enum PulsePreviews {
             try db.markSupplement(userId: userId, date: date, itemKey: "d3k2", mark: .taken)
             try db.markSupplement(userId: userId, date: date, itemKey: "creatine", mark: .skipped)
         }
+        model.previewNowMinutes = 13 * 60
+        return model
+    }
+
+    /// The clock, pinned to 13:00 — a Midday bucket and a "before training"
+    /// fatigue slot. Every sheet whose CONTENT depends on the time of day gets
+    /// this, or the committed PNG changes by the hour.
+    @MainActor
+    static func pinned(_ model: DayModel) -> DayModel {
         model.previewNowMinutes = 13 * 60
         return model
     }
@@ -335,6 +356,25 @@ enum PulsePreviews {
         // the number and the sheet says where it came from.
         case "stress":
             Presenting(model: fullDay()) { StressBreakdownSheet(model: $0) }
+                .environment(AppEnvironment.preview)
+        // The five words, on the slot the clock picks. `previewNowMinutes` pins
+        // the clock so the shot lands on the same slot every run — without it
+        // the segmented control moves at 11:00 and again at 17:00 and the
+        // committed PNG churns twice a day.
+        case "fatigue":
+            Presenting(model: pinned(fullDay())) { FatigueSheet(model: $0) }
+                .environment(AppEnvironment.preview)
+        // The typed stress reading, in the bucket 13:00 falls in — with the
+        // morning's answer already on the day, which is the state the "today so
+        // far" line exists for.
+        case "head":
+            Presenting(model: pinned(fullDay())) { HeadSheet(model: $0) }
+                .environment(AppEnvironment.preview)
+        // The ring behind the dashboard mark. Over Pulse rather than over
+        // Today: the sheet needs a `DayModel` with its streams running, and
+        // `PulseTabView` is what starts them.
+        case "quick-log":
+            Presenting(model: pinned(fullDay())) { QuickLogSheet(model: $0) }
                 .environment(AppEnvironment.preview)
         case "doms":
             // The tile alone, at the size it actually gets: half of what §5.7
@@ -438,4 +478,7 @@ enum PulsePreviews {
 #Preview("Pulse — swap") { PulsePreviews.view("day-swap") }
 #Preview("Pulse — sleep edit") { PulsePreviews.view("sleep-edit") }
 #Preview("Pulse — stress") { PulsePreviews.view("stress") }
+#Preview("Pulse — fatigue") { PulsePreviews.view("fatigue") }
+#Preview("Pulse — head") { PulsePreviews.view("head") }
+#Preview("Quick Log") { PulsePreviews.view("quick-log") }
 #endif

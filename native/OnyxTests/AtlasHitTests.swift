@@ -136,7 +136,7 @@ struct SubjectiveRampTests {
         #expect(Color.onyx.severity(1) == Color.onyx.good)
         #expect(Color.onyx.severity(2) == Color.onyx.record)
         #expect(Color.onyx.severity(3) == Color.onyx.danger)
-        // A slot nobody has rated is NOT "Fresh" — the commonest way a recovery
+        // A slot nobody has rated is NOT "Amazing" — the commonest way a recovery
         // screen lies is by drawing an absent reading as a good one.
         #expect(Color.onyx.fatigue(nil) == Color.onyx.textTertiary)
         #expect(Color.onyx.fatigue(1) == Color.onyx.good)

@@ -116,8 +116,8 @@ const LEGACY_RANK: Record<string, number> = { morning: 0, noon: 1, evening: 2, e
  *
  * ── THE WORD IS THE CONTROL, THE SENTENCE IS THE DEFINITION ──────────────────
  * Numbers would invite arithmetic the scale does not support: the distance from
- * Fresh to Fine is not the distance from Heavy to Empty, and nothing here
- * averages them. But one word is not a definition either — "Worn" meant whatever
+ * Amazing to Good is not the distance from Tired to Exhausted, and nothing here
+ * averages them. But one word is not a definition either — "Okay" meant whatever
  * the last week had taught it to mean, which is how a five-point scale quietly
  * becomes a three-point one.
  *
@@ -141,29 +141,34 @@ export interface FatigueLevel {
   color: string
 }
 
+// The words are plain everyday English as of W4 (founder decision 6): the
+// stored 1-5 is unchanged, and this table must stay in step with
+// `OnyxCore.Fatigue.levels` for as long as both surfaces exist — the same
+// stored 3 reading one word on the phone and another here is a week's report
+// that contradicts the screen it was taken from.
 export const FATIGUE_LEVELS: readonly FatigueLevel[] = [
   {
-    value: 1, label: 'Fresh', color: EMERALD,
+    value: 1, label: 'Amazing', color: EMERALD,
     hint: 'could add a rep',
     detail: 'Could add a rep to everything today.',
   },
   {
-    value: 2, label: 'Fine', color: STEEL,
+    value: 2, label: 'Good', color: STEEL,
     hint: 'nothing would stop a session',
     detail: 'Normal. Nothing here would stop a planned session.',
   },
   {
-    value: 3, label: 'Worn', color: SAND,
+    value: 3, label: 'Okay', color: SAND,
     hint: 'the plan, not a PR',
     detail: 'Could train the plan, would not chase a record.',
   },
   {
-    value: 4, label: 'Heavy', color: GOLD,
+    value: 4, label: 'Tired', color: GOLD,
     hint: 'stairs register',
     detail: 'Stairs register. The warm-up would decide whether to train.',
   },
   {
-    value: 5, label: 'Empty', color: OXIDE,
+    value: 5, label: 'Exhausted', color: OXIDE,
     hint: 'would cancel',
     detail: 'Would cancel.',
   },
@@ -214,7 +219,7 @@ export function foldFatigueRows(rows: ReadonlyArray<{ slot: string; level: numbe
 /**
  * The day's summary reading — the LATEST slot logged, not the mean.
  *
- * A mean of "Fresh at 7am, Empty at 9pm" is "Worn", which describes neither
+ * A mean of "Amazing at 7am, Exhausted at 9pm" is "Okay", which describes neither
  * moment and is the one answer that was never true. The tracker exists to show
  * the shape of a day; the single figure that stands for it is where the day
  * ended up.
@@ -236,8 +241,8 @@ export function latestFatigue(day: FatigueDay): { slot: FatigueSlot; level: numb
  *
  * `latestFatigue` is the day's summary because a mean describes no moment. The
  * stress index asks a different question — how heavy did the whole day feel —
- * and for that the shape of the curve is the answer: "Fresh, Worn, Empty"
- * averages to Worn, which is the honest one-number account of that day's load
+ * and for that the shape of the curve is the answer: "Amazing, Okay, Exhausted"
+ * averages to Okay, which is the honest one-number account of that day's load
  * on the person. Null when nothing was logged; never a zero standing in.
  */
 export function fatigueDayMean(day: FatigueDay): number | null {

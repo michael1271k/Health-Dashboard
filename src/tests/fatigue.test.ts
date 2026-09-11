@@ -15,7 +15,7 @@ describe('the fatigue scale', () => {
 
   it('gives every level a BEHAVIOURAL sentence, not only a word', () => {
     // The word is the control; the sentence is the definition. Without it
-    // "Worn" means whatever the last week taught it to mean, which is how a
+    // "Okay" means whatever the last week taught it to mean, which is how a
     // five-point scale quietly becomes a three-point one.
     for (const l of FATIGUE_LEVELS) {
       expect(l.detail).toBeTruthy()
@@ -51,7 +51,9 @@ describe('the fatigue scale', () => {
     expect(fatigueLevel(null)).toBeNull()
     expect(fatigueLevel(undefined)).toBeNull()
     expect(fatigueLevel(9)).toBeNull()
-    expect(fatigueLevel(1)?.label).toBe('Fresh')
+    expect(fatigueLevel(1)?.label).toBe('Amazing')
+    // In step with `OnyxCore.Fatigue.levels` (W4, decision 6).
+    expect(fatigueLevel(5)?.label).toBe('Exhausted')
   })
 })
 
@@ -95,7 +97,7 @@ describe('the session’s cost', () => {
 
 describe('the day’s single reading', () => {
   it('is the LATEST slot, never the mean', () => {
-    // The mean of Fresh(1) and Empty(5) is Worn(3) — a reading that describes
+    // The mean of Amazing(1) and Exhausted(5) is Okay(3) — a reading that describes
     // neither moment and was true at no point in the day.
     const day: FatigueDay = { waking: 1, night: 5 }
     expect(latestFatigue(day)).toEqual({ slot: 'night', level: 5 })
