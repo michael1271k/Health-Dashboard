@@ -101,6 +101,37 @@ struct TrainingTests {
         #expect(MuscleCredit.worked(from: [:]).isEmpty)
     }
 
+    @Test("a week with no targets at all still draws the work it did")
+    func workedSurvivesAnEmptyTargetTable() {
+        let sets: [LandmarkMuscle: Double] = [.quads: 12, .calves: 1]
+
+        // The ordinary case: each muscle against its own target.
+        let graded = MuscleCredit.worked(sets: sets, targets: [.quads: 12, .calves: 4])
+        #expect(graded[.quads] == 1)
+        #expect(graded[.calves] == 0.25)
+
+        // A muscle the plan does not ask for grades against the biggest target.
+        let partial = MuscleCredit.worked(sets: sets, targets: [.quads: 12])
+        #expect(partial[.calves] != nil && partial[.calves]! > 0)
+
+        // ── THE ONE THIS TEST EXISTS FOR ────────────────────────────────────
+        // A fresh account, or a phase nobody has given `plan_phase_volume` rows,
+        // has no target anywhere. Grading against a denominator of zero dropped
+        // every muscle and drew a blank body for a week with twelve sets of
+        // quads in it — on the widget tile and on the Today sheet, in two
+        // separate copies of this arithmetic. There is one copy now, and this is
+        // the case it must never fail.
+        let untargeted = MuscleCredit.worked(sets: sets, targets: [:])
+        #expect(untargeted[.quads] == 1, "the busiest muscle fills the figure")
+        #expect(untargeted[.calves] == 0.25, "and the floor keeps one set visible")
+        // …and it is the SAME rule, not a second copy of it.
+        #expect(untargeted == MuscleCredit.worked(from: sets))
+
+        // Still nothing when there is genuinely nothing.
+        #expect(MuscleCredit.worked(sets: [:], targets: [:]).isEmpty)
+        #expect(MuscleCredit.worked(sets: [:], targets: [.quads: 12]).isEmpty)
+    }
+
     // MARK: - The deck
 
     @Test("cutting drops the two bulk-only lifts and nothing else")

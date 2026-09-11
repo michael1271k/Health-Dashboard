@@ -26,12 +26,22 @@ import Foundation
 
 /// Which window. `days` carries its own length so 30 and 90 are one case.
 public enum EraWindow: Sendable, Equatable, Hashable {
+    /// The athlete's own training week, ending today — `user_goals.week_end_day`
+    /// through `Week.startDay(fromEndDay:)`, never a hard-coded Sunday. The
+    /// window a set target is denominated in, and the muscle atlas card's
+    /// default.
+    case thisWeek
     /// The programme phase covering today — "Onyx Cut", "Lean Bulk".
     case currentPhase
     /// The run of days ending today that share today's nutrition rung.
     case currentLever
-    /// From the day the cut block opened.
+    /// From the day the cut block opened. Legacy: its label is the fixed string
+    /// "Since cut", which is a lie on a bulk. `currentProgram` is the same range
+    /// under the plan's own name and should be preferred by new callers.
     case sinceCutStart
+    /// From `plans.started_on` of the active plan, under that plan's OWN label —
+    /// "Onyx-5 Cut", not "Since cut".
+    case currentProgram
     /// A trailing count of days, today included.
     case days(Int)
     /// Everything the caller holds.
@@ -55,10 +65,21 @@ public enum EraWindow: Sendable, Equatable, Hashable {
         case .currentPhase: "currentPhase"
         case .currentLever: "currentLever"
         case .sinceCutStart: "sinceCutStart"
+        case .thisWeek: "thisWeek"
+        case .currentProgram: "currentProgram"
         case .days(let n): "days:\(Swift.max(1, n))"
         case .all: "all"
         }
     }
+
+    /// Every keyed window, `modes` plus the two the muscle atlas card offers.
+    ///
+    /// `fromKey` walked `modes` until W3, so a window OUTSIDE the screen
+    /// picker's six serialised fine and read back as nil. Nothing persists a
+    /// window today — both pickers are plain `@State` — so this is a trap
+    /// disarmed rather than a bug fixed: the first caller to store one would
+    /// have found `.thisWeek` reverting to the default with no error anywhere.
+    static let keyed: [EraWindow] = modes + [.thisWeek, .currentProgram]
 
     /// The window a key names, or nil.
     public static func fromKey(_ key: String) -> EraWindow? {
@@ -66,7 +87,7 @@ public enum EraWindow: Sendable, Equatable, Hashable {
             guard let n = Int(key.dropFirst(5)), n > 0 else { return nil }
             return .days(n)
         }
-        return modes.first { $0.key == key }
+        return keyed.first { $0.key == key }
     }
 }
 
@@ -80,6 +101,8 @@ extension EraWindow: Codable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let kind = try c.decode(String.self, forKey: .kind)
         switch kind {
+        case "thisWeek": self = .thisWeek
+        case "currentProgram": self = .currentProgram
         case "currentPhase": self = .currentPhase
         case "currentLever": self = .currentLever
         case "sinceCutStart": self = .sinceCutStart
@@ -110,6 +133,10 @@ public struct EraWindowInput: Codable, Sendable, Equatable {
     public var today: String
     /// The active plan's display name — the `plans` row's.
     public var planLabel: String
+    /// `user_goals.week_end_day` — 0 = Sunday-ending. `.thisWeek` is the only
+    /// window that reads it, and it reads it through `Week.startDay(fromEndDay:)`
+    /// so there is still exactly one place that knows the mapping.
+    public var weekEndDay: Int?
     /// `user_goals.active_lever`, verbatim.
     public var storedLever: String?
     /// `user_goals.maintenance_until` — a release that closes itself.
@@ -130,12 +157,13 @@ public struct EraWindowInput: Codable, Sendable, Equatable {
     public var periods: [LeverPeriod]
 
     public init(
-        today: String, planLabel: String, storedLever: String? = nil,
+        today: String, planLabel: String, weekEndDay: Int? = nil, storedLever: String? = nil,
         releaseEndsOn: String? = nil, firstDataISO: String? = nil,
         planStartISO: String? = nil, phases: [PhaseDef] = [], rungs: [NutritionLever] = [], periods: [LeverPeriod] = []
     ) {
         self.today = today
         self.planLabel = planLabel
+        self.weekEndDay = weekEndDay
         self.storedLever = storedLever
         self.releaseEndsOn = releaseEndsOn
         self.firstDataISO = firstDataISO
@@ -149,7 +177,7 @@ public struct EraWindowInput: Codable, Sendable, Equatable {
         LeverLadder(rungs: rungs, periods: periods, stored: storedLever, releaseEndsOn: releaseEndsOn)
     }
 
-    enum CodingKeys: String, CodingKey { case today, planLabel, storedLever, releaseEndsOn, firstDataISO, planStartISO, phases, rungs, periods }
+    enum CodingKeys: String, CodingKey { case today, planLabel, weekEndDay, storedLever, releaseEndsOn, firstDataISO, planStartISO, phases, rungs, periods }
 
     /// The W2 table fields are optional on the wire: an input written before
     /// them (the golden fixtures) decodes with empty tables, never as a failure.
@@ -157,6 +185,7 @@ public struct EraWindowInput: Codable, Sendable, Equatable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         today = try c.decode(String.self, forKey: .today)
         planLabel = try c.decode(String.self, forKey: .planLabel)
+        weekEndDay = try c.decodeIfPresent(Int.self, forKey: .weekEndDay)
         storedLever = try c.decodeIfPresent(String.self, forKey: .storedLever)
         releaseEndsOn = try c.decodeIfPresent(String.self, forKey: .releaseEndsOn)
         firstDataISO = try c.decodeIfPresent(String.self, forKey: .firstDataISO)
@@ -245,6 +274,18 @@ public extension EraWindow {
         }
 
         switch self {
+        case .thisWeek:
+            // The athlete's week, not the calendar's: `week_end_day` is what the
+            // per-muscle set targets are denominated in, and a hard-coded Sunday
+            // here would grade a Monday-start week against six of its own days
+            // and one of somebody else's. That Sunday was real: it is what
+            // `MuscleAggregator.weekStartUTC` did until W3 deleted it.
+            // Ending TODAY, not at the week's end — every window here is
+            // trailing (see the header). The widget's week is the whole
+            // `[start, start + 7)` span, so a session somehow dated later this
+            // week counts on the tile and not here.
+            return clamp(Week.start(of: today, startDay: Week.startDay(fromEndDay: input.weekEndDay)), "This week")
+
         case .currentPhase:
             // No phase covers the day — the gap around the Thailand trip is a
             // real one. The plan is still a true name for what is running.
@@ -260,9 +301,19 @@ public extension EraWindow {
             // period, which is the point: it names the ABSENCE of a rung.
             return clamp(EraWindow.leverRunStart(input), Levers.lever(byId: id, in: ladder)?.label ?? "Custom")
 
-        case .sinceCutStart:
+        case .sinceCutStart, .currentProgram:
             // The active plan's first day. A plan never started has no "since".
-            return clamp(input.planStartISO ?? input.firstDataISO ?? today, "Since cut")
+            //
+            // ONE arm for two cases: the range is identical and only the NAME
+            // differs — `.currentProgram` wears the plan's own label, because a
+            // filter pill reading "Since cut" on a bulk is exactly the
+            // hard-coded era name `EraWindow` was built to replace. Two arms
+            // spelled the same expression twice, and the next change to the
+            // anchor chain would have had two places to land.
+            return clamp(
+                input.planStartISO ?? input.firstDataISO ?? today,
+                self == .currentProgram ? input.planLabel : "Since cut"
+            )
 
         case .days(let n):
             let span = Swift.max(1, n)

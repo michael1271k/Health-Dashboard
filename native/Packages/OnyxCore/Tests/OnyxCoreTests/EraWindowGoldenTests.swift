@@ -64,9 +64,13 @@ struct EraWindowGoldenTests {
 
     @Test("every mode round-trips through its key")
     func keysRoundTrip() {
-        for mode in EraWindow.modes {
+        // `keyed`, not `modes`: W3's two windows are offered by the muscle atlas
+        // card rather than by the screen picker, and a key that serialises but
+        // reads back nil is a preference that silently reverts to the default.
+        for mode in EraWindow.keyed {
             #expect(EraWindow.fromKey(mode.key) == mode, "\(mode.key)")
         }
+        #expect(EraWindow.keyed.contains(.thisWeek) && EraWindow.keyed.contains(.currentProgram))
         #expect(EraWindow.modes.contains(EraWindow.default))
     }
 

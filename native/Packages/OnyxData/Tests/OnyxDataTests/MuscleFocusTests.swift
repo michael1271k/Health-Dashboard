@@ -6,10 +6,14 @@ import OnyxCore
 /// The week's sets on the body, against the week's targets.
 ///
 /// Three things can go wrong here and none of them shows up as a crash: the
-/// credit rule can drift from the tile's (`WidgetDerive.volumeByFamily`), a
-/// zero-target muscle can read as "behind" instead of "not asked for", and an
-/// override can fail to beat the program's default — which is the whole reason
-/// the override exists.
+/// credit rule can drift from the tile's, a zero-target muscle can read as
+/// "behind" instead of "not asked for", and an override can fail to beat the
+/// program's default — which is the whole reason the override exists.
+///
+/// The first of those is now structural rather than tested twice: since W3 both
+/// call `MuscleCredit.weightedSets(exerciseNames:)`, and
+/// `WidgetSnapshotBuilderTests.slugSetsCountTowardsMuscleCredit` asserts the
+/// sheet's row and the tile's bar against one logged set.
 @Suite("Weekly muscle focus")
 struct MuscleFocusTests {
 

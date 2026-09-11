@@ -123,8 +123,15 @@ describe('native token discipline', () => {
       expect(existsSync(file), `${file} is missing`).toBe(true)
     }
     const tokens = readFileSync(TOKEN_FILES[0], 'utf8')
-    // The four domain accents, spelled once each. If a fifth hue appears here
-    // the mandate has been widened and that should be a deliberate diff.
+    // The four domain accents, spelled once each. If a fifth CHROME hue appears
+    // here the mandate has been widened and that should be a deliberate diff.
+    //
+    // The sixteen landmark muscles are the one categorical palette in the system
+    // and the one deliberate exception to "four accents" (founder decision 4,
+    // W3). They are data, not chrome: the rule they answer to is that any two of
+    // them are tellable apart in one legend, which the four accents could not do
+    // — they drew chest, three delts and three arm muscles in one indigo. Each
+    // appears ONCE: a family's colour is its middle landmark's, not a ninth hex.
     const hexes = [...tokens.matchAll(/0x[0-9A-Fa-f]{6}/g)].map((m) => m[0].toUpperCase())
     expect(new Set(hexes).size).toBe(hexes.length)
     expect(hexes).toEqual([
@@ -134,6 +141,16 @@ describe('native token discipline', () => {
       '0X4CAF87',                                       // good
       '0XFFD35C',                                       // record — the only fifth hue
       '0X5AA9E6',                                       // water
+      // The sixteen, in LandmarkMuscle order. Hue is the family's and only
+      // lightness steps inside it, light → dark.
+      '0XF66D64',                                       // Chest
+      '0X00D4CE', '0X00B6B0', '0X009894',               // Back: lats, upper, lower
+      '0XFF9F46', '0XE68100', '0XC26C00',               // Shoulders: front, side, rear
+      '0X998BFF',                                       // Biceps
+      '0X0EA6FF',                                       // Triceps
+      '0XB49F00',                                       // Forearms
+      '0X8AE171', '0X76CC5C', '0X61B647', '0X4DA230', '0X388D15',  // Legs
+      '0XE66DB6',                                       // Core
       '0X5B62C9', '0XE07A9A', '0X6E6E78',               // sleep: deep, rem, awake
     ])
     // Protein, carbs, fat and the core sleep stage are DOMAIN STOPS, not hues of

@@ -102,12 +102,6 @@ public struct WidgetE1rm: Codable, Sendable, Equatable {
     public var trend: [TrendPoint]
 }
 
-public struct WidgetFamilyVolume: Codable, Sendable, Equatable {
-    public var family: String
-    public var kg: Double
-    public var sets: Double
-}
-
 public struct VitalBlock: Codable, Sendable, Equatable {
     public var value: Double?
     public var baseline: Double?
@@ -311,44 +305,13 @@ public enum WidgetDerive {
         return sorted.prefix(max(0, limit)).map(\.e1rm)
     }
 
-    // MARK: Volume by muscle family
-
-    /// Primary full, secondary half, never both for one family. Warm-ups COUNT.
-    public static func volumeByFamily(_ sets: [WidgetSetRow]) -> [WidgetFamilyVolume] {
-        var order: [MuscleFamily] = []
-        var kg: [MuscleFamily: Double] = [:]
-        var setCount: [MuscleFamily: Double] = [:]
-        func families(_ tokens: [String]) -> [MuscleFamily] {
-            var out: [MuscleFamily] = []
-            for t in tokens {
-                if let l = LandmarkMuscle.from(token: t) {
-                    let f = MuscleFamily.of(l)
-                    if !out.contains(f) { out.append(f) }
-                }
-            }
-            return out
-        }
-        for s in sets {
-            let volume = (s.weightKg ?? 0) * (s.reps ?? 0)
-            let movers = MuscleMap.resolveMovers(s.exercise)
-            let primary = families(movers.primary)
-            let secondary = families(movers.secondary)
-            func credit(_ f: MuscleFamily, _ share: Double) {
-                if !order.contains(f) { order.append(f) }
-                if volume > 0 { kg[f] = (kg[f] ?? 0) + volume * share }
-                setCount[f] = (setCount[f] ?? 0) + share
-            }
-            for f in primary { credit(f, 1) }
-            for f in secondary where !primary.contains(f) { credit(f, MuscleCredit.secondarySetCredit) }
-        }
-        let rows = order.map { WidgetFamilyVolume(family: $0.rawValue, kg: jsRound(kg[$0] ?? 0), sets: round1(setCount[$0] ?? 0)) }
-            .filter { $0.kg > 0 || $0.sets > 0 }
-        return rows.enumerated().sorted { a, b in
-            if a.element.kg != b.element.kg { return a.element.kg > b.element.kg }
-            if a.element.sets != b.element.sets { return a.element.sets > b.element.sets }
-            return a.offset < b.offset
-        }.map(\.element)
-    }
+    // ── `volumeByFamily` LIVED HERE ──────────────────────────────────────────
+    // Deleted in W3. It was the second of the three accumulators F7 found: six
+    // families, half credit for assistance, the athlete's week start — agreeing
+    // with neither the Trends card above it nor the sheet the tile opens. The
+    // widget now reads `MuscleCredit.weightedSets(exerciseNames:)` like
+    // everything else, and rolls the sixteen up to the eight in the payload
+    // (`OnyxSnapshot.volumeByFamily`). Do not re-add a family-grained count.
 
     // MARK: Vitals
 

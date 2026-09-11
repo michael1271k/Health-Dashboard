@@ -426,13 +426,15 @@ private struct LiftRow: View {
   }
 }
 
-/// Where the week's tonnage went, as one bar per muscle family.
+/// Where the week's work went, as one bar per muscle family.
 ///
-/// Scaled against the week's OWN maximum. There is no per-family volume landmark
-/// to grade against — `volumeZone` measures direct SETS against per-muscle
-/// Renaissance-Periodisation targets, which is a different quantity entirely — so
-/// a bar coloured by "zone" here would look like a verdict and be an invention.
-/// Relative emphasis is the comparison the data actually supports.
+/// ── WHY THE BAR IS SETS AND NOT TONNAGE, SINCE W3 ──────────────────────────
+/// It used to scale by kg and label itself with sets, which is two currencies in
+/// one 26 pt bar: a heavy leg day and a long arm day drew the same picture for
+/// opposite reasons. The programme is written in sets, the targets are in sets,
+/// and the sheet this register echoes is in sets — so the bar is sets, scaled
+/// against the week's own busiest family, and the tint carries the verdict the
+/// scale cannot: Good once the phase's target is met.
 ///
 /// Shared by the Records Large and the Volume Large: it is the same register
 /// answering the same question, and two copies of it would drift.
@@ -442,11 +444,11 @@ struct FamilySplit: View {
   var height: CGFloat = 26
 
   var body: some View {
-    if families.isEmpty {
+    if families.allSatisfy({ $0.sets == 0 }) {
       Text("no sets logged this week")
         .font(OnyxWidgetType.face(10)).foregroundStyle(Color.onyx.textSecondary)
     } else {
-      let peak = families.map(\.kg).max() ?? 1
+      let peak = families.map(\.sets).max() ?? 1
       HStack(alignment: .bottom, spacing: 6) {
         ForEach(families) { family in
           VStack(spacing: 3) {
@@ -454,15 +456,14 @@ struct FamilySplit: View {
               VStack(spacing: 0) {
                 Spacer(minLength: 0)
                 RoundedRectangle(cornerRadius: 2)
-                  .fill(mono ? .white : OnyxDomain.forFamily(family.family).accent)
-                  .frame(height: max(2, geo.size.height * CGFloat(peak > 0 ? family.kg / peak : 0)))
+                  // The family's own colour in every state — see `MuscleView.bar`.
+                  .fill(mono ? .white : Color.onyx.muscleFamily(family.family))
+                  .frame(height: max(2, geo.size.height * CGFloat(peak > 0 ? family.sets / peak : 0)))
               }
             }
             .frame(height: height)
-            Text(family.family.prefix(4).uppercased())
+            Text(family.family.rawValue.prefix(4).uppercased())
               .font(OnyxWidgetType.face(7, weight: .bold)).foregroundStyle(Color.onyx.textSecondary)
-            // Sets, not tonnage: the bar already carries the tonnage, and the
-            // set count is the figure the programme is actually written in.
             // Fractional by design — a secondary mover earns half a set.
             Text(String(format: "%.0f", family.sets))
               .font(OnyxWidgetType.face(8, weight: .semibold)).monospacedDigit()

@@ -39,7 +39,19 @@ public extension AppDatabase {
                 .order(Column("date").asc, Column("started_at").asc)
                 .fetchAll(db)
             guard !sessions.isEmpty else { return [] }
-            let names = Dictionary(try Exercise.fetchAll(db).map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
+            // ── THE CATALOGUE, PLUS THE SLUGS THE PHONE WRITES ──────────────
+            // `exercises` holds server uuids only. A set logged on the phone is
+            // stamped `helix5-<slug>` and keeps that id for as long as the
+            // session has local events. Naming only the catalogue dropped every
+            // phone-logged set from muscle credit — "Side delts 0/7" after an
+            // Upper B was exactly this (F2), fixed in W1 at the widget's reader
+            // and at `LoggerModel.restoreLoggedSets`, and MISSED here because
+            // nothing keyed on muscle read this table until W3's atlas card.
+            let exercises = try Exercise.fetchAll(db)
+            let names = Dictionary(
+                exercises.map { ($0.id, $0.name) } + ExerciseSlug.nameBySlug(exercises).map { ($0.key, $0.value) },
+                uniquingKeysWith: { a, _ in a }
+            )
             let sets = try WorkoutSet
                 .filter(sessions.map(\.id).contains(Column("session_id")))
                 .order(Column("fold_order").asc, Column("set_index").asc)

@@ -99,8 +99,13 @@ struct WidgetSnapshotBuilderTests {
         let sideDelts = feed.muscleFocus.rows.first { $0.muscle == .sideDelts }
         #expect(sideDelts?.sets == 1, "the sheet credits the slug set")
 
-        let families = try #require(build(db, .full).volumeByFamily)
-        #expect(families.contains { $0.family == "Shoulders" && $0.sets == 1 }, "the tile agrees: \(families)")
+        // The tile reads the same sixteen and rolls them up to eight. One
+        // accumulator (F7): the sheet's Side delts row and the tile's Shoulders
+        // bar are now the same arithmetic, not two that happen to agree.
+        let payload = try #require(build(db, .full).muscleFocus)
+        #expect(payload.first { $0.muscle == "Side delts" }?.sets == 1, "the tile credits the slug set")
+        let families = try build(db, .full).volumeByFamily
+        #expect(families.contains { $0.family == .shoulders && $0.sets == 1 }, "the tile agrees: \(families)")
     }
 
     @Test("the full scope carries the route's headline numbers")
@@ -204,7 +209,7 @@ struct WidgetSnapshotBuilderTests {
     func lifestyleScope() throws {
         let s = try build(try seeded(), .lifestyle)
         #expect(s.steps.trend != nil && s.vitals != nil && s.water.trend != nil && s.macros.kcalTrend != nil && s.weight.trend != nil)
-        #expect(s.records == nil && s.e1rm == nil && s.volumeByFamily == nil && s.volumeTrend == nil)
+        #expect(s.records == nil && s.e1rm == nil && s.muscleFocus == nil && s.volumeTrend == nil)
         #expect(s.calendar == nil && s.cardio == nil)
         #expect(s.body == nil && s.scores == nil && s.readiness == nil && s.sleep.trend == nil)
     }
@@ -212,7 +217,7 @@ struct WidgetSnapshotBuilderTests {
     @Test("performance keeps records, 1RM and the family split")
     func performanceScope() throws {
         let s = try build(try seeded(), .performance)
-        #expect(s.records != nil && s.e1rm != nil && s.volumeByFamily != nil && s.volumeTrend != nil)
+        #expect(s.records != nil && s.e1rm != nil && s.muscleFocus != nil && s.volumeTrend != nil)
         #expect(s.steps.trend == nil && s.vitals == nil && s.water.trend == nil && s.weight.trend == nil)
         #expect(s.calendar == nil && s.cardio == nil && s.body == nil && s.scores == nil)
     }

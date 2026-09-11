@@ -702,7 +702,7 @@ struct SessionDetailView: View {
             HStack(spacing: 1) {
                 ForEach(Array(rows.enumerated()), id: \.element.muscle) { i, row in
                     Rectangle()
-                        .fill(Color.onyx.muscle(row.muscle, step: i, of: rows.count))
+                        .fill(Color.onyx.muscle(row.muscle))
                         .frame(width: total > 0 ? max(2, proxy.size.width * row.sets / total) : 0)
                 }
             }
@@ -720,7 +720,7 @@ struct SessionDetailView: View {
             ForEach(Array(rows.prefix(4).enumerated()), id: \.element.muscle) { i, row in
                 HStack(spacing: OnyxSpace.xs) {
                     Circle()
-                        .fill(Color.onyx.muscle(row.muscle, step: i, of: rows.count))
+                        .fill(Color.onyx.muscle(row.muscle))
                         .frame(width: 6, height: 6)
                     Text(row.muscle.displayName)
                         .onyxType(.caption)

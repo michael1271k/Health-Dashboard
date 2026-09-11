@@ -80,6 +80,10 @@ public struct WidgetSnapshotBuilder: Sendable {
         // cheaper mistake.
         var ledgerLogs: [DailyLogRow]
         var ledgerNutrition: [NutritionEntryRow]
+        /// This phase's per-muscle set targets, keyed by `LandmarkMuscle.rawValue`
+        /// — the `plan_phase_volume` rows. The tile grades against these, which
+        /// is what makes it the same reading as the sheet it opens.
+        var phaseVolume: [String: Int]
         /// The phase's own rate band and target weight — the `plan_phase_goals`
         /// row. No compiled fallback since W2: no row, no destination.
         var phaseGoals: PlanPhaseGoalRow?
@@ -369,7 +373,7 @@ public struct WidgetSnapshotBuilder: Sendable {
             weekPrev: Self.totals(prevSessions),
             records: performance?.records,
             e1rm: performance?.e1rm,
-            volumeByFamily: performance?.volumeByFamily,
+            muscleFocus: performance?.muscleFocus,
             today: todaySessions.isEmpty ? nil : OnyxSnapshot.Today(
                 durationMin: longest?.session.durationMin.map { Int($0.rounded()) },
                 sessionRpe: longest?.session.sessionRpe,
@@ -497,6 +501,13 @@ public struct WidgetSnapshotBuilder: Sendable {
                 ledgerNutrition: try NutritionEntryRow
                     .filter(user && Column("date") >= ledgerFrom && Column("date") <= date && Column("meal_type") == "daily")
                     .fetchAll(db),
+                phaseVolume: Dictionary(
+                    try PlanPhaseVolumeRow
+                        .filter(user && Column("plan_id") == programId && Column("phase") == phase.rawValue)
+                        .fetchAll(db)
+                        .map { ($0.muscle, $0.targetSets) },
+                    uniquingKeysWith: { _, last in last }
+                ),
                 phaseGoals: try PlanPhaseGoalRow
                     .filter(user && Column("plan_id") == programId
                             && Column("phase") == phase.rawValue)
@@ -665,8 +676,8 @@ public struct WidgetSnapshotBuilder: Sendable {
         return WidgetDerive.trendPoints(order.map { DatedValue(date: $0, value: byDate[$0] ?? nil) }, limit: 7)
     }
 
-    /// Records, 1RM movement and the week's muscle-family split.
-    func performanceSlice(_ rows: Rows, date: String, weekStart: String) -> (records: [OnyxSnapshot.Record], e1rm: [OnyxSnapshot.E1rm], volumeByFamily: [OnyxSnapshot.FamilyVolume]) {
+    /// Records, 1RM movement and the week's sets per LANDMARK against target.
+    func performanceSlice(_ rows: Rows, date: String, weekStart: String) -> (records: [OnyxSnapshot.Record], e1rm: [OnyxSnapshot.E1rm], muscleFocus: [OnyxSnapshot.MuscleVolume]) {
         let since = ISODate.addDays(date, -Self.performanceHistoryDays) ?? date
         let weekEnd = ISODate.addDays(weekStart, 7) ?? date
         let dayOf = Dictionary(rows.sessions.map { ($0.session.id, $0.date) }, uniquingKeysWith: { a, _ in a })
@@ -689,9 +700,27 @@ public struct WidgetSnapshotBuilder: Sendable {
             WidgetDerive.e1rmTrends(sets, asOf: date, limit: 5).map {
                 OnyxSnapshot.E1rm(exercise: $0.exercise, kg: $0.kg, deltaKg: $0.deltaKg, trend: Self.points($0.trend))
             },
-            WidgetDerive.volumeByFamily(weekSets).map {
-                OnyxSnapshot.FamilyVolume(family: $0.family, kg: $0.kg, sets: $0.sets)
-            }
+            // ── THE ONE ACCUMULATOR (F7) ────────────────────────────────────
+            // The same call `TodayFeedBuilder.muscleFocus` makes, over the same
+            // week, with the same ghost exclusion — so the tile and the sheet it
+            // opens cannot disagree about how much work the week was. Every one
+            // of the sixteen is present whether or not the week touched it: a
+            // muscle that vanishes when untrained is the one you most need to
+            // see, and the payload is what the figure paints.
+            {
+                let credit = MuscleCredit.weightedSets(
+                    exerciseNames: weekSets.filter { $0.setType != "ghost" }.map(\.exercise)
+                )
+                return LandmarkMuscle.allCases.map { muscle in
+                    OnyxSnapshot.MuscleVolume(
+                        muscle: muscle.rawValue,
+                        // One decimal: the credit is halves, and a raw Double
+                        // prints 8.500000000000002 often enough to matter.
+                        sets: ((credit[muscle] ?? 0) * 10).rounded() / 10,
+                        target: rows.phaseVolume[muscle.rawValue] ?? 0
+                    )
+                }
+            }()
         )
     }
 

@@ -241,16 +241,58 @@ public struct OnyxSnapshot: Codable, Sendable, Equatable {
       self.trend = trend
     }
   }
-  public struct FamilyVolume: Codable, Sendable, Equatable, Identifiable {
-    public let family: String
-    public let kg: Double
+  /// One LANDMARK's week: weighted sets against the phase's target.
+  ///
+  /// The payload's muscle grain since W3, and the only one — the eight-family
+  /// figures the bars draw are rolled up from these (`volumeByFamily`), so a
+  /// tile cannot disagree with the sheet it opens about how much work a session
+  /// was. Decision 4: charts group by eight, the atlas paints sixteen; one array
+  /// is what makes those the same reading at two grains.
+  public struct MuscleVolume: Codable, Sendable, Equatable, Identifiable {
+    /// `LandmarkMuscle.rawValue` — the display spelling the atlas keys on.
+    public let muscle: String
     /// Fractional by design: a secondary mover earns half a set.
     public let sets: Double
-    public var id: String { family }
-    public init(family: String, kg: Double, sets: Double) {
-      self.family = family
-      self.kg = kg
+    /// The `plan_phase_volume` row for this muscle and phase. Zero is a real
+    /// answer: Adductors is 0 on a cut, and a muscle with no target is not
+    /// behind, it is unasked-for.
+    public let target: Int
+    public var id: String { muscle }
+    public init(muscle: String, sets: Double, target: Int) {
+      self.muscle = muscle
       self.sets = sets
+      self.target = target
+    }
+    public var landmark: LandmarkMuscle? { LandmarkMuscle(rawValue: muscle) }
+  }
+
+  /// A family's week — the sum of its landmarks', in the same currency.
+  ///
+  /// ── WHY A SUM AND NOT A SET COUNT ──────────────────────────────────────────
+  /// A leg press credits quads in full and glutes and hamstrings at a half, so
+  /// one physical set rolls up to 2.0 weighted sets of Legs. That is not double
+  /// counting: it is what the muscles were asked for, and the TARGET rolls up
+  /// the same way (quads 10 + hams 8 + glutes 8 + adductors 0 + calves 6 = 32),
+  /// so the ratio the bar draws is the ratio the programme is written in.
+  public struct FamilyVolume: Codable, Sendable, Equatable, Identifiable {
+    /// The family itself, not its name. It is built from `MuscleFamily.allCases`
+    /// and only ever read to pick a colour and a label, so a `String` bought
+    /// nothing and cost every reader a `MuscleFamily(rawValue:) ?? .chest` —
+    /// which turns a typo into chest-red rather than into a compile error.
+    public let family: MuscleFamily
+    /// Fractional by design: a secondary mover earns half a set.
+    public let sets: Double
+    public let target: Int
+    public var id: String { family.rawValue }
+    public init(family: MuscleFamily, sets: Double, target: Int) {
+      self.family = family
+      self.sets = sets
+      self.target = target
+    }
+    /// 0…1 against the target, or nil when the plan asks for nothing — a rail
+    /// that sits full or empty at random says less than no rail.
+    public var progress: Double? {
+      target > 0 ? Swift.min(1, sets / Double(target)) : nil
     }
   }
 
@@ -510,7 +552,10 @@ public struct OnyxSnapshot: Codable, Sendable, Equatable {
   public let weekPrev: WeekTotals?
   public let records: [Record]?
   public let e1rm: [E1rm]?
-  public let volumeByFamily: [FamilyVolume]?
+  /// The week's weighted sets per landmark, against this phase's targets.
+  /// Named `volumeByFamily` until W3, when the grain moved down to the sixteen
+  /// and the eight became a rollup of it rather than a second count.
+  public let muscleFocus: [MuscleVolume]?
 
   // ── Added with the four configurable families ──────────────────────────────
   // Every one is OPTIONAL, including `today`, which the server sends in all
@@ -557,7 +602,7 @@ public struct OnyxSnapshot: Codable, Sendable, Equatable {
   /// Body scope. Four composition metrics and their own spans.
   public let bodyComp: [BodyCompMetric]?
 
-  public init(date: String, generatedAt: String, scope: String? = nil, battery: Int? = nil, score: Int? = nil, sleep: Sleep, weight: Weight, macros: Macros, water: Water, steps: Steps, workout: Workout, week: Week, weekPrev: WeekTotals? = nil, records: [Record]? = nil, e1rm: [E1rm]? = nil, volumeByFamily: [FamilyVolume]? = nil, today: Today? = nil, streak: Streak? = nil, context: DayContext? = nil, cardio: Cardio? = nil, calendar: [CalendarDay]? = nil, volumeTrend: [Point]? = nil, body: Body? = nil, scores: Scores? = nil, readiness: Readiness? = nil, vitals: Vitals? = nil, consistency: Consistency? = nil, deficit: DeficitLedger? = nil, trajectory: Trajectory? = nil, batteryStack: [BatteryStackDay]? = nil, bodyComp: [BodyCompMetric]? = nil) {
+  public init(date: String, generatedAt: String, scope: String? = nil, battery: Int? = nil, score: Int? = nil, sleep: Sleep, weight: Weight, macros: Macros, water: Water, steps: Steps, workout: Workout, week: Week, weekPrev: WeekTotals? = nil, records: [Record]? = nil, e1rm: [E1rm]? = nil, muscleFocus: [MuscleVolume]? = nil, today: Today? = nil, streak: Streak? = nil, context: DayContext? = nil, cardio: Cardio? = nil, calendar: [CalendarDay]? = nil, volumeTrend: [Point]? = nil, body: Body? = nil, scores: Scores? = nil, readiness: Readiness? = nil, vitals: Vitals? = nil, consistency: Consistency? = nil, deficit: DeficitLedger? = nil, trajectory: Trajectory? = nil, batteryStack: [BatteryStackDay]? = nil, bodyComp: [BodyCompMetric]? = nil) {
     self.date = date
     self.generatedAt = generatedAt
     self.scope = scope
@@ -573,7 +618,7 @@ public struct OnyxSnapshot: Codable, Sendable, Equatable {
     self.weekPrev = weekPrev
     self.records = records
     self.e1rm = e1rm
-    self.volumeByFamily = volumeByFamily
+    self.muscleFocus = muscleFocus
     self.today = today
     self.streak = streak
     self.context = context
@@ -593,6 +638,42 @@ public struct OnyxSnapshot: Codable, Sendable, Equatable {
 }
 
 extension OnyxSnapshot {
+  /// The eight families, rolled up from the sixteen landmarks.
+  ///
+  /// Computed and not stored: two arrays that must agree is precisely the
+  /// disease W3 cured (F7 — three accumulators, three currencies). In
+  /// `MuscleFamily.allCases` order, which is the legend's order, and families
+  /// the week never touched AND the plan never asked for are dropped — a bar of
+  /// zero against a target of zero is a row that says nothing.
+  public var volumeByFamily: [FamilyVolume] { Self.familyRollup(muscleFocus ?? []) }
+
+  /// The rollup itself, so a test can check it without building a whole payload.
+  public static func familyRollup(_ rows: [MuscleVolume]) -> [FamilyVolume] {
+    let byMuscle = Dictionary(
+      rows.compactMap { row in row.landmark.map { ($0, row) } },
+      uniquingKeysWith: { a, _ in a }
+    )
+    return MuscleFamily.allCases.compactMap { family in
+      let owned = family.members.compactMap { byMuscle[$0] }
+      let sets = owned.reduce(0) { $0 + $1.sets }
+      let target = owned.reduce(0) { $0 + $1.target }
+      guard sets > 0 || target > 0 else { return nil }
+      return FamilyVolume(family: family, sets: (sets * 10).rounded() / 10, target: target)
+    }
+  }
+
+  /// Landmark → 0…1 for the atlas. `MuscleCredit.worked(sets:targets:)` states
+  /// the rule; this is the payload's spelling of the same call the Today sheet
+  /// and the Trends card make.
+  public var muscleWorked: [String: Double] {
+    let rows = (muscleFocus ?? []).compactMap { row in row.landmark.map { ($0, row) } }
+    let worked = MuscleCredit.worked(
+      sets: Dictionary(rows.map { ($0.0, $0.1.sets) }, uniquingKeysWith: { a, _ in a }),
+      targets: Dictionary(rows.map { ($0.0, $0.1.target) }, uniquingKeysWith: { a, _ in a })
+    )
+    return Dictionary(worked.map { ($0.key.rawValue, $0.value) }, uniquingKeysWith: { a, _ in a })
+  }
+
   /// One composition metric out of the W12 series, or nil when the payload
   /// predates it. Every face reads it through here so a missing series is one
   /// `nil` rather than four spellings of the same lookup.

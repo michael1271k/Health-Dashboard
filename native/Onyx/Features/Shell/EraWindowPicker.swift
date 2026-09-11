@@ -133,6 +133,10 @@ enum EraWindowSource {
         EraWindowInput(
             today: today,
             planLabel: schedule.plans.first { $0.id == schedule.programId }?.label ?? schedule.programId,
+            // `.thisWeek` is the muscle atlas card's default and the window the
+            // set targets are written in; without this it would fall back to a
+            // Sunday start for a Monday athlete.
+            weekEndDay: goals?.weekEndDay,
             // An empty string is not a selection — `WeeklyExportBuilder` reads
             // the column the same way, because a blank there means "nothing
             // stored" and `isLeverId("")` would say otherwise.

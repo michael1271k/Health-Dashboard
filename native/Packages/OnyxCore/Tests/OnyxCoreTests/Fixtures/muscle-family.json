@@ -1,7 +1,7 @@
 {
-  "module": "theme/muscleHue",
-  "fn": "familyOf",
-  "note": "Landmark muscle → one of six families. Colours are NOT ported.",
+  "module": "training/muscleFamily",
+  "fn": "MuscleFamily.of",
+  "note": "Landmark muscle -> one of EIGHT families (founder decision 4, W3). The six it replaced folded biceps, triceps and forearms into one 'Arms', which no `plan_phase_volume` row has ever agreed with. Colours are not ported; they are OnyxUI tokens.",
   "cases": [
     {
       "name": "Chest",
@@ -57,21 +57,21 @@
       "input": {
         "muscle": "Biceps"
       },
-      "expected": "Arms"
+      "expected": "Biceps"
     },
     {
       "name": "Triceps",
       "input": {
         "muscle": "Triceps"
       },
-      "expected": "Arms"
+      "expected": "Triceps"
     },
     {
       "name": "Forearms",
       "input": {
         "muscle": "Forearms"
       },
-      "expected": "Arms"
+      "expected": "Forearms"
     },
     {
       "name": "Quads",
