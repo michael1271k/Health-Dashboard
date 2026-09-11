@@ -47,6 +47,26 @@ _Nothing yet._
 
 ---
 
+## [2.0.1] — 2026-09-11 · The Ceiling That Was the Wrong Muscle
+
+### Fixed
+
+- **Native · InBody sheet.** A muscle-mass percentage above 70 % was refused
+  with *"muscle 80.2 is outside 10–70%"*, and the reading could not be saved.
+  The ceiling was the one for SKELETAL muscle applied to the column that holds
+  the scale's MUSCLE MASS percentage — lean soft tissue over bodyweight, which
+  on a lean athlete reads high-70s to low-80s on every InBody. The gate
+  (`VitalsGate.musclePercentRange`) now runs 10–85 %, wide enough for a real
+  reading and still narrow enough to catch a kilogram typed into a percent
+  field. Nothing about the number changed: the same value, the same derived
+  muscle mass, the same ledger row — it just lands now.
+  The app's own preview fixtures used 77.6 %, a value the old gate would have
+  refused, so this was never only about one reading.
+  Skeletal muscle (kg) and fat-free mass (kg) are unaffected and were already
+  loggable; neither is derived from this percentage.
+
+---
+
 ## [2.0.0] — 2026-09-11 · Somebody Else's First Day
 
 Onyx has had one user, and every screen quietly assumed it. Sign-up asked for an

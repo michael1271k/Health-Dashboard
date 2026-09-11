@@ -244,7 +244,10 @@ struct InvariantTests {
     @Test("body: the percentages a scale can report have physiologic bounds")
     func bodyPercentBounds() {
         #expect(VitalsGate.bodyFatArtifact(18.2) == nil && VitalsGate.bodyFatArtifact(1.5) != nil && VitalsGate.bodyFatArtifact(71) != nil)
-        #expect(VitalsGate.musclePercentArtifact(41) == nil && VitalsGate.musclePercentArtifact(9) != nil && VitalsGate.musclePercentArtifact(70.1) != nil)
+        #expect(VitalsGate.musclePercentArtifact(41) == nil && VitalsGate.musclePercentArtifact(9) != nil && VitalsGate.musclePercentArtifact(85.1) != nil)
+        // A lean InBody reading. Muscle % is lean SOFT TISSUE, not skeletal
+        // muscle, and the old 70 ceiling refused this one.
+        #expect(VitalsGate.musclePercentArtifact(80.2) == nil && VitalsGate.musclePercentArtifact(77.6) == nil)
         #expect(VitalsGate.visceralFatArtifact(6) == nil && VitalsGate.visceralFatArtifact(0) != nil && VitalsGate.visceralFatArtifact(31) != nil)
         #expect(VitalsGate.bodyFatArtifact(.nan) != nil)
     }
