@@ -130,6 +130,7 @@ begin
   delete from public.personal_records    where user_id = uid;
   delete from public.routine_templates   where user_id = uid;
   delete from public.doms_logs           where user_id = uid;
+  delete from public.joint_flags         where user_id = uid;
   delete from public.plan_phase_goals    where user_id = uid;
   delete from public.plan_phase_volume   where user_id = uid;
   delete from public.program_day_layout  where user_id = uid;
