@@ -38,6 +38,10 @@ final class DayModel {
     // ── Per date ────────────────────────────────────────────────────────────
     private(set) var log: DailyLogRow?
     private(set) var fatigueRows: [FatigueLogRow] = []
+    private(set) var stressRows: [StressLogRow] = []
+    /// Whether the date carries a session — the other half of the day's kind.
+    /// See `isTraining`.
+    private(set) var sessionLogged = false
     private(set) var doms: [DomsLogRow] = []
     private(set) var supplementLog: [SupplementLogRow] = []
     private(set) var cardio: [CardioLogRow] = []
@@ -146,7 +150,8 @@ final class DayModel {
         dateTasks.forEach { $0.cancel() }
         // Cleared, not left standing: these belong to the previous day until the
         // new streams' first yield, and a stale row under a new title is a lie.
-        log = nil; fatigueRows = []; doms = []; supplementLog = []; cardio = []; night = nil; nights = []
+        log = nil; fatigueRows = []; stressRows = []; doms = []; supplementLog = []; cardio = []; night = nil; nights = []
+        sessionLogged = false
         swapNote = nil
         let d = date
         let from = ISODate.addDays(d, -(SleepDebt.windowDays - 1)) ?? d
@@ -166,6 +171,8 @@ final class DayModel {
                 }
             },
             watch(database.fatigueStream(userId: userId, date: d), into: \.fatigueRows),
+            watch(database.stressStream(userId: userId, date: d), into: \.stressRows),
+            watch(database.sessionLoggedStream(userId: userId, date: d), into: \.sessionLogged),
             watch(database.domsStream(userId: userId, date: d), into: \.doms),
             watch(database.supplementLogStream(userId: userId, date: d), into: \.supplementLog),
             watch(database.cardioStream(userId: userId, date: d), into: \.cardio),
@@ -359,8 +366,20 @@ final class DayModel {
     }
 
     /// Cancellation is not a failure — every date change cancels seven streams.
+    ///
+    /// ── AN ERROR THAT KNOWS WHY SAYS SO (W1 LEFT THIS) ──────────────────────
+    /// `saveBodyMetrics` refuses a reading a body cannot report and throws a
+    /// `BodyMetricError` that names the field, the value and what is wrong with
+    /// it. Every one of those arrived here and came back out as "That change
+    /// could not be saved on this device" — which is not only useless, it is
+    /// false: the device is fine and the number is not. A typo of 855 in the
+    /// body-fat field read as a broken phone.
     private func report(_ error: any Error) {
         if error is CancellationError { return }
+        if let refused = error as? BodyMetricError {
+            failure = refused.description
+            return
+        }
         failure = "That change could not be saved on this device."
     }
 
@@ -386,7 +405,21 @@ final class DayModel {
     var program: Program { Schedule.programForContext(context, date).program }
 
     var scheduled: ScheduleDay? { Schedule.scheduleDayIn(context, date) }
-    var isTraining: Bool { Schedule.isTrainingDayIn(context, date) }
+    /// Training day — as PLANNED or as LOGGED.
+    ///
+    /// ── W1 LEFT THIS READING THE PLAN ALONE ─────────────────────────────────
+    /// The scorer settled on one rule (`AppDatabase.isTrainingDay`: a session
+    /// exists, or the calendar says so) and this screen kept the plan-only
+    /// half. So a session trained on a scheduled rest day offered Waking ·
+    /// Midday · Night while the fold behind the score used Waking · Before ·
+    /// After — a day where the slot you were asked for did not exist in the
+    /// arithmetic that read your answer, and the stack dropped its
+    /// training-only items under a session in progress.
+    ///
+    /// `sessionLogged` counts sessions exactly as `ScheduleResolution` counts
+    /// them, unfinished ones included: the slot being asked for is "Before
+    /// training", and it is asked for mid-session.
+    var isTraining: Bool { Schedule.isTrainingDayIn(context, date) || sessionLogged }
     var isOverridden: Bool { overrides[date] != nil }
 
     /// What is on any date, overrides included — the closure `Swap` plans over.
@@ -455,6 +488,32 @@ final class DayModel {
 
     /// Term by term, for the breakdown sheet.
     var stressBreakdown: Stress.Breakdown? { window.stressBreakdown }
+
+    // MARK: - Head — the typed stress reading (decision 3)
+
+    /// The day's own answers, earliest bucket first. A row whose slot this
+    /// build does not know is dropped rather than drawn under a blank heading.
+    var stressReadings: [StressReading] {
+        // In the order the DAY happens, which is `allCases` — sorting on the raw
+        // value is alphabetical and puts evening first.
+        let order = Dictionary(uniqueKeysWithValues: StressSlot.allCases.enumerated().map { ($1, $0) })
+        return stressRows.compactMap(AppDatabase.reading)
+            .sorted { (order[$0.slot] ?? 0) < (order[$1.slot] ?? 0) }
+    }
+
+    /// The bucket a reading taken NOW belongs to — never a choice the user
+    /// makes (`StressSlot.forClock`).
+    var stressSlot: StressSlot { StressSlot.forClock(clock) }
+
+    /// What the row states: the LATEST answer, not the day's mean. The mean is
+    /// the index's business (`StressInputsBuilder`).
+    var stressLatest: StressReading? { PsychStress.latest(stressReadings) }
+
+    /// The answer already sitting in a bucket, so the sheet edits rather than
+    /// duplicates.
+    func stressReading(_ slot: StressSlot) -> StressReading? {
+        stressReadings.first { $0.slot == slot }
+    }
 
     // MARK: - The now strip
 
@@ -587,6 +646,33 @@ final class DayModel {
         }
     }
 
+    /// Write (or clear) one bucket's stress reading. Returns whether it landed,
+    /// so the sheet closes on success and keeps the typing on failure.
+    ///
+    /// Optimistic like every other writer here — but the optimism is a full row
+    /// rather than a field, because the sheet commits level, tags and note
+    /// together and a half-applied echo would draw a reading nobody entered.
+    @discardableResult
+    func setStress(_ slot: StressSlot, level: Int?, tags: [StressTag] = [], note: String? = nil) -> Bool {
+        stressRows.removeAll { $0.slot == slot.rawValue }
+        if let level {
+            let trimmed = (note ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            stressRows.append(StressLogRow(
+                id: "local", userId: userId, date: date, slot: slot.rawValue, level: level,
+                tags: JSONText(raw: "[" + StressTag.sorted(tags).map { "\"\($0.rawValue)\"" }.joined(separator: ",") + "]"),
+                note: trimmed.isEmpty ? nil : trimmed,
+                createdAt: Date(), updatedAt: Date()
+            ))
+        }
+        let landed = write { [database, userId, date] in
+            try database.setStress(userId: userId, date: date, slot: slot, level: level, tags: tags, note: note)
+        }
+        // The index is a read over the day's rows, so a new reading only shows
+        // up on the tile and in the breakdown once the window is rebuilt.
+        if landed { loadWindow() }
+        return landed
+    }
+
     /// Attribution (`source`) is left nil: the session that caused the soreness
     /// is a 72-hour lookup over `workout_sessions` the web runs per muscle, and
     /// nothing on this screen reads it back yet.
@@ -646,32 +732,92 @@ final class DayModel {
     }
 
     /// Add a supplement to the stack.
+    @discardableResult
     func addSupplement(
-        name: String, dose: String, time: String?, days: [Int],
+        name: String, dose: String, doseAmount: Double? = nil, doseUnit: String? = nil,
+        time: String?, days: [Int],
         color: String?, form: String?, notes: String?, trainingOnly: Bool
-    ) {
+    ) -> Bool {
         let schedule = CustomSchedule(
             days: days.isEmpty ? nil : days,
             slot: nil,
             notes: (notes ?? "").isEmpty ? nil : notes,
             trainingOnly: trainingOnly ? true : nil
         )
-        write { [database, userId] in
+        return write { [database, userId] in
             try database.addCustomSupplement(
                 userId: userId, name: name, dose: dose,
-                color: color, form: form, time: (time ?? "").isEmpty ? nil : time,
-                schedule: schedule
+                color: color, form: (form ?? "").isEmpty ? nil : form,
+                time: (time ?? "").isEmpty ? nil : time,
+                schedule: schedule,
+                doseAmount: doseAmount, doseUnit: doseUnit
             )
         }
     }
 
-    /// Edit one row's name, dose or time.
-    func editSupplement(_ custom: CustomSupplement, name: String, dose: String, time: String?) {
+    /// Edit everything the form owns.
+    ///
+    /// ── WHY THIS IS NOT AN `editCustomSupplement` BLOCK ─────────────────────
+    /// The schedule is a jsonb carrying five facts the form has no field for,
+    /// one of which (`key`) is the join to every log row the item ever wrote.
+    /// `AppDatabase.updateCustomSupplement` merges rather than replaces, and
+    /// keeping that in one place is what stops the next caller from building a
+    /// fresh `CustomSchedule` and quietly orphaning a year of history.
+    @discardableResult
+    func editSupplement(
+        _ custom: CustomSupplement,
+        name: String, dose: String, doseAmount: Double?, doseUnit: String?,
+        form: String?, time: String?, days: [Int], trainingOnly: Bool
+    ) -> Bool {
         write { [database, userId] in
-            try database.editCustomSupplement(id: custom.id, userId: userId) { row in
-                row.name = name
-                row.dose = dose
-                row.time = (time ?? "").isEmpty ? nil : time
+            try database.updateCustomSupplement(
+                id: custom.id, userId: userId,
+                name: name, dose: dose, doseAmount: doseAmount, doseUnit: doseUnit,
+                form: form, time: time, days: days, trainingOnly: trainingOnly
+            )
+        }
+    }
+
+    // MARK: - Quick Log
+
+    /// The day's water, in litres, or nil when nothing has been recorded.
+    var waterMl: Double? { log?.waterMl }
+
+    /// One glass.
+    ///
+    /// ── A TAP ADDS; ONLY THE NUTRITION SHEET REPLACES ───────────────────────
+    /// `addWaterGlass` appends a row to the ledger and the HealthKit ingest
+    /// adds the glasses to what Apple reports. `setWaterOverride` — the other
+    /// door — writes a manual sentinel that makes every later sync decline the
+    /// date's water without saying so. A one-tap control must never be the
+    /// second kind (`NutritionModel.addWater` carries the same note, and the
+    /// same scar).
+    @discardableResult
+    func addWaterGlass(_ ml: Double = 250) -> Bool {
+        log?.waterMl = (log?.waterMl ?? 0) + ml
+        return write { [database, userId, date] in
+            try database.addWaterGlass(userId: userId, date: date, ml: ml)
+        }
+    }
+
+    /// Whatever you wanted to say about the day — `daily_logs.journal_md`.
+    ///
+    /// The column has existed and been mirrored since the beginning and nothing
+    /// has ever written it. Nothing reads it either: it is a note to yourself,
+    /// it scores nothing, and it is deliberately not an input to anything.
+    var note: String { log?.journalMd ?? "" }
+
+    @discardableResult
+    func setNote(_ text: String) -> Bool {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let stored: String? = trimmed.isEmpty ? nil : trimmed
+        log?.journalMd = stored
+        return write { [database, userId, date] in
+            // Named in `clearing:` so a note the user emptied reaches the
+            // server as a null rather than being omitted from the merge — the
+            // same rule `setSleepInaccurate` and `setWeighInSkipReason` follow.
+            try database.editDailyLog(userId: userId, date: date, clearing: stored == nil ? ["journal_md"] : []) {
+                $0.journalMd = stored
             }
         }
     }

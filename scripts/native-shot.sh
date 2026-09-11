@@ -83,13 +83,19 @@ shoot() {
   local screen="$1" size="$2" suffix="$3"
   xcrun simctl ui "$UDID" content_size "$size" >/dev/null
   xcrun simctl terminate "$UDID" "$BUNDLE_ID" 2>/dev/null || true
+  # `terminate` returns before the process is actually gone, and `launch` on an
+  # app that is still dying ATTACHES to it — the new `--onyx-screen` is never
+  # read and the shot photographs the previous screen under the new name. A
+  # W4 run of twelve screens came out shifted by one that way, and a shifted
+  # set is worse than a missing one: every PNG looks plausible.
+  sleep 1
   xcrun simctl launch "$UDID" "$BUNDLE_ID" --onyx-screen "$screen" >/dev/null
   # The launch returns as soon as the process exists; the first frame is a
   # few hundred ms later. Shooting too early photographs the launch screen —
   # or, on the first launch after an install, a black window: 3.5 s was enough
   # on a warm 402 pt device and produced eight solid-black PNGs on a freshly
   # created one, which is a shot that reviews as "the screen is broken".
-  sleep 6
+  sleep 8
   xcrun simctl io "$UDID" screenshot --type=png "$OUT/$screen$suffix.png" >/dev/null
   echo "  $OUT/$screen$suffix.png"
 }
@@ -100,7 +106,7 @@ read -ra SCREENS <<< "$SCREEN"
 if [ "$SCREEN" = "all" ]; then
   # Keep in step with `PreviewHarness.Screen` — the harness is the authority and
   # an unknown name there renders a visible error rather than failing silently.
-  SCREENS=(signin backfill today today-edit today-sheet today-sheet-vitals today-sheet-steps today-sheet-muscle today-sheet-records today-weighin today-board train train-empty logger logger-stats logger-paused logger-finish logger-timer set-row set-row-split set-row-cardio set-row-records set-options effort-picker day day-rows day-past day-empty sleep-edit stress scale scale-first day-swap doms stack stack-add fuel fuel-over fuel-empty nutrients macro-edit you levers sync-status sync-doctor plan body volume library exercise reports report history history-week session session-ledger session-records exercise-history trends trends-empty body-trends body-trends-empty body-trends-stress widgets)
+  SCREENS=(signin backfill today today-edit today-sheet today-sheet-vitals today-sheet-steps today-sheet-muscle today-sheet-records today-weighin today-board train train-empty logger logger-stats logger-paused logger-finish logger-timer set-row set-row-split set-row-cardio set-row-records set-options effort-picker day day-rows day-past day-empty sleep-edit stress fatigue head quick-log scale scale-first day-swap doms stack stack-add fuel fuel-over fuel-empty nutrients macro-edit you levers sync-status sync-doctor plan body volume library exercise reports report report-edit history history-week session session-ledger session-records exercise-history trends trends-empty body-trends body-trends-empty body-trends-stress widgets)
 fi
 
 # `widgets` is a contact sheet of every tile; the harness pages it because a

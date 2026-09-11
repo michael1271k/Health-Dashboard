@@ -308,9 +308,9 @@ struct WeeklyExportBuilderTests {
         {"date": "2026-08-25", "muscle": "quads", "severity": 3, "sourceLabel": "Legs & Core A", "sourceDate": "2026-08-24"}
       ],
       "fatigue": [
-        {"date": "2026-08-24", "slot": "Waking", "level": 3, "label": "Worn"},
-        {"date": "2026-08-24", "slot": "Before training", "level": 2, "label": "Fine"},
-        {"date": "2026-08-26", "slot": "Midday", "level": 4, "label": "Heavy"}
+        {"date": "2026-08-24", "slot": "Waking", "level": 3, "label": "Okay"},
+        {"date": "2026-08-24", "slot": "Before training", "level": 2, "label": "Good"},
+        {"date": "2026-08-26", "slot": "Midday", "level": 4, "label": "Tired"}
       ],
       "bodyComp": [
         {"date": "2026-08-23", "weightKg": 65, "bmi": 21.5, "bodyFatPct": 17, "bmr": 1500, "muscleMassKg": 50.1,

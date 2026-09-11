@@ -37,31 +37,31 @@
           "levels": [
             {
               "value": 1,
-              "label": "Fresh",
+              "label": "Amazing",
               "hint": "could add a rep",
               "detail": "Could add a rep to everything today."
             },
             {
               "value": 2,
-              "label": "Fine",
+              "label": "Good",
               "hint": "nothing would stop a session",
               "detail": "Normal. Nothing here would stop a planned session."
             },
             {
               "value": 3,
-              "label": "Worn",
+              "label": "Okay",
               "hint": "the plan, not a PR",
               "detail": "Could train the plan, would not chase a record."
             },
             {
               "value": 4,
-              "label": "Heavy",
+              "label": "Tired",
               "hint": "stairs register",
               "detail": "Stairs register. The warm-up would decide whether to train."
             },
             {
               "value": 5,
-              "label": "Empty",
+              "label": "Exhausted",
               "hint": "would cancel",
               "detail": "Would cancel."
             }
@@ -1421,7 +1421,7 @@
       "expected": {
         "level": {
           "value": 1,
-          "label": "Fresh",
+          "label": "Amazing",
           "hint": "could add a rep",
           "detail": "Could add a rep to everything today."
         }
@@ -1436,7 +1436,7 @@
       "expected": {
         "level": {
           "value": 2,
-          "label": "Fine",
+          "label": "Good",
           "hint": "nothing would stop a session",
           "detail": "Normal. Nothing here would stop a planned session."
         }
@@ -1451,7 +1451,7 @@
       "expected": {
         "level": {
           "value": 3,
-          "label": "Worn",
+          "label": "Okay",
           "hint": "the plan, not a PR",
           "detail": "Could train the plan, would not chase a record."
         }
@@ -1466,7 +1466,7 @@
       "expected": {
         "level": {
           "value": 4,
-          "label": "Heavy",
+          "label": "Tired",
           "hint": "stairs register",
           "detail": "Stairs register. The warm-up would decide whether to train."
         }
@@ -1481,7 +1481,7 @@
       "expected": {
         "level": {
           "value": 5,
-          "label": "Empty",
+          "label": "Exhausted",
           "hint": "would cancel",
           "detail": "Would cancel."
         }

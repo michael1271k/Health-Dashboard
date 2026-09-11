@@ -288,6 +288,34 @@ extension Color {
             }
         }
 
+        /// A stack item's own colour, as a token.
+        ///
+        /// ── WHY THE STORED STRING CANNOT BE DRAWN ───────────────────────────
+        /// `custom_supplements.color` is a CSS colour written by the web —
+        /// sometimes a name, sometimes a hex — and it is carried opaquely all
+        /// the way through `OnyxCore` for exactly that reason. Rendering it
+        /// would put an arbitrary hue on a screen whose palette is a
+        /// measurement (see the muscle landmarks), and a `Features/` file that
+        /// spelled the hex would fail `native-token-discipline`. So it is
+        /// MAPPED, here, where the tokens live.
+        ///
+        /// Never `record` and never `danger`: gold means a personal record
+        /// app-wide and red means destructive, and a multivitamin is neither.
+        /// Anything unrecognised — every hex included — falls to the Fuel
+        /// accent, which is the screen's own domain and so is an answer rather
+        /// than a placeholder.
+        public static func supplement(_ raw: String?) -> Color {
+            switch (raw ?? "").trimmingCharacters(in: .whitespaces).lowercased() {
+            case "amber", "orange", "yellow":    OnyxDomain.fuel.start
+            case "red", "coral", "pink":         OnyxDomain.fuel.end
+            case "green", "emerald", "lime":     good
+            case "blue", "sapphire", "cyan":     water
+            case "purple", "violet", "lavender": OnyxDomain.recover.start
+            case "teal":                         OnyxDomain.body.accent
+            default:                             OnyxDomain.fuel.accent
+            }
+        }
+
         /// How tired, in ink — the 1…5 scale `Fatigue.levels` defines.
         ///
         /// Same three-step ramp as `severity`, deliberately: soreness and

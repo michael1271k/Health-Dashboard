@@ -176,8 +176,16 @@ enum PreviewHarness {
                 ReportReaderView(report: PreviewReport.rows[0], seededBody: PreviewReport.body)
             }
             .environment(AppEnvironment.preview)
+        // The paste target. Seeded on a week with NOTHING on it, because the
+        // placeholder is the half of this screen that had never been drawn.
+        case "report-edit":
+            ReportEditorSheet(
+                week: ReportWeek(start: "2026-08-30", end: "2026-09-05", report: nil, isCurrent: true),
+                seededBody: nil
+            )
+            .environment(AppEnvironment.preview)
         case "day", "day-rows", "day-past", "day-empty", "scale", "scale-first", "day-swap", "doms", "stack", "stack-add",
-             "sleep-edit", "stress":
+             "sleep-edit", "stress", "fatigue", "head", "quick-log":
             PulsePreviews.view(screen)
         case "fuel", "fuel-over", "fuel-empty", "nutrients", "macro-edit":
             NutritionPreviews.view(screen)

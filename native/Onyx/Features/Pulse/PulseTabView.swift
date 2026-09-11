@@ -63,6 +63,7 @@ struct DayScreen: View {
 
     @State private var showCalendar = false
     @State private var ratingFatigue = false
+    @State private var ratingHead = false
     @State private var entering = false
     @State private var showStack = false
     @State private var showSoreness = false
@@ -128,6 +129,11 @@ struct DayScreen: View {
             Section {
                 ScaleRow(model: model) { entering = true }
                 FatigueSummaryRow(model: model) { ratingFatigue = true }
+                // Body, then mind. D6 folds the two self-reports into ONE term
+                // of the Stress index, so they are neighbours rather than a row
+                // apart — and the reader who answers one is one row from the
+                // other.
+                HeadSummaryRow(model: model) { ratingHead = true }
                 SorenessRow(model: model) { showSoreness = true }
                 StackRow(model: model) { showStack = true }
             }
@@ -184,6 +190,7 @@ struct DayScreen: View {
             }
         }
         .sheet(isPresented: $ratingFatigue) { FatigueSheet(model: model) }
+        .sheet(isPresented: $ratingHead) { HeadSheet(model: model) }
         .sheet(isPresented: $showSoreness) { SorenessSheet(model: model) }
         .navigationDestination(item: $openSession) { SessionDetailView(sessionId: $0.id) }
         .sheet(isPresented: $entering) { InBodyEntryView(model: model) }
