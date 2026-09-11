@@ -47,7 +47,7 @@ _Nothing yet._
 
 ---
 
-## [1.8.0] — 2026-09-11 · Before, During and After the Workout
+## [1.9.0] — 2026-09-11 · Before, During and After the Workout
 
 A hotfix sprint against one real session (Legs & Core B, 11 Sep). Three screens
 — the plan card you read before a workout, the deck you log it on, and the
