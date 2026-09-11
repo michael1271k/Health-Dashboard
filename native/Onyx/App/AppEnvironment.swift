@@ -72,6 +72,9 @@ public final class AppEnvironment {
     /// Non-nil while the first-launch backfill sheet is up (§7.2). The sheet
     /// binds to this; `runBackfill` clears it when the history has landed.
     var backfill: BackfillModel?
+    /// Non-nil while a brand-new account is being set up (W5). Offered once,
+    /// after the first pull has landed — see `offerOnboardingIfNeeded`.
+    var onboarding: OnboardingModel?
     /// What every gauge, widget snapshot and score input is graded against
     /// (§6.2): one observation over `user_goals`, `daily_targets`,
     /// `target_profiles` and `schedule_overrides`. A lever pulled in Settings
@@ -414,6 +417,15 @@ public final class AppEnvironment {
             } else {
                 await self.syncNow(reason: .launch)
             }
+            // ── ONBOARDING GOES AFTER THE PULL, NEVER BEFORE IT (W5) ────────
+            // "Has this account been set up" is a question about ROWS, and on a
+            // new device the rows have not arrived yet. Asking first would
+            // offer onboarding to anyone reinstalling the app, and the seed
+            // would then write a second plan over a real one.
+            //
+            // Waiting also means the sign-up trigger's placeholder `plans` row
+            // is local by the time the seed wants to claim it.
+            self.offerOnboardingIfNeeded(userId: userId)
             // A no-op if sign-out stopped this coordinator meanwhile.
             await coordinator.startRealtime(client: supabase)
             #if ONYX_ADP
@@ -445,6 +457,103 @@ public final class AppEnvironment {
         guard let end = Calendar.current.date(byAdding: .day, value: 1, to: start) else { return [] }
         let found = (try? await Self.healthReader.workouts(start: start, end: end)) ?? []
         return found.filter { !$0.isLifting && $0.cardioKind != nil }
+    }
+
+    /// Put the onboarding flow up, if this account has never been set up.
+    ///
+    /// `needsOnboarding` is the gate and it is deliberately conservative (see
+    /// `AccountSeed`): any plan with a programme, any routine, any catalogue row
+    /// at all means somebody has been here. The founder's account trips every
+    /// one of those, which is the property this whole wave has to preserve.
+    ///
+    /// A throw is NOT an offer. A store that will not open is a reason to show
+    /// the app, not a reason to re-seed an account that may be full of data.
+    func offerOnboardingIfNeeded(userId: String) {
+        guard onboarding == nil else { return }
+        guard (try? database.needsOnboarding(userId: userId)) == true else { return }
+        onboarding = OnboardingModel(database: database, userId: userId)
+    }
+
+    /// The flow finished (or was dismissed after seeding). One-way.
+    func finishOnboarding() {
+        onboarding = nil
+        // The seed queued nine tables' worth of rows; push them now rather than
+        // waiting for the next foreground, so a new account's first sight of
+        // the Sync screen is not a backlog.
+        Task { await syncNow(reason: .foreground) }
+    }
+
+    /// Ask for Apple Health, from onboarding.
+    ///
+    /// ── IT IS AN OFFER AND IT STAYS AN OFFER ────────────────────────────────
+    /// Guideline 5.1.1 is explicit that data useful to a non-essential feature
+    /// must be optional, and Onyx logs sets perfectly well with no Health access
+    /// at all. So the step this is called from has a "Not now" that is exactly
+    /// as prominent as the button, and the answer is not recorded anywhere:
+    /// iOS owns the permission and the app asks it, never a flag of its own.
+    ///
+    /// The returned `Bool` is only "did the sheet complete" — HealthKit
+    /// deliberately does not report what was granted for READ types, so an
+    /// onboarding screen that claimed "connected" would be guessing.
+    @discardableResult
+    func requestHealthAccess() async -> Bool {
+        let reader = Self.healthReader
+        guard reader.isAvailable else { return false }
+        return (try? await reader.requestAuthorization(read: HealthCatalogue.readTypes)) ?? false
+    }
+
+    /// Resting energy over a window, in kilocalories.
+    ///
+    /// ── WHY THE CARDIO SHEET WANTS IT ───────────────────────────────────────
+    /// A bout carries its ACTIVE energy — the cost of the walk above sitting
+    /// still. Apple's Fitness app, every treadmill console and every other app a
+    /// person compares against report the TOTAL, which is active plus the
+    /// resting burn the same forty minutes would have cost anyway. Logging 218
+    /// kcal for a walk the watch called 340 is the kind of discrepancy that
+    /// reads as a broken importer.
+    ///
+    /// So the sheet offers both, filled and editable, and `cardio_logs` has
+    /// held `active_kcal` and `total_kcal` as separate columns all along.
+    ///
+    /// Basal is authorised (`HealthCatalogue.extraReadTypes`) but nothing
+    /// ingests it, and until W5 `HealthKitReader.unit(for:)` had no case for it
+    /// — it fell through to `.count()` and returned a number that was not
+    /// kilocalories and did not say so.
+    func restingEnergy(from start: Date, to end: Date) async -> Double? {
+        guard end > start else { return nil }
+        return try? await Self.healthReader.quantity(
+            "HKQuantityTypeIdentifierBasalEnergyBurned", reduce: .sum, start: start, end: end
+        )
+    }
+
+    /// The most recent body reading Apple Health holds, for the InBody sheet.
+    ///
+    /// One call for the four figures rather than four, because the sheet wants
+    /// them together or not at all — a prefill that filled weight and left body
+    /// fat blank would read as "Health has no body fat" when it means "the read
+    /// half-failed". Each is independently optional inside the answer.
+    ///
+    /// The window is ninety days back. A `.latest` statistics query still needs
+    /// one, and a body reading older than a quarter is not a prefill, it is a
+    /// number that will be wrong in a way the user has to notice.
+    func latestHealthBody(now: Date = Date(), days: Int = 90) async -> HealthBodyReading {
+        let start = Calendar.current.date(byAdding: .day, value: -days, to: now) ?? now
+        let reader = Self.healthReader
+        func read(_ identifier: String) async -> Double? {
+            try? await reader.quantity(identifier, reduce: .latest, start: start, end: now)
+        }
+        return HealthBodyReading(
+            weightKg: await read("HKQuantityTypeIdentifierBodyMass"),
+            bmi: await read("HKQuantityTypeIdentifierBodyMassIndex"),
+            // HealthKit hands percentages back as a 0–1 fraction; every screen
+            // in this app is in whole percent. `HealthCatalogue` scales the same
+            // read by 100 for the same reason.
+            bodyFatPct: await read("HKQuantityTypeIdentifierBodyFatPercentage").map { $0 * 100 },
+            // Lean body mass is FAT-FREE mass, not muscle mass. `HealthMetrics`
+            // and `DailyLogIngest` both refuse to put it in `muscle_mass_kg`
+            // and this must not be the one place that does.
+            fatFreeMassKg: await read("HKQuantityTypeIdentifierLeanBodyMass")
+        )
     }
 
     /// `ONYX_NO_HEALTH=1` (DEBUG launch environment) reads no HealthKit at

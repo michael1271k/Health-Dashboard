@@ -84,6 +84,25 @@ private struct SettingsForm: View {
                 } label: {
                     LabeledContent("Training plan", value: "\(model.plan.label) · \(model.phase.label)")
                 }
+                // ── THE ROUTINE BUILDER (W5) ────────────────────────────────
+                // Beside the plan, because a routine IS the plan's deck — the
+                // `routines` rows `PlanView` already lists read-only. That
+                // screen shows what the deck is; this one writes it.
+                NavigationLink {
+                    RoutineBuilderView(model: RoutinesModel(
+                        database: environment.database,
+                        userId: userId,
+                        programId: model.planId,
+                        programLabel: model.plan.label
+                    ))
+                } label: {
+                    LabeledContent("Routines", value: routineSummary)
+                }
+                NavigationLink {
+                    ExerciseImportView(database: environment.database, userId: userId)
+                } label: {
+                    Text("Import exercises")
+                }
             } header: {
                 OnyxSectionHeader("Plan", .train)
             }
@@ -258,6 +277,25 @@ private struct SettingsForm: View {
         } message: {
             Text(deleteError ?? "")
         }
+    }
+
+    /// The signed-in user, for the screens that write rows of their own.
+    ///
+    /// `SettingsModel` holds it privately and every other row on this screen
+    /// goes through the model; the routine builder and the importer own their
+    /// own writes, so they are handed the id directly. An unresolved auth state
+    /// cannot reach this screen — `RootView` shows `SignInView` for it.
+    private var userId: String {
+        if case let .signedIn(id) = environment.auth { return OnyxJSON.canonicalUserID(id) }
+        return ""
+    }
+
+    /// `5 days · 37 movements`, or the empty state a blank plan starts in.
+    private var routineSummary: String {
+        let days = model.deck(for: model.planId)?.days ?? []
+        guard !days.isEmpty else { return "None yet" }
+        let movements = days.reduce(0) { $0 + $1.exercises.count }
+        return "\(days.count) \(days.count == 1 ? "day" : "days") · \(movements) movements"
     }
 
     /// `Baseline · 1,955 kcal`, or the release and the date it ends.

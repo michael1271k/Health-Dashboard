@@ -70,10 +70,13 @@ public struct WorkoutSample: Sendable, Equatable {
     public var distanceM: Double?
     public var activeKcal: Double?
     public var avgHr: Double?
-    /// Metres climbed. Read from the workout's metadata and DISPLAYED ONLY —
-    /// `cardio_logs` has no column for it and is not getting one, so it lives
-    /// as long as the import card is on screen and no longer. See
-    /// `CardioImport` for why the table is closed to new columns.
+    /// Metres climbed, from the workout's metadata
+    /// (`HKMetadataKeyElevationAscended`) rather than a sample type.
+    ///
+    /// It used to say here that this was display-only because `cardio_logs` had
+    /// no column. W2 added `elevation_m` and W5 writes it: an ascent is most of
+    /// what separates a hard walk from an easy one, and throwing it away meant
+    /// the ledger could not tell them apart a month later.
     public var elevationM: Double?
 
     public init(
@@ -99,4 +102,32 @@ public struct WorkoutSample: Sendable, Equatable {
     /// Wall-clock minutes. The bout's own duration, not its active time — the
     /// figure a person recognises when they compare it to what their watch said.
     public var durationMin: Double { end.timeIntervalSince(start) / 60 }
+}
+
+/// The four body figures Apple Health can offer a weigh-in form, as of now.
+///
+/// One value rather than four calls because the sheet wants them together: a
+/// prefill that filled weight and left body fat blank reads as "Health has no
+/// body fat" when it means "that half of the read failed". Each field is
+/// independently optional INSIDE the answer, which is the honest shape.
+public struct HealthBodyReading: Sendable, Equatable {
+    public var weightKg: Double?
+    public var bmi: Double?
+    /// Whole percent, already scaled — HealthKit's own unit is a 0–1 fraction.
+    public var bodyFatPct: Double?
+    /// FAT-FREE mass, which is what HealthKit's `leanBodyMass` actually is.
+    /// It is NOT skeletal muscle mass and must never be written as it.
+    public var fatFreeMassKg: Double?
+
+    public init(
+        weightKg: Double? = nil, bmi: Double? = nil,
+        bodyFatPct: Double? = nil, fatFreeMassKg: Double? = nil
+    ) {
+        self.weightKg = weightKg; self.bmi = bmi
+        self.bodyFatPct = bodyFatPct; self.fatFreeMassKg = fatFreeMassKg
+    }
+
+    /// Nothing to offer. The sheet hides its Health row rather than showing a
+    /// button that fills four dashes.
+    public var isEmpty: Bool { self == HealthBodyReading() }
 }

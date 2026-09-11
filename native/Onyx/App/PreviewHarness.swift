@@ -129,12 +129,136 @@ enum PreviewHarness {
         activeKcal: 201, avgHr: 108
     )
 
+    static let previewUser = "00000000-0000-0000-0000-000000000001"
+
+    /// A store that already holds one of the names in the seeded paste, so the
+    /// preview shot shows a duplicate being recognised rather than only the
+    /// happy path.
+    @MainActor
+    static func importStore() -> AppDatabase {
+        let database = try! AppDatabase.inMemory(deviceId: "shot-import-preview")
+        _ = try? database.createExercise(userId: previewUser, name: "Lat Pulldown")
+        return database
+    }
+
+    /// The routine builder over the seeded catalogue — a real five-day split.
+    ///
+    /// Built fresh per shot and NOT shared: `RoutineBuilderView` and
+    /// `RoutineDayEditor` each `.task { model.load() }`, and a model shared
+    /// between two shots would carry the first one's reload into the second.
+    @MainActor
+    static func routinesModel() -> RoutinesModel {
+        let database = try! AppDatabase.inMemory(deviceId: "shot-routines")
+        PreviewCatalogue.seed(database)
+        // The CATALOGUE too, not only the routines. `PreviewCatalogue` seeds
+        // `routines` and nothing else, so the first shot of this screen was a
+        // wall of thirty-three "not in your exercise list" — a state this screen
+        // now words differently, but not the one worth photographing as normal.
+        for day in (try? database.routineDays(userId: previewUser, programId: "onyx5")) ?? [] {
+            for exercise in day.payload.exercises {
+                _ = try? database.createExercise(userId: previewUser, name: exercise.name)
+            }
+        }
+        let model = RoutinesModel(
+            database: database, userId: previewUser, programId: "onyx5", programLabel: "Onyx-5"
+        )
+        model.load()
+        return model
+    }
+
+    /// `onboarding-volume` → a model parked on the volume step.
+    ///
+    /// The bodyweight and goal are the flow's own defaults, so the macros and
+    /// the MEV numbers on screen are exactly what a real new account is shown —
+    /// a shot that seeded nicer figures would be photographing a screen nobody
+    /// gets. The records step carries two filled fields and three blank, which
+    /// is the state worth reviewing: the one where a person has answered part
+    /// of an optional question.
+    @MainActor
+    static func onboardingModel(_ screen: String) -> OnboardingModel {
+        let model = OnboardingModel(
+            database: try! AppDatabase.inMemory(deviceId: "shot-onboarding"),
+            userId: "00000000-0000-0000-0000-000000000001"
+        )
+        let name = screen.replacingOccurrences(of: "onboarding-", with: "")
+        let steps: [String: OnboardingModel.Step] = [
+            "welcome": .welcome, "you": .you, "goal": .goal, "targets": .targets,
+            "volume": .volume, "records": .records, "plan": .plan, "done": .done,
+        ]
+        model.step = steps[name] ?? .welcome
+        if model.step.rawValue >= OnboardingModel.Step.records.rawValue {
+            model.oneRepMaxes = ["Bench Press": 92.5, "Squat": 120]
+        }
+        if model.step.rawValue >= OnboardingModel.Step.plan.rawValue {
+            model.planId = PlanTemplates.plans.first?.id
+        }
+        return model
+    }
+
     @MainActor @ViewBuilder
     static func view(_ screen: String) -> some View {
         let model = sharedSettingsModel
         switch screen {
         case "signin":
             SignInView().environment(AppEnvironment.preview)
+        // ── ONBOARDING, ONE SCREEN PER STEP (W5) ────────────────────────────
+        // A fresh model per shot, over an EMPTY in-memory store — which is the
+        // state the flow actually runs in, and the one thing the seeded
+        // `sharedSettingsModel` above cannot represent. The step is set
+        // directly rather than by tapping through, so a shot of step six does
+        // not depend on the five before it still working.
+        case let s where s.hasPrefix("onboarding"):
+            OnboardingFlow(model: onboardingModel(s))
+                .environment(AppEnvironment.preview)
+        // ── THE ROUTINE BUILDER (W5) ────────────────────────────────────────
+        // Over the seeded catalogue, so the list is a real five-day split and
+        // the day editor opens on a day with seven movements in it — the state
+        // where the per-movement row has to survive its own width.
+        case "routines":
+            NavigationStack { RoutineBuilderView(model: routinesModel()) }
+                .environment(AppEnvironment.preview)
+        case "routine-day":
+            NavigationStack {
+                RoutineDayEditor(model: routinesModel(), dayKey: "cb_a")
+            }
+            .environment(AppEnvironment.preview)
+        // Empty, which is what "Build my own" lands on and the state a builder
+        // is judged by: a screen with nothing in it still has to say what to do.
+        case "routines-empty":
+            NavigationStack {
+                RoutineBuilderView(model: RoutinesModel(
+                    database: try! AppDatabase.inMemory(deviceId: "shot-routines-empty"),
+                    userId: previewUser, programId: "my-plan", programLabel: "My plan"
+                ))
+            }
+            .environment(AppEnvironment.preview)
+        case "import-exercises":
+            NavigationStack {
+                ExerciseImportView(
+                    database: try! AppDatabase.inMemory(deviceId: "shot-import"),
+                    userId: previewUser
+                )
+            }
+            .environment(AppEnvironment.preview)
+        // The preview state, over a store that already holds one of the names —
+        // so the shot carries all three verdicts at once: a clean import, a
+        // duplicate that will be left alone, and a movement nothing can
+        // classify. That third row is the one worth reviewing.
+        case "import-preview":
+            NavigationStack {
+                ExerciseImportView(
+                    database: importStore(), userId: previewUser,
+                    seededPaste: """
+                    Exercise Name,Primary Muscle,Secondary Muscles,Equipment
+                    Zercher Squat,Quads,Glutes,Barbell
+                    Meadows Row,Lats,Biceps,Barbell
+                    Lat Pulldown,Lats,,Cable
+                    Jefferson Curl,,,Barbell
+                    Copenhagen Plank,,,Bodyweight
+                    """
+                )
+            }
+            .environment(AppEnvironment.preview)
         case "backfill":
             BackfillSheet(model: .preview).environment(AppEnvironment.preview)
         case "you":

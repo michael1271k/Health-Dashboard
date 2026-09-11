@@ -62,7 +62,14 @@ public enum BodyComposition {
 
     private static func finite(_ v: Double?) -> Double? { v.flatMap { $0.isFinite ? $0 : nil } }
 
-    private static func massFromPct(_ weight: Double?, _ pct: Double?) -> Double? {
+    /// One percentage of a bodyweight, as kilograms.
+    ///
+    /// Public since W5: the InBody sheet prints "= xx.x kg" live beside every
+    /// percentage field, and a second copy of `(weight × pct) / 100` in a view
+    /// is a second copy that rounds differently the first time either is
+    /// touched. `nil` in either argument is `nil` out — a percentage of an
+    /// unknown weight is not a mass.
+    public static func massFromPct(_ weight: Double?, _ pct: Double?) -> Double? {
         guard let weight, let pct else { return nil }
         return r2((weight * pct) / 100)
     }

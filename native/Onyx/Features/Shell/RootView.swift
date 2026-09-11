@@ -119,6 +119,19 @@ private struct SignedInTabs: View {
         .fullScreenCover(isPresented: Binding(get: { environment.backfill != nil }, set: { _ in })) {
             if let model = environment.backfill { BackfillSheet(model: model) }
         }
+        // Setting up a brand-new account (W5). A cover for the same reasons the
+        // backfill is one — the tabs mount underneath and observe the store, so
+        // by the time the last step's write commits they are already showing the
+        // plan it wrote.
+        //
+        // It is offered strictly AFTER the first pull (`offerOnboardingIfNeeded`),
+        // because "has this account been set up" is a question about rows and on
+        // a fresh install the rows have not arrived yet. Only one of the two
+        // covers is ever up: the backfill clears itself before onboarding is
+        // offered.
+        .fullScreenCover(isPresented: Binding(get: { environment.onboarding != nil }, set: { _ in })) {
+            if let model = environment.onboarding { OnboardingFlow(model: model) }
+        }
     }
 
     private static var batteryLevel: Double {

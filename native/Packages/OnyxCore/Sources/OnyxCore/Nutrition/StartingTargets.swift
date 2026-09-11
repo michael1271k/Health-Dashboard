@@ -141,7 +141,12 @@ public enum StartingTargetsBuilder {
 
     /// Grams of fibre per 1,000 kcal — the FDA's reference intake, which is
     /// where the founder's own 30 g at 1,955 kcal came from.
-    static let fiberPerThousandKcal: Double = 14
+    ///
+    /// Public because the onboarding form does not ASK for fibre — four macro
+    /// fields is already the most a first run should put on screen — so it has
+    /// to re-derive the figure from whatever kcal the user ends up with, using
+    /// this constant rather than a second copy of 14.
+    public static let fiberPerThousandKcal: Double = 14
 
     /// The starting four for a bodyweight and a goal.
     ///

@@ -95,10 +95,19 @@ struct ScaleRow: View {
 /// five rows of em dashes for as long as it takes to type the first percentage.
 struct InBodyEntryView: View {
     let model: DayModel
+    @Environment(AppEnvironment.self) private var environment
     @Environment(\.dismiss) private var dismiss
 
     @State private var draft: [Field: Double] = [:]
     @State private var last: DailyLogRow?
+    /// What Apple Health holds, once asked. Empty until the read lands, and
+    /// empty forever on a device that has never been given permission — which
+    /// is why the button below it is hidden rather than disabled in that case:
+    /// a permanently dead control teaches nothing.
+    @State private var health = HealthBodyReading()
+    /// Injected so the shot harness can photograph the Health row without a
+    /// HealthKit query, which on a simulator returns nothing, every time.
+    var healthReading: (@Sendable () async -> HealthBodyReading)?
     @State private var showDerived = false
     @FocusState private var focus: Field?
 
@@ -156,6 +165,28 @@ struct InBodyEntryView: View {
 
     private func stored(_ spec: Spec) -> Double? { model.log?[keyPath: spec.key] }
 
+    /// The one reserved line under each field.
+    ///
+    /// ── A PERCENTAGE OF A BODY IS NOT A QUANTITY ANYONE FEELS ───────────────
+    /// "Body fat 18.4" and "Muscle 44.1" are the numbers the scale prints and
+    /// they are almost impossible to reason about against each other: 18 % of
+    /// what, and is 44 % muscle a lot? The kilograms are the figure a person
+    /// actually tracks, and the sheet already computes all five of them — it
+    /// just kept them folded inside a closed disclosure at the bottom.
+    ///
+    /// So a percentage field shows its OWN mass live, the moment there is a
+    /// weight to multiply by, and falls back to the previous reading when there
+    /// is not. The derived section below stays: it is the same five figures
+    /// assembled as a set, which is a different question from "what is this
+    /// field worth".
+    private func hint(_ spec: Spec) -> String? {
+        if spec.unit == "%",
+           let mass = BodyComposition.massFromPct(draft[.weight], draft[spec.field]) {
+            return "= \(DayFormat.number(mass, fraction: 1)) kg"
+        }
+        return carried(spec).map { "last \(DayFormat.number($0, fraction: spec.fraction))" }
+    }
+
     /// The previous reading, offered only while this day has none of its own.
     private func carried(_ spec: Spec) -> Double? {
         draft[spec.field] == nil ? last?[keyPath: spec.key] : nil
@@ -208,6 +239,13 @@ struct InBodyEntryView: View {
             // than dangerous.
             last = try? model.latestBodyReading()
         }
+        // A separate `.task` from the `onAppear` above: the stored reading is a
+        // synchronous local read and must not wait behind a HealthKit query
+        // that can take a second and can hang on a permission sheet.
+        .task {
+            if let healthReading { health = await healthReading() }
+            else { health = await environment.latestHealthBody() }
+        }
     }
 
     // MARK: The fields
@@ -221,7 +259,7 @@ struct InBodyEntryView: View {
             ForEach(Self.specs(in: group), id: \.field) { spec in
                 OnyxFieldCell(
                     label: spec.label,
-                    hint: carried(spec).map { "last \(DayFormat.number($0, fraction: spec.fraction))" },
+                    hint: hint(spec),
                     value: Binding(get: { draft[spec.field] }, set: { draft[spec.field] = $0 }),
                     field: spec.field, focus: $focus,
                     unit: spec.unit, range: spec.range, fractionLength: spec.fraction
@@ -251,14 +289,55 @@ struct InBodyEntryView: View {
             }
             .disabled(fillable.isEmpty)
             .accessibilityHint("Fills the empty fields only. Nothing is saved until you press Save.")
+
+            // Hidden, not disabled, when Health has nothing — unlike the button
+            // above it, whose empty case ("no earlier reading") is a state the
+            // user will grow out of within a week. A device that has never been
+            // granted Health access will never fill this one, and a control
+            // that can never work is worse than no control.
+            if !health.isEmpty {
+                Button {
+                    for (field, value) in healthFillable { draft[field] = value }
+                } label: {
+                    Label("Fill from Apple Health", systemImage: "heart.text.square")
+                }
+                .disabled(healthFillable.isEmpty)
+                .accessibilityHint("Fills the empty fields only. Nothing is saved until you press Save.")
+            }
         } footer: {
             Text(fillFooter)
         }
     }
 
+    /// What Health can offer that the form does not already have.
+    ///
+    /// Empty fields only, exactly like "Fill from last time": a scale reading
+    /// the person has just typed is better evidence than a Health sample from
+    /// some other device, and silently replacing it is the one thing a prefill
+    /// must never do.
+    ///
+    /// Body fat lands as a PERCENTAGE and fat-free mass is deliberately absent:
+    /// `leanBodyMass` is fat-free mass, and this form's only mass field is
+    /// SKELETAL MUSCLE, which is a smaller and different quantity.
+    /// `DailyLogIngest` refuses the same conflation, and this must not be the
+    /// one place that makes it.
+    private var healthFillable: [(Field, Double)] {
+        var out: [(Field, Double)] = []
+        func offer(_ field: Field, _ value: Double?) {
+            guard let value, draft[field] == nil else { return }
+            out.append((field, (value * 10).rounded() / 10))
+        }
+        offer(.weight, health.weightKg)
+        offer(.bmi, health.bmi)
+        offer(.bodyFat, health.bodyFatPct)
+        return out
+    }
+
     private var fillFooter: String {
         guard let lastDate = last?.date else {
-            return "No earlier reading on this device yet — the first weigh-in has nothing to copy from."
+            return health.isEmpty
+                ? "No earlier reading on this device yet — the first weigh-in has nothing to copy from."
+                : "No earlier reading on this device yet. Apple Health has your latest weigh-in."
         }
         if fillable.isEmpty {
             return "Every field already has a value. The last reading was \(Swap.shortDayLabel(lastDate))."
