@@ -59,6 +59,43 @@ final class WorkoutWeek {
         let ready: Bool
     }
 
+    /// One movement's best set from the last time this split was trained.
+    ///
+    /// A PAIR is collapsed to its weaker side before it competes, the same rule
+    /// `SessionVolume` scores it by: a Side Plank logged 66 s left and 61 s
+    /// right is a 61 s hold, and printing the better half as "last time" sets a
+    /// target that was never held.
+    struct TopSet: Sendable, Equatable {
+        let weightKg: Double
+        /// Reps, or SECONDS on a timed hold — the same overload `reps` carries
+        /// everywhere else in this app.
+        let reps: Double
+        let rpe: Double?
+        let timed: Bool
+    }
+
+    /// The last session of the split TODAY is, and what was done in it.
+    ///
+    /// ── WHY THE SAME `day_key` AND NOT "THE LAST TIME YOU DID THIS LIFT" ────
+    /// The founder's call (2026-09-11), and it is the stricter of the two. Leg
+    /// Press appears in Legs A and Legs B; "last time you trained it" would put
+    /// Monday's 75 × 13 on a Thursday card whose prescription is a different
+    /// movement pattern at a different point in the week. One session, one
+    /// date, one comparison — and a movement that was not in it shows nothing
+    /// rather than a number from some other day, which is the honest blank.
+    ///
+    /// Keyed by CANONICAL name, because the card has plan names and the ledger
+    /// has whatever was logged; `ExerciseAliases` is the one join between them.
+    struct Previous: Sendable, Equatable {
+        let id: String
+        let date: String
+        let top: [String: TopSet]
+
+        func top(for name: String) -> TopSet? {
+            top[ExerciseAliases.canonicalName(name).lowercased()]
+        }
+    }
+
     /// Where today's session stands.
     enum State: Sendable, Equatable {
         case none
@@ -97,6 +134,9 @@ final class WorkoutWeek {
         /// swap menu needs that the plan alone cannot answer, since an override
         /// resolves to a perfectly ordinary-looking day.
         var isOverridden = false
+        /// The last time this split was trained — what the plan card prints in
+        /// place of the prescription. Nil on the first ever session of a split.
+        var previous: Previous?
     }
 
     // MARK: - Live state
@@ -230,12 +270,22 @@ final class WorkoutWeek {
             if finished[s.date] == nil { finished[s.date] = s }
         }
 
+        // ── EVERY NON-GHOST ROW, NOT THE WORKING ONES ───────────────────────
+        // `SessionVolume`'s header is the rule and it is one sentence: "A ghost
+        // weighs nothing; a warm-up still counts." Filtering to working sets
+        // before calling it was this file overruling that rule, and the cost
+        // was visible on 2026-09-11 — the Workout tab's card said 8,815 kg for
+        // a session whose own summary page, `closeSession` and
+        // `workout_sessions.total_volume_kg` all said 9,715. The gap was one
+        // 60 × 15 warm-up on the leg press, and a reader has no way to tell
+        // which of the two numbers is the workout.
+        //
+        // Set COUNTS stay on the working rows: a warm-up is not a set of the
+        // prescription, and that is a different question from what was lifted.
         var tonnage = 0.0
         for session in finished.values {
             let rows = (try? database.historySets(sessionId: session.id)) ?? []
-            tonnage += SessionVolume.sessionVolumeKg(
-                rows.filter { SetTags.isWorkingSet($0.setType) }.map(SessionAnalysis.volumeSet)
-            )
+            tonnage += SessionVolume.sessionVolumeKg(rows.map(SessionAnalysis.volumeSet))
         }
         out.weekTonnageKg = jsRound(tonnage)
         out.sessionsLogged = finished.count
@@ -282,13 +332,14 @@ final class WorkoutWeek {
                 var previous = 0.0
                 for session in lastFinished.values {
                     let rows = (try? database.historySets(sessionId: session.id)) ?? []
-                    previous += SessionVolume.sessionVolumeKg(
-                        rows.filter { SetTags.isWorkingSet($0.setType) }.map(SessionAnalysis.volumeSet)
-                    )
+                    previous += SessionVolume.sessionVolumeKg(rows.map(SessionAnalysis.volumeSet))
                 }
                 out.weekDeltaKg = jsRound(out.weekTonnageKg - previous)
             }
         }
+
+        // ── What the card prints where the rep window used to be ────────────
+        out.previous = previousSession(database, dayKey: out.todayKey, before: today)
 
         // ── The other two doors ─────────────────────────────────────────────
         out.liftsTracked = (try? database.read { db in
@@ -376,7 +427,7 @@ final class WorkoutWeek {
                 let working = rows.filter { SetTags.isWorkingSet($0.setType) }
                 out.state = .live(
                     sets: SessionDetail.toRows(working.map(SessionAnalysis.detailSet)).filter { $0.num != nil }.count,
-                    volumeKg: SessionVolume.sessionVolumeKg(working.map(SessionAnalysis.volumeSet))
+                    volumeKg: SessionVolume.sessionVolumeKg(rows.map(SessionAnalysis.volumeSet))
                 )
             } else if let closed = finished[today], closed.dayKey == key {
                 let rows = (try? database.historySets(sessionId: closed.id)) ?? []
@@ -392,13 +443,106 @@ final class WorkoutWeek {
                 out.state = .done(
                     id: closed.id,
                     sets: SessionDetail.toRows(working.map(SessionAnalysis.detailSet)).filter { $0.num != nil }.count,
-                    volumeKg: jsRound(SessionVolume.sessionVolumeKg(working.map(SessionAnalysis.volumeSet))),
+                    volumeKg: jsRound(SessionVolume.sessionVolumeKg(rows.map(SessionAnalysis.volumeSet))),
                     minutes: closed.durationMin,
                     prCount: pr.prCount
                 )
             }
         }
 
+        return out
+    }
+
+    // MARK: - The last time this split was trained
+
+    /// The most recent FINISHED session carrying `dayKey`, and each movement's
+    /// best set in it.
+    ///
+    /// ── WHAT THIS REPLACED, AND WHY IT IS NOT A SECOND KIND OF NUMBER ──────
+    /// The plan card printed the prescription — `3 × 10-15`. Two of those three
+    /// figures are a range the program asserts, and a reader standing at the
+    /// machine does not need to be told the window they have been inside for
+    /// eight weeks; they need the number they have to beat. The window has not
+    /// been deleted from the app — the logger's own card still carries it, at
+    /// the moment it is actionable, and `Ceilings.repWindow` still gates the
+    /// e1RM axis and the progression cue. It is gone from the SUMMARY, where it
+    /// was the only thing on the row and said the least.
+    ///
+    /// ── THE TOP SET IS THE HEAVIEST, TIES TO REPS ───────────────────────────
+    /// The founder's rule (2026-09-11), and it is `ExerciseSummary`'s own:
+    /// "at equal load the set that says the most is the one with the most
+    /// reps". A warm-up cannot win it — `isWorkingSet` — because "last time"
+    /// is a claim about work. On an unloaded movement every set weighs 0 and
+    /// the reps alone decide, which is the right answer for a knee raise and
+    /// for a hold.
+    private nonisolated static func previousSession(
+        _ database: AppDatabase, dayKey: String?, before today: String
+    ) -> Previous? {
+        guard let dayKey else { return nil }
+        let session = ((try? database.sessionHistory()) ?? [])
+            .first { $0.dayKey == dayKey && $0.endedAt != nil && $0.date < today }
+        // `sessionHistory` is already newest-first, so `first` IS the latest.
+        guard let session else { return nil }
+        let rows = ((try? database.historySets(sessionId: session.id)) ?? [])
+            .filter { SetTags.isWorkingSet($0.setType) }
+        guard !rows.isEmpty else { return nil }
+
+        var top: [String: TopSet] = [:]
+        for group in SessionAnalysis.grouped(rows) {
+            let canonical = SessionAnalysis.displayName(id: group.exerciseId, stored: group.name)
+            let timed = TimedExercise.isTimed(canonical)
+            var best: TopSet?
+            for candidate in collapsed(group.sets) {
+                let set = TopSet(weightKg: candidate.weightKg, reps: candidate.reps,
+                                 rpe: candidate.rpe, timed: timed)
+                guard let held = best else { best = set; continue }
+                if set.weightKg > held.weightKg
+                    || (set.weightKg == held.weightKg && set.reps > held.reps) {
+                    best = set
+                }
+            }
+            // A row with no load AND no reps is not a set anybody can beat: a
+            // treadmill bout is `0 kg × 0` with its content in `duration_sec`,
+            // and `collapsed` reads neither of those columns. Printing
+            // `Last: 0 reps` under Treadmill states a fact about a walk that is
+            // false and useless at once. A blank is already what this card says
+            // for a movement the last session did not hold.
+            if let best, best.reps > 0 || best.weightKg > 0 {
+                top[canonical.lowercased()] = best
+            }
+        }
+        return Previous(id: session.id, date: session.date, top: top)
+    }
+
+    /// One movement's rows as PHYSICAL sets: a genuine L/R pair becomes one
+    /// candidate at `min(weight) × min(reps)`, everything else stands alone.
+    ///
+    /// The same collapse `SessionVolume` and `PrEngine.volumeCredits` apply,
+    /// for the same reason — a pair is one set of work, and scoring it at its
+    /// better side invents a set that was not performed. The RPE kept is the
+    /// HARDER of the two: the pair was as hard as its worse side felt.
+    private nonisolated static func collapsed(
+        _ rows: [HistorySetRow]
+    ) -> [(weightKg: Double, reps: Double, rpe: Double?)] {
+        var out: [(weightKg: Double, reps: Double, rpe: Double?)] = []
+        var pairAt: [String: Int] = [:]
+        for row in rows {
+            let reps = Double(row.reps)
+            guard let pairId = row.pairId, !pairId.isEmpty, row.lr == "L" || row.lr == "R" else {
+                out.append((row.weightKg, reps, row.rpe))
+                continue
+            }
+            if let i = pairAt[pairId] {
+                out[i] = (
+                    Swift.min(out[i].weightKg, row.weightKg),
+                    Swift.min(out[i].reps, reps),
+                    [out[i].rpe, row.rpe].compactMap { $0 }.max()
+                )
+            } else {
+                pairAt[pairId] = out.count
+                out.append((row.weightKg, reps, row.rpe))
+            }
+        }
         return out
     }
 }

@@ -122,7 +122,18 @@ public enum PrRecorder {
                 key: s.exerciseId, weightKg: s.weightKg, reps: Double(s.reps), setType: s.setType,
                 timed: TimedExercise.isTimed(canonical),
                 repFloor: Ceilings.repWindow(for: canonical, dayKey: dayKey, program: program)?.floor,
-                pairId: s.pairId, side: s.side, date: date,
+                // ── THE DOMAIN SPELLING, NOT THE LOCAL ONE ──────────────────
+                // `workout_sets.side` is `left`/`right` on this device
+                // (`SyncTranslation.localSide`) and `L`/`R` on the wire, and
+                // every OnyxCore rule that folds a pair tests the one-letter
+                // form — `PrEngine.volumeCredits` included. Handed the local
+                // spelling it recognised no pair at all, so a unilateral set
+                // was scored for the VOLUME axis twice, once per side at its
+                // own tonnage, against a baseline built the same broken way.
+                // `save.ts` gets `L`/`R` for free because it reads the server's
+                // column, which is why the two clients could disagree about a
+                // split set's volume record and nothing here ever said so.
+                pairId: s.pairId, side: SyncTranslation.domainSide(s.side), date: date,
                 exerciseName: canonical, setNumber: s.setIndex > 0 ? s.setIndex : i + 1
             )
         }
@@ -180,7 +191,48 @@ public enum PrRecorder {
     ) throws -> PrBaselines {
         guard !exerciseIds.isEmpty else { return .empty }
         let floors = try floors(db)
-        var query = WorkoutSet.filter(exerciseIds.contains(Column("exercise_id")))
+        // ── EVERY ID THAT IS THIS MOVEMENT, NOT JUST THE ONE IN HAND ────────
+        //
+        // This filtered on `exerciseIds` alone — the ids the session's OWN rows
+        // carry. A lift logged on both clients has its history under two of
+        // them (a catalogue uuid from the web, a `helix5-` slug from a deck the
+        // payload could not resolve; `nameResolver`'s header calls that
+        // routine), and the bar was then built from whichever half this session
+        // happened to use. Half a history is a low bar — and an id appearing
+        // for the first time has NO history, which is worse than a low bar:
+        // `detectSetPrs` awards nothing at all against an empty index ("a delta
+        // against nothing is not a delta"), so every axis of that movement goes
+        // quietly unrecorded for the whole session.
+        //
+        // `attach(editing:)` hit exactly this and fixed it one layer up by
+        // taking the UNION of the deck's ids and the session's rows. The CLOSE
+        // path never got the same treatment, and 2026-09-11 is what that cost:
+        // five records detected by a replay over the full ledger, ONE filed by
+        // the phone at close.
+        //
+        // So the rows are gathered under every id that resolves to the same
+        // canonical NAME, and each is re-keyed to the id this session will be
+        // judged under. Two consequences worth being explicit about:
+        //
+        //   · The FILING key does not move. `record` still writes
+        //     `personal_records` under `name(exercise.key)` exactly as before —
+        //     this widens the BAR, not the ledger, so it is not the F16
+        //     decision about keying `record` on the name.
+        //   · It can only ever RAISE a bar or fill an empty one, never lower
+        //     one. So it removes false positives and cannot invent a record,
+        //     which is the direction a change to detection has to run in.
+        //
+        // It also makes `record` agree with `replay`, which has always resolved
+        // ids by name — the asymmetry that let a close file a record a later
+        // replay would silently retract.
+        let keyByName = Dictionary(
+            exerciseIds.map { (name($0), $0) }, uniquingKeysWith: { first, _ in first }
+        )
+        let siblings = try String.fetchAll(db, sql: "SELECT DISTINCT exercise_id FROM workout_sets")
+            .filter { keyByName[name($0)] != nil }
+        let lookup = Set(exerciseIds).union(siblings)
+
+        var query = WorkoutSet.filter(lookup.contains(Column("exercise_id")))
         if let sessionId { query = query.filter(Column("session_id") != sessionId) }
         if let before {
             query = query.filter(
@@ -192,10 +244,12 @@ public enum PrRecorder {
         return PrEngine.buildBaselines(
             prior.map {
                 BaselineSetRow(
-                    key: $0.exerciseId, weightKg: $0.weightKg, reps: Double($0.reps),
+                    // Re-keyed to the id the CANDIDATES carry — see above.
+                    key: keyByName[name($0.exerciseId)] ?? $0.exerciseId,
+                    weightKg: $0.weightKg, reps: Double($0.reps),
                     est1rm: $0.est1rmKg, setType: $0.setType,
                     repFloor: Ceilings.repWindow(for: name($0.exerciseId), dayKey: dayKey, program: program)?.floor,
-                    pairId: $0.pairId, side: $0.side
+                    pairId: $0.pairId, side: SyncTranslation.domainSide($0.side)
                 )
             },
             isTimed: { TimedExercise.isTimed(name($0)) },
@@ -374,7 +428,10 @@ public enum PrRecorder {
                 PrCandidateSet(
                     key: exerciseKey, weightKg: s.weightKg, reps: Double(s.reps), setType: s.setType,
                     timed: timed, repFloor: repFloor,
-                    pairId: s.pairId, side: s.side, date: session.date,
+                    // The domain spelling, exactly as `candidates` does it —
+                    // `replay` is `record`'s twin and a pair it failed to
+                    // collapse would retract a record `record` filed correctly.
+                    pairId: s.pairId, side: SyncTranslation.domainSide(s.side), date: session.date,
                     exerciseName: exerciseKey, setNumber: s.setIndex > 0 ? s.setIndex : i + 1
                 )
             }
@@ -406,7 +463,7 @@ public enum PrRecorder {
                 BaselineSetRow(
                     key: exerciseKey, weightKg: $0.weightKg, reps: Double($0.reps),
                     est1rm: $0.est1rmKg, setType: $0.setType, repFloor: repFloor,
-                    pairId: $0.pairId, side: $0.side
+                    pairId: $0.pairId, side: SyncTranslation.domainSide($0.side)
                 )
             })
         }

@@ -655,6 +655,30 @@ public extension SyncTranslation {
         }
     }
 
+    /// `left`/`right` (local) → `L`/`R` — the spelling every OnyxCore rule that
+    /// folds a unilateral pair tests for.
+    ///
+    /// ── WHY THIS IS NOT `side(_:)`, THE OUTBOUND ONE ────────────────────────
+    /// That one THROWS on a value it does not recognise, because an unmapped
+    /// side reaching Postgres would write a second vocabulary into a column two
+    /// clients read. This one is for handing local rows to the DOMAIN — the PR
+    /// engine, the volume rule — where the honest answer to "what side is
+    /// this" for an unrecognised value is "none", exactly as `localSide`
+    /// decided inbound. A throw here would cost a record; a nil costs a pair
+    /// its collapse, which is the same thing the row already says.
+    ///
+    /// `public` because the LIVE deck needs it too: `LoggerModel.refreshLivePrs`
+    /// builds its candidates from rows holding the local spelling, and a live
+    /// trophy computed on uncollapsed pairs is a badge the close then refuses
+    /// to file — the exact failure `PrRecorder.baselines`'s header forbids.
+    static func domainSide(_ local: String?) -> String? {
+        switch local?.uppercased() {
+        case "L", "LEFT": return "L"
+        case "R", "RIGHT": return "R"
+        default: return nil
+        }
+    }
+
     /// A rating the `rpe_range` CHECK will accept, or nothing.
     ///
     /// The constraint is `rpe IS NULL OR (rpe >= 1 AND rpe <= 10)`, and

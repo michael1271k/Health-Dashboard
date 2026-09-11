@@ -55,6 +55,16 @@ struct LiveLoggerView: View {
     @State private var showPhase = false
     @State private var showFinish = false
     @State private var showTimer = false
+    /// The SET stopwatch, owned here and lent to `TimerSheet`.
+    ///
+    /// It cannot live in the sheet: a sheet's `@State` dies with the sheet, and
+    /// the whole point of this control is to run through a hold — which is
+    /// exactly when the reader swipes back to the deck to look at the set they
+    /// are about to write into. The same argument `WorkoutTabView`'s header
+    /// makes about `LoggerModel` and the Live Activity, one level down.
+    @State private var watchStart: Date?
+    @State private var watchAccumulated: TimeInterval = 0
+    @State private var watchLaps: [TimeInterval] = []
     @State private var confirmCancel = false
 
     /// Which face, and how it got here — the animation travels with it.
@@ -194,7 +204,10 @@ struct LiveLoggerView: View {
             guard !model.isEditing else { return }
             activity.update(model: model, clock: clock)
         } content: {
-            TimerSheet(clock: clock, accent: accent)
+            TimerSheet(
+                clock: clock, accent: accent,
+                watchStart: $watchStart, accumulated: $watchAccumulated, laps: $watchLaps
+            )
         }
         .sheet(isPresented: $showDistribution) { MuscleDistributionSheet(model: model) }
         .sheet(isPresented: $showPhase) {
@@ -449,10 +462,24 @@ struct LiveLoggerView: View {
             // and here "end the workout and run a 49-day recompute". The word
             // is the control, so the row is built by hand and the fill is a
             // background rather than a button style that can restyle it.
+            // ── AND WHY THE WORD IS `fixedSize` ───────────────────────────
+            // It shipped as "Fin…". A toolbar hands its trailing items a width
+            // from what is LEFT after the leading group and the title, and a
+            // `Text` inside `lineLimit(1)` answers a squeeze by truncating —
+            // silently, and only on the device, because the preview canvas has
+            // no navigation bar to run out of. Six characters is the whole
+            // control; a truncated verb on the button that ends the workout is
+            // worse than any layout it could push on.
+            //
+            // `fixedSize` makes the word incompressible, so the bar takes the
+            // space from the flexible middle instead. The capsule's own
+            // horizontal padding stays outside it and can still absorb — see
+            // the `minHeight` below, which is the tap target and not the type.
             Button { showFinish = true } label: {
                 HStack(spacing: OnyxSpace.xs) {
                     Image(systemName: "checkmark").imageScale(.small)
                     Text(model.isEditing ? "Save" : "Finish")
+                        .fixedSize(horizontal: true, vertical: false)
                 }
                 .onyxType(.caption).fontWeight(.semibold)
                 .foregroundStyle(Color.onyx.base)

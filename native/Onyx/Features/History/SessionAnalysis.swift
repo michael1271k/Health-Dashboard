@@ -1,6 +1,7 @@
 import Foundation
 import OnyxCore
 import OnyxData
+import OnyxUI
 
 /// Rows in, OnyxCore results out — the glue between the ledger and the
 /// Workout Analysis screens. NO arithmetic lives here: every number is
@@ -119,6 +120,26 @@ enum SessionAnalysis {
         /// oldest first — the 40×16 sparkline in the header. Values only: a
         /// sparkline has no axis, so carrying the dates would invite a label.
         let spark: [Double]
+        /// What each record-setting set actually BEAT, keyed by the set's own
+        /// `set_index` (`DetailSet.setNumber`).
+        ///
+        /// ── WHY THIS CANNOT BE READ BACK OUT OF `personal_records` ──────────
+        /// The ledger is upsert-on-conflict: the write that files a record
+        /// destroys the value it beat, and a record beaten again next month is
+        /// filed against a different session entirely. The only place the PAIR
+        /// survives is `PrEngine`'s `AxisRecord`, captured BEFORE the winner is
+        /// folded into the index — which `detect` already computes here and
+        /// used to throw away, keeping only the axis NAMES for the trophy.
+        ///
+        /// So the summary could draw gold and could not say what the gold was
+        /// worth, while the live deck (`LivePrEngine` → `PrRecordSheet`) has
+        /// printed both numbers since E4. Same engine, same sheet, one set of
+        /// numbers: this is the field that lets the post-workout page open it.
+        ///
+        /// Keyed on the SET rather than the row because a unilateral pair is
+        /// two `DetailSet`s under one `DetailRow`, and the record belongs to
+        /// whichever side completed it.
+        let records: [Int: [LivePrRecord]]
     }
 
     struct TrailSeries: Identifiable {
@@ -207,12 +228,28 @@ enum SessionAnalysis {
             let canonical = displayName(id: g.exerciseId, stored: g.name)
             let timed = TimedExercise.isTimed(canonical)
             var sets: [DetailSet] = []
+            var records: [Int: [LivePrRecord]] = [:]
             for r in g.sets {
                 let d = pr.perSet[i]; i += 1
                 var s = detailSet(r)
                 s.isPr = !d.axes.isEmpty
                 s.est1rmKg = d.est1rm
                 s.prAxes = d.axes.map(\.rawValue)
+                // The beaten baselines, in the shape `PrRecordSheet` already
+                // takes. `d.records` holds only the axes that had a bar to
+                // beat, which is the same omission the live deck makes: an
+                // asserted record with no arithmetic behind it is a claim
+                // without a delta, and the sheet prints deltas.
+                let won = d.axes.compactMap { axis -> LivePrRecord? in
+                    guard let mark = d.records[axis] else { return nil }
+                    return LivePrRecord(
+                        id: "\(g.exerciseId)|\(Int(s.setNumber))|\(axis.rawValue)",
+                        exercise: canonical,
+                        setLabel: "Set \(Int(s.setNumber))",
+                        axis: axis, mark: mark
+                    )
+                }
+                if !won.isEmpty { records[Int(s.setNumber), default: []] += won }
                 sets.append(s)
             }
             let working = sets.filter { SetTags.isWorkingSet($0.setType) }
@@ -281,7 +318,8 @@ enum SessionAnalysis {
                 previousSets: prev,
                 cue: cue, stats: SessionDetail.exerciseStats(detail), window: window,
                 atCeiling: atCeiling,
-                spark: sessionMeanE1rm((priorByEx[g.exerciseId] ?? []) + g.sets).map(\.kg)
+                spark: sessionMeanE1rm((priorByEx[g.exerciseId] ?? []) + g.sets).map(\.kg),
+                records: records
             ))
         }
 

@@ -1070,7 +1070,18 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
                 weightKg: row.weightKg, reps: row.reps, rpe: row.rpe,
                 kind: row.kind, qualities: row.qualities, isDone: false,
                 previous: row.previous, rpeStale: row.rpeStale,
-                progressed: row.progressed, side: side, pairId: pairId
+                progressed: row.progressed, side: side, pairId: pairId,
+                // ── THE MEASURED AXES COME ACROSS TOO ───────────────────────
+                // They did not, and the omission was invisible on everything
+                // the deck had ever been asked to split: a hold carries its
+                // SECONDS in `reps` (`TimedExercise`'s convention, the same one
+                // `PrEngine` scores the duration axis on), so a Side Plank
+                // survived by luck. Anything actually carrying `durationSec` —
+                // a bout, a restored cardio row — split into two halves with
+                // the measurement erased, which is a set the deck would then
+                // refuse to tick at all (`canLog` tests reps OR cardio).
+                durationSec: row.durationSec, incline: row.incline,
+                distanceKm: row.distanceKm, elevationM: row.elevationM
             )
         }
         let sides = [half("left"), half("right")]
@@ -1106,7 +1117,15 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             kind: members.first?.kind ?? .normal,
             qualities: SetQuality.allCases.filter { q in members.contains { $0.qualities.contains(q) } },
             isDone: false,
-            previous: members.first?.previous
+            previous: members.first?.previous,
+            // The weaker side on every measured axis too, for the reason the
+            // load and the reps take it: a merge must never invent work. The
+            // symmetric half of `splitSet`'s copy — without it, merging a pair
+            // that carried a measurement erased it.
+            durationSec: members.compactMap(\.durationSec).min(),
+            incline: members.compactMap(\.incline).min(),
+            distanceKm: members.compactMap(\.distanceKm).min(),
+            elevationM: members.compactMap(\.elevationM).min()
         )
         exercise.rows.removeAll { $0.pairId == pairId }
         exercise.rows.insert(merged, at: min(index, exercise.rows.count))
@@ -1279,6 +1298,18 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
                     setType: row.kind.rawValue,
                     timed: TimedExercise.isTimed(name),
                     repFloor: floor,
+                    // ── THE PAIR, WHICH THIS USED TO DROP ───────────────────
+                    // Neither field was passed, so the live pass judged each
+                    // side of a split set as a set of its own: two volume
+                    // credits for one physical set, each at its own tonnage,
+                    // where `PrRecorder.record` — once it is handed the domain
+                    // spelling — collapses them to the weaker side and scores
+                    // ONE. A trophy that lights on a set the close refuses to
+                    // file is the exact failure `PrRecorder.baselines`'s header
+                    // forbids, and it can only happen on a lift that has been
+                    // split, which is why it went unnoticed.
+                    pairId: row.pairId,
+                    side: SyncTranslation.domainSide(row.side),
                     // The session's own day when there is one: a record is
                     // dated by the session it was earned in, and today's date
                     // on a three-week-old set would file it under the wrong day.

@@ -193,11 +193,27 @@ struct TrainingTests {
 @Suite("Set pair layout — one box, and how much of it splits")
 struct SetPairLayoutTests {
 
-    @Test("two sides that agree about everything are an ordinary set")
-    func identicalIsUnified() {
-        #expect(SetPairLayout.resolve(weights: [12, 12], reps: [10, 10], rpes: [8, 8]) == .unified)
-        // Unrated on BOTH sides is agreement, not a difference.
-        #expect(SetPairLayout.resolve(weights: [12, 12], reps: [10, 10], rpes: [nil, nil]) == .unified)
+    @Test("only a LONE row is an ordinary set")
+    func loneRowIsUnified() {
+        #expect(SetPairLayout.resolve(weights: [12], reps: [10], rpes: [8]) == .unified)
+        #expect(SetPairLayout.resolve(weights: [], reps: [], rpes: []) == .unified)
+    }
+
+    @Test("a pair that agrees about everything still splits its effort")
+    func identicalPairSplitsEffort() {
+        // ── THE 2026-09-11 DEAD END ─────────────────────────────────────────
+        // This pair used to resolve `.unified`, which drew the two rows as the
+        // one row they replaced — so splitting a set looked like it had done
+        // nothing — and left the sides unable to ever differ, because the
+        // single effort control wrote to both. The state below is exactly what
+        // `LoggerModel.splitSet` produces the instant it runs, so it is the
+        // state that must be visibly a pair.
+        #expect(SetPairLayout.resolve(weights: [12, 12], reps: [10, 10], rpes: [8, 8]) == .effortSplit)
+        #expect(SetPairLayout.resolve(weights: [12, 12], reps: [10, 10], rpes: [nil, nil]) == .effortSplit)
+        // A TIMED hold carries its seconds in `reps`, so a 66 s Side Plank
+        // split into two 66 s sides is the same shape — and it is the case the
+        // founder reported.
+        #expect(SetPairLayout.resolve(weights: [0, 0], reps: [66, 66], rpes: [nil, nil]) == .effortSplit)
     }
 
     @Test("same numbers, different effort splits only the effort")

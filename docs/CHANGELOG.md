@@ -47,6 +47,91 @@ _Nothing yet._
 
 ---
 
+## [1.9.0] — 2026-09-11 · Before, During and After the Workout
+
+A hotfix sprint against one real session (Legs & Core B, 11 Sep). Three screens
+— the plan card you read before a workout, the deck you log it on, and the
+summary you read after — plus the two numbers that turned out to be wrong
+underneath them.
+
+### Added
+- **The plan card shows LAST TIME, not the rep window** (Train tab). Every
+  movement's row printed `3 × 10-15`, which is the prescription and has not
+  moved in eight weeks. It now prints the top set from the last session of the
+  same split — `Last: 72.5 kg × 15 @ 8.5` — heaviest working set, ties broken
+  by reps, a unilateral pair scored at its weaker side, a hold in seconds. A
+  movement that was not in that session prints nothing rather than a number
+  from some other day.
+- **"Open last · Thu 4 Sep"** on the same card opens that whole session's
+  summary in a sheet, over the plan you are about to perform.
+- **A set stopwatch** in the logger's timer sheet (tap the elapsed reading).
+  Start / Stop / Lap / Reset, for timing a plank or a hollow hold; read it and
+  type the number into the set. It is anchored to a date rather than driven by
+  a repeating timer, so it is the system clock the phone and the watch already
+  share — it cannot drift, and it survives the screen locking.
+- **Muscle tags on the session summary header**, derived from the muscle credit
+  the session actually earned. A Legs & Core B holding a Side Plank and a
+  Hanging Knee Raise was missing its Abs/core tag; nothing up there had ever
+  asked what was trained, only what the calendar said. Nothing is truncated —
+  core work is always the smallest share, so any "top four" drops exactly the
+  tag this fixes.
+- **The trophy is the set's badge on the summary**, and long-pressing a record
+  row opens the record sheet the live deck has had since E4 — which axis, the
+  new figure, and what it beat. VoiceOver reaches it through a "What it beat"
+  rotor action.
+
+### Fixed
+- **One session, one tonnage.** 11 Sep read **8,815 kg** on the Train tab and
+  the Pulse card, and **9,715 kg** on its own summary page — the gap was a
+  single 60 kg × 15 warm-up on the leg press. `SessionVolume`'s rule is one
+  sentence ("a ghost weighs nothing; a warm-up still counts") and five call
+  sites in three files were filtering warm-ups out before calling it. They no
+  longer do, so every surface now agrees with `workout_sessions.total_volume_kg`
+  and with the close path. Set COUNTS still exclude warm-ups, deliberately —
+  that is a different question. `src/tests/session-tonnage-discipline.test.ts`
+  fails the next call site that re-adds the filter.
+- **Records that never got filed.** 11 Sep stored `pr_count = 1` where a replay
+  of the whole ledger finds five: Leg Press volume (72.5 × 15), Calf Press
+  volume and 1RM (70 × 15), Hanging Knee Raise reps (18), Side Plank duration
+  (66 s). `PrRecorder.baselines` gathered the bar under the session's OWN
+  exercise ids, so a movement whose history sits under a second id — a
+  catalogue uuid from the web beside a `helix5-` slug from the phone, which
+  `nameResolver` calls routine — was judged against an empty bar, and an empty
+  bar awards nothing at all. The bar is now gathered under every id that
+  resolves to the same canonical name. It can only ever raise a bar or fill an
+  empty one, so it removes false positives and cannot invent a record; the
+  ledger's filing key is unchanged.
+- **A split set was scored twice.** The PR engine folds an L/R pair on `L`/`R`,
+  and the phone's own rows spell the sides `left`/`right` — so `volumeCredits`
+  saw no pair and credited each arm its own tonnage, both at close and on the
+  live deck (which was not passing `pair_id` or `side` at all). An asymmetric
+  pair could take a volume record the same work logged unsided never would.
+- **Splitting a set now does something visible.** A pair whose two sides agreed
+  drew as the single row it replaced, and the one effort control wrote to both
+  of them — so "split the Side Plank, rate the left arm harder" was a dead end
+  with no way out of it. A completed pair now always draws its two efforts
+  (`L 8 · R 9`) over one value line, which is what the web has always done.
+- **"Fin…"** — the Finish button truncated in the navigation bar. The word is
+  incompressible now.
+- **Dead space on unloaded movements.** With no kg column, the reps/time track
+  kept its floor beside the badge and the effort word stayed pinned right,
+  leaving ~90 pt of nothing between them on Side Plank and Hanging Knee Raise.
+  The surviving track takes the vacated width, in the row and in its header.
+- **A split set kept its measurements.** `splitSet` copied load, reps and effort
+  to both halves and dropped `duration_sec`, `incline`, `distance_km` and
+  `elevation_m`; `mergeSet` dropped them the other way.
+- **`scripts/backfill-prs.mjs` could not run at all.** `workout_sets` passed
+  1,000 rows, PostgREST truncated the read silently, and the script's own
+  preflight — correctly — refused to proceed, because a truncated read prunes
+  the ledger of every session it cannot see. The read is paged now.
+
+### Data
+- The record book was replayed over the full ledger (`backfill-prs.mjs`):
+  120 rows written, 3 superseded rows pruned, 9 `is_pr` flags and 3 `pr_count`s
+  corrected — 11 Sep from 1 to 5, 10 Sep from 10 to 5, 8 Sep from 4 to 1.
+
+---
+
 ## [1.8.0] — 2026-09-11 · Sixteen Muscles, One Count
 
 Every muscle has its own colour, and the week is counted once.

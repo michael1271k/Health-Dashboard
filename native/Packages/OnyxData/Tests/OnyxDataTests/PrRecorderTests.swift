@@ -166,4 +166,91 @@ struct PrRecorderTests {
         try db.writer.write { conn in _ = try PrRecorder.recomputeAll(conn, userId: user) }
         #expect(try records(db) == first, "a second replay must change nothing")
     }
+
+    /// ── THE 2026-09-11 FAILURE, IN ONE TEST ─────────────────────────────────
+    ///
+    /// One movement, its history under the CATALOGUE UUID (pulled from the web)
+    /// and today's session under the SLUG (logged on this phone). That is not a
+    /// contrived pairing — `nameResolver`'s own header calls it routine, and
+    /// `LoggerModel.storedId` produces the slug for any movement the routine
+    /// payload could not resolve.
+    ///
+    /// `baselines` filtered on the session's own ids, so the bar came back
+    /// EMPTY, and an empty index awards no axis at all ("a delta against
+    /// nothing is not a delta"). The visible result was a Legs & Core B session
+    /// that stored `pr_count = 1` where a replay over the full ledger finds
+    /// five — three movements' records lost in silence, with no error anywhere.
+    ///
+    /// The bar is now gathered under every id that resolves to the same
+    /// canonical name and re-keyed to the one in hand, so this session is
+    /// judged against the history that actually exists.
+    @Test("a lift logged under two ids is judged against BOTH")
+    func baselineSpansAliasedIds() throws {
+        let db = try store()
+        // The history, under the catalogue uuid the web writes: 100 kg.
+        try log(db, id: "s1", date: "2026-09-04", weights: [100], exercise: "ex-hack")
+        // Today, under the slug this phone mints for the same movement. TWO
+        // sets, and that is the point — the first has nothing to beat under
+        // either rule, so it is the SECOND that separates them: against the
+        // session's own first set 90 is a new best, against the movement's
+        // actual history it is 10 kg short.
+        try log(db, id: "s2", date: "2026-09-11", weights: [80, 90], exercise: "helix5-hack-squat")
+        _ = try db.closeSession(id: "s2")
+
+        #expect(try records(db).first { $0.axis == "weight" } == nil,
+                "90 kg does not beat a 100 kg history just because today's id is new")
+        #expect(try db.writer.read { try WorkoutSession.fetchOne($0, key: "s2")?.prCount } == 0)
+
+        // And the other direction: a set that DOES beat the aliased history is
+        // filed, which is what makes this a widened bar rather than a mute one.
+        try log(db, id: "s3", date: "2026-09-12", weights: [120], exercise: "helix5-hack-squat")
+        _ = try db.closeSession(id: "s3")
+        let beaten = try #require(try records(db).first { $0.axis == "weight" })
+        #expect(beaten.value == 120 && beaten.sessionId == "s3")
+    }
+
+    /// A pair is ONE set of work, scored at its weaker side — and the local
+    /// store spells the sides `left`/`right` while every OnyxCore rule that
+    /// folds them tests `L`/`R`. Handed the local spelling, `volumeCredits`
+    /// sees no pair and credits each row its own tonnage, so a split set could
+    /// take a volume record that the same work logged unsided never would.
+    @Test("a split set is scored at its weaker side, not once per arm")
+    func pairCollapsesForTheVolumeAxis() throws {
+        let db = try store()
+        // The bar: one unsided set at 20 × 9 = 180 kg. Through `log`, so the
+        // catalogue row, the session shape and the slug are the ones every
+        // other case here is built on and `replay` is known to resolve.
+        try log(db, id: "p1", date: "2026-09-04", weights: [20], reps: 9)
+        try db.writer.write { conn in
+            // Today: an ASYMMETRIC pair — the left arm pressed 20, the right
+            // managed 16. One set of work at the weaker side: 16 × 10 = 160,
+            // which is short of the 180 bar. Scored per-arm instead, the left
+            // alone reads 200 and takes a volume record for a set that, as one
+            // physical set, was the weakest of the three.
+            try WorkoutSession(id: "p2", userId: user, dayKey: "legs_a", date: "2026-09-11", startedAt: Date()).insert(conn)
+            try WorkoutSet(id: "p2-0", sessionId: "p2", exerciseId: "helix5-hack-squat",
+                           setIndex: 1, weightKg: 20, reps: 10, side: "left", pairId: "pair-1").insert(conn)
+            try WorkoutSet(id: "p2-1", sessionId: "p2", exerciseId: "helix5-hack-squat",
+                           setIndex: 2, weightKg: 16, reps: 10, side: "right", pairId: "pair-1").insert(conn)
+        }
+        _ = try db.closeSession(id: "p2")
+
+        #expect(try records(db).first { $0.axis == "volume" } == nil,
+                "splitting a set must not invent tonnage the same work did not produce")
+        // The e1RM axis DOES fire here and should: ten reps at 20 kg beats nine
+        // at 20 kg, and that is a per-side claim about a load, not a claim
+        // about how much work the set was. Only the VOLUME axis folds a pair.
+
+        // ── `replay` TAKES THE SAME FIX AND IS NOT COVERED HERE ─────────────
+        // `SessionEditing` runs `PrRecorder.replay` on every edit to a finished
+        // session, and it builds its own candidates and its own baselines — so
+        // it needs `SyncTranslation.domainSide` exactly as `record` does, and
+        // it now has it at both of its call sites (the candidate builder and
+        // the `seen` accumulator). It is NOT asserted here: a replay over this
+        // two-session fixture files nothing at all, so every assertion about it
+        // passes whether or not the pair collapsed, which is a test that proves
+        // nothing. Covering it needs a fixture whose replay produces a record,
+        // and that is a test worth writing on its own rather than smuggling
+        // into this one.
+    }
 }

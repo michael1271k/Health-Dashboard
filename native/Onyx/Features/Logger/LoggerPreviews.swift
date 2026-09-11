@@ -94,6 +94,26 @@ enum LoggerPreviews {
             .onyxScreen(.train)
             .environment(AppEnvironment.preview)
             .preferredColorScheme(.dark)
+        case "logger-timer":
+            // Both clocks in one sheet: the session's own reading and pause at
+            // the top, the SET stopwatch under it. Presented by the harness for
+            // the reason every other sheet here is — the button that opens it
+            // is the hero's elapsed reading, and a shot script cannot tap one.
+            //
+            // The stopwatch is photographed STOPPED at zero. Running, it draws
+            // `Text(_:style: .timer)`, whose rendering is the system's and
+            // changes between any two frames — so a shot of it would fail a
+            // pixel comparison every run while telling a reviewer nothing the
+            // stopped face does not.
+            let ticking = LoggerModel.previewUpperB(logged: true)
+            NavigationStack {
+                LiveLoggerView(model: ticking)
+                    .sheet(isPresented: .constant(true)) {
+                        TimerSheet(clock: ticking, accent: Color.onyx.day(ticking.day.key))
+                    }
+            }
+            .environment(AppEnvironment.preview)
+            .preferredColorScheme(.dark)
         case "set-row-records":
             // The sheet the trophy opens — what the record actually was and
             // what it beat. Presented by the harness for the same reason the
