@@ -40,6 +40,7 @@ struct WorkoutTabView: View {
     var seededToday: String?
 
     @State private var week: WorkoutWeek?
+    @State private var weekSheetOpen = false
     /// The session this tab is keeping, live or not. Survives the cover being
     /// dismissed — that is the whole reason it lives here.
     @State private var session: LoggerModel?
@@ -161,6 +162,15 @@ struct WorkoutTabView: View {
                 ))
             }
         }
+        // Re-read on dismissal for the same reason the day swap does: the
+        // week panel, today's card and the progression queue all read the
+        // schedule, and a week rearranged behind a modal must not leave any of
+        // them drawing the old one.
+        .sheet(isPresented: $weekSheetOpen, onDismiss: { Task { await week?.refresh() } }) {
+            if let week, week.loaded {
+                WeekOverrideSheet(week: week)
+            }
+        }
         .sheet(isPresented: $loggingCardio) {
             if let week {
                 CardioLogSheet(
@@ -213,20 +223,38 @@ struct WorkoutTabView: View {
     /// The tonnage is trailing in the header, where a supporting figure belongs.
     private var weekPanel: some View {
         VStack(alignment: .leading, spacing: OnyxSpace.s) {
-            // Label beside the tally until the tally alone is a line wide. At
-            // AX5 an `HStack` broke "THIS WEEK" and "12,510 kg" across four
-            // lines between them.
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .firstTextBaseline, spacing: OnyxSpace.s) {
-                    Text("This week").onyxMicro()
-                    Spacer(minLength: OnyxSpace.s)
-                    tally
+            // ── THE HEADER IS THE DOOR (W6) ─────────────────────────────────
+            // Tapping "This week" opens the week's seven days for reassignment.
+            // The header and not the cells: a cell already means "open the
+            // session that happened here", and giving it a second meaning that
+            // depends on whether the day is logged is the kind of control
+            // people learn by getting it wrong.
+            //
+            // A Button wrapping the whole ViewThatFits rather than just the
+            // Text, so the tap target is the full width of the panel's top
+            // line — a 60 pt word is not a target at the end of an arm holding
+            // a phone in a gym.
+            Button { weekSheetOpen = true } label: {
+                // Label beside the tally until the tally alone is a line wide. At
+                // AX5 an `HStack` broke "THIS WEEK" and "12,510 kg" across four
+                // lines between them.
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .firstTextBaseline, spacing: OnyxSpace.s) {
+                        weekLabel
+                        Spacer(minLength: OnyxSpace.s)
+                        tally
+                    }
+                    VStack(alignment: .leading, spacing: OnyxSpace.xs) {
+                        weekLabel
+                        tally
+                    }
                 }
-                VStack(alignment: .leading, spacing: OnyxSpace.xs) {
-                    Text("This week").onyxMicro()
-                    tally
-                }
+                .contentShape(.rect)
             }
+            .buttonStyle(.plain)
+            .onyxPress()
+            .accessibilityLabel("This week")
+            .accessibilityHint("Rearrange this week's days")
             HStack(spacing: OnyxSpace.xs) {
                 ForEach(week?.snapshot.cells ?? []) { cell in
                     dayCell(cell)
@@ -239,6 +267,19 @@ struct WorkoutTabView: View {
         .onyxGlass(.tile)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("This week")
+    }
+
+    /// The header's own line. A chevron beside it, because a heading that opens
+    /// something has to say so — the panel looked identical before it was
+    /// tappable, and an affordance nobody can see is a feature nobody uses.
+    private var weekLabel: some View {
+        HStack(spacing: OnyxSpace.xs) {
+            Text("This week").onyxMicro()
+            Image(systemName: "chevron.right")
+                .onyxType(.micro)
+                .foregroundStyle(Color.onyx.textTertiary)
+                .accessibilityHidden(true)
+        }
     }
 
     @ViewBuilder

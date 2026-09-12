@@ -248,3 +248,196 @@ public enum Swap {
         }
     }
 }
+
+// MARK: - The WEEK tier (W6)
+
+/// One week's assignment, as the sheet holds it while it is being edited.
+///
+/// ── WHY A DRAFT AND NOT A SEQUENCE OF SWAPS ─────────────────────────────────
+/// `planDaySwap` is an EXCHANGE, and an exchange is the right shape for a
+/// single tap on a single day: you say "put Legs A here" and the thing that was
+/// here goes to where Legs A was. It is the wrong shape for a screen showing
+/// all seven days at once, because every tap would silently rewrite a second
+/// row the user is looking at. They move Wednesday and Friday changes under
+/// their finger, and the two edits they have made so far stop describing the
+/// week they can see.
+///
+/// So the week sheet edits an ASSIGNMENT — seven dates, each holding a day key
+/// or rest — and the writes are derived once, at the end, by diffing the draft
+/// against the plan. Everything the user does is visible in the seven rows in
+/// front of them, which is the entire reason this tier exists rather than
+/// looping the day tier seven times.
+public struct WeekAssignment: Equatable, Sendable {
+    /// Sunday-anchored, seven entries. `Schedule.restOverride` for a rest day.
+    public private(set) var days: [String: String]
+    /// The dates, in week order — the sheet's row order, and stable.
+    public let dates: [String]
+
+    public init(dates: [String], days: [String: String]) {
+        self.dates = dates
+        self.days = days
+    }
+
+    public func key(on date: String) -> String { days[date] ?? Schedule.restOverride }
+
+    /// Where `dayKey` sits in this week, if anywhere.
+    public func date(of dayKey: String) -> String? {
+        guard dayKey != Schedule.restOverride else { return nil }
+        return dates.first { days[$0] == dayKey }
+    }
+
+    /// Put `dayKey` on `date`, and take it off wherever else it was.
+    ///
+    /// ── THE VACATED DAY RESTS; IT DOES NOT INHERIT ──────────────────────────
+    /// The day tier's exchange hands the displaced session to the vacated slot,
+    /// because there it is the only way the week keeps its session count. Here
+    /// the user can see the vacated slot and assign it themselves in the next
+    /// tap, so filling it for them would be the screen arguing with the person
+    /// reading it. It goes to rest, visibly, and the footer says the week is
+    /// one session short until they place it.
+    ///
+    /// Placing rest simply clears the date. A day key may live on exactly one
+    /// date, which is what makes "two Legs A this week" unrepresentable rather
+    /// than merely refused.
+    /// Record what a date HELD, without moving anything.
+    ///
+    /// ── WHY THIS IS NOT `place` ─────────────────────────────────────────────
+    /// `place` enforces one date per day key, which is the right rule for a
+    /// DRAFT: a week cannot plan two Legs A. It is the wrong rule for the
+    /// RECORD, because history is perfectly capable of holding two — a split
+    /// trained twice in a week, a swap that doubled one up, or simply a store
+    /// where several sessions carry the same key.
+    ///
+    /// Overlaying logged sessions through `place` made each one evict the last:
+    /// with Sunday and Wednesday both logged as Chest & Back, whichever the
+    /// dictionary happened to iterate second won and the other row drew "Rest"
+    /// beside a completed-session seal. The sheet was reporting a session that
+    /// happened as a day that did not.
+    public mutating func set(_ dayKey: String, on date: String) {
+        guard dates.contains(date) else { return }
+        days[date] = dayKey
+    }
+
+    public mutating func place(_ dayKey: String, on date: String) {
+        guard dates.contains(date) else { return }
+        if dayKey == Schedule.restOverride {
+            days[date] = Schedule.restOverride
+            return
+        }
+        if let previous = self.date(of: dayKey), previous != date {
+            days[previous] = Schedule.restOverride
+        }
+        days[date] = dayKey
+    }
+}
+
+/// What confirming a week's edit will do.
+public struct WeekPlan: Equatable, Sendable {
+    /// Dates whose override must be written.
+    public var writes: [ScheduleWrite]
+    /// Dates whose override must be DELETED — they are back on the plan.
+    public var clears: [String]
+    /// Day keys the plan schedules this week that the draft has nowhere. The
+    /// week is short by this many sessions, and the sheet says so rather than
+    /// letting a holiday quietly delete a leg day.
+    public var dropped: [String]
+    /// The first refusal, or nil. A placement onto or off a logged session.
+    public var block: SwapBlock?
+
+    public var isEmpty: Bool { writes.isEmpty && clears.isEmpty }
+}
+
+public extension Swap {
+
+    /// The plan's own answer for this week — the draft's starting point.
+    static func weekAssignment(of dateISO: String, resolve: ResolveDay) -> WeekAssignment {
+        let dates = weekDatesOf(dateISO)
+        var days: [String: String] = [:]
+        for date in dates { days[date] = keyOrRest(resolve(date)) }
+        return WeekAssignment(dates: dates, days: days)
+    }
+
+    /// Diff a draft against the plan and say what it costs.
+    ///
+    /// ── WHY IT DIFFS AGAINST THE PLAN AND NOT AGAINST THE CURRENT STATE ─────
+    /// `base` is the week with NO overrides — the layout's own weekday answer.
+    /// A date whose draft equals the plan is CLEARED rather than written, which
+    /// is what makes dragging a day back where it started actually undo the
+    /// override instead of pinning the plan's own value on top of itself.
+    ///
+    /// That distinction is invisible for one week and load-bearing after it: a
+    /// pinned row survives a later permanent layout change and quietly holds
+    /// one date on the old plan, which is the bug `planPermanentMove` writes
+    /// pins to CAUSE deliberately and this tier must not cause by accident.
+    ///
+    /// ── AND WHY A LOGGED DAY BLOCKS THE WHOLE CONFIRM ───────────────────────
+    /// Not just its own row. The rule from `blockForPlacement` is that a
+    /// session is attributed by its own `day_key` and the plan says what was
+    /// PLANNED, so a date holding a committed session cannot be told it held
+    /// something else. Applying the other six rows and skipping that one would
+    /// leave the week in a shape the user did not ask for and did not see.
+    /// - Parameters:
+    ///   - base: the week with NO overrides — the layout's own weekday answer.
+    ///   - current: the week as it stands now, overrides included. What the
+    ///     sheet opened on, and the only way to tell "this date is already
+    ///     correct" from "this date must be changed back".
+    ///   - draft: what the user has built.
+    ///   - scheduled: the day keys the plan asks for this week, for `dropped`.
+    static func planWeek(
+        base: WeekAssignment,
+        current: WeekAssignment,
+        draft: WeekAssignment,
+        logged: [LoggedDay],
+        scheduled: [String]
+    ) -> WeekPlan {
+        var writes: [ScheduleWrite] = []
+        var clears: [String] = []
+
+        for date in draft.dates {
+            let want = draft.key(on: date)
+            // Nothing to do: this date already holds what the user asked for,
+            // by override or by plan. A write here would restamp an identical
+            // row, and on a date with no override it would PIN the plan's own
+            // value — invisible for a week, and load-bearing after it, because
+            // a pin survives a later permanent layout change and quietly holds
+            // one date on the old plan.
+            if want == current.key(on: date) { continue }
+
+            // ── EMPTYING A LOGGED DATE IS A `sourceLogged` REFUSAL ──────────
+            // The generic rule below would catch this too, and would name the
+            // wrong obstacle: scanning dates in week order reaches the date
+            // being emptied before the one being filled, so moving Monday's
+            // logged push to Wednesday reported "Monday already has Push A
+            // logged" — true, and a description of a placement the user never
+            // attempted. What they did was take a finished session off the day
+            // it was performed on, and that is the sentence they need.
+            //
+            // Only when the date is left EMPTY. A date that is simultaneously
+            // being vacated and filled — legs dropped onto a logged Monday — is
+            // both refusals at once, and there the target framing is the direct
+            // answer to the thing the user just did.
+            if want == Schedule.restOverride, let leaving = current.days[date], leaving != want,
+               let session = logged.first(where: { $0.date == date }), session.dayKey == leaving {
+                return WeekPlan(
+                    writes: [], clears: [], dropped: [],
+                    block: SwapBlock(kind: .sourceLogged, date: date, dayKey: session.dayKey)
+                )
+            }
+
+            if want == base.key(on: date) {
+                // Back on the plan, and something is currently in the way. The
+                // override has to GO, not be rewritten to the plan's value.
+                clears.append(date)
+                continue
+            }
+            if let block = blockForPlacement(date, dayKey: want, logged: logged, sourceDate: current.date(of: want)) {
+                return WeekPlan(writes: [], clears: [], dropped: [], block: block)
+            }
+            writes.append(ScheduleWrite(date: date, dayKey: want))
+        }
+
+        let placed = Set(draft.dates.compactMap { draft.days[$0] })
+        let dropped = scheduled.filter { !placed.contains($0) }
+        return WeekPlan(writes: writes, clears: clears, dropped: dropped, block: nil)
+    }
+}

@@ -137,6 +137,30 @@ final class WorkoutWeek {
         /// The last time this split was trained — what the plan card prints in
         /// place of the prescription. Nil on the first ever session of a split.
         var previous: Previous?
+
+        // ── THE WEEK SHEET'S THREE ASSIGNMENTS (W6) ─────────────────────────
+        // `weekCurrent` is what the panel draws — plan plus overrides. `weekBase`
+        // is the same week with the overrides taken away, and it is the one the
+        // sheet could not work without: it is how "put this back where it was"
+        // is told from "pin the plan's own value here", which look identical for
+        // a week and diverge the moment the layout is permanently changed.
+        /// The week as it stands: plan, layout and per-date overrides.
+        var weekCurrent = WeekAssignment(dates: [], days: [:])
+        /// The same week with no per-date overrides at all.
+        var weekBase = WeekAssignment(dates: [], days: [:])
+        /// Committed sessions inside the week, for the placement rule.
+        var loggedDays: [LoggedDay] = []
+        /// The day keys the plan asks for this week, in plan order — what a
+        /// draft is checked against for a session it has left homeless.
+        var scheduledKeys: [String] = []
+        /// Training-only supplement keys, unioned over the week's seven days.
+        ///
+        /// The day tier passes ONE date's keys. A week batch touches seven
+        /// weekdays whose stacks differ, and `applyScheduleWrites` takes a
+        /// single list — so the union is what makes the cascade complete.
+        /// Deleting a key that was never scheduled on a date removes no row,
+        /// which is why the wider list is the safe one rather than the lossy one.
+        var trainingOnlyKeys: [String] = []
     }
 
     // MARK: - Live state
@@ -194,6 +218,35 @@ final class WorkoutWeek {
     func addCardio(_ row: CardioLogRow) -> Bool {
         do {
             try database.addCardio(row)
+            Task { await refresh() }
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    /// Apply a week's edit: the overrides that must be written, and the ones
+    /// that must go.
+    ///
+    /// Both halves in one call because they are one change. Writing the moves
+    /// and failing to clear the returns leaves a week that is half rearranged
+    /// and half pinned — the state `undoSwap` exists to prevent one tier down,
+    /// and the reason that method takes a list rather than a date.
+    @discardableResult
+    func applyWeekPlan(_ plan: WeekPlan) -> Bool {
+        guard plan.block == nil, !plan.isEmpty else { return false }
+        do {
+            if !plan.writes.isEmpty {
+                try database.applyScheduleWrites(
+                    userId: userId, plan.writes.map { (date: $0.date, dayKey: $0.dayKey) },
+                    trainingOnlySupplementKeys: snapshot.trainingOnlyKeys
+                )
+            }
+            if !plan.clears.isEmpty {
+                try database.clearScheduleOverrides(
+                    userId: userId, dates: plan.clears, trainingOnlySupplementKeys: snapshot.trainingOnlyKeys
+                )
+            }
             Task { await refresh() }
             return true
         } catch {
@@ -305,6 +358,66 @@ final class WorkoutWeek {
                 isFuture: date > today
             )
         }
+
+        // ── THE WEEK SHEET'S INPUT ──────────────────────────────────────────
+        // Built here rather than in the sheet so it costs the same one detached
+        // pass as everything else on this tab: a sheet that opened its own
+        // schedule context would read the catalogue a second time, on the main
+        // actor, while a modal was animating in.
+        //
+        // `bare` is `context` with the overrides removed and NOTHING else
+        // changed — same plan, same phase, same permanent layout — so it
+        // answers "what does the plan say about this date", which is the only
+        // question `planWeek` needs a second context for.
+        // `let` copies, not the mutable `context` above: `ResolveDay` is
+        // `@Sendable` and captures its context, so capturing a `var` is a data
+        // race the compiler refuses outright. Two immutable snapshots is also
+        // what the two closures actually mean.
+        let withOverrides = context
+        var stripped = context
+        stripped.overrides = [:]
+        let bare = stripped
+        // ── A LOGGED DAY IS WHAT IT LOGGED, NOT WHAT THE PLAN SAYS ──────────
+        // The same rule `DayCell` above applies, and for the same reason: a
+        // session is attributed by its own `day_key` everywhere in this app, so
+        // a Wednesday that ran Chest & Back after a swap IS Chest & Back. The
+        // first build of this sheet took the plan's answer for every date and
+        // drew "Rest" beside a completed-session seal on the one row where the
+        // two disagree — the exact day a week sheet exists to be opened about.
+        //
+        // `weekBase` is deliberately NOT given this treatment: its job is to
+        // answer "what does the plan say", which is how `planWeek` tells
+        // clearing an override from pinning one.
+        var current = Swap.weekAssignment(of: today, resolve: { Schedule.scheduleDayIn(withOverrides, $0) })
+        for (date, session) in finished {
+            guard let key = session.dayKey, !key.isEmpty else { continue }
+            // `set`, not `place`: the record may hold the same split on two
+            // dates and neither one evicts the other. See `WeekAssignment.set`.
+            current.set(key, on: date)
+        }
+        out.weekCurrent = current
+        out.weekBase = Swap.weekAssignment(of: today, resolve: { Schedule.scheduleDayIn(bare, $0) })
+        // A session's own `day_key` is what it is attributed by, everywhere in
+        // this app. A finished session with no key cannot collide with a
+        // placement and is carried as nil rather than dropped, because
+        // `blockForPlacement` still refuses to overwrite the DATE.
+        out.loggedDays = dates.compactMap { date in
+            finished[date].map { LoggedDay(date: date, dayKey: $0.dayKey) }
+        }
+        out.scheduledKeys = out.weekBase.dates
+            .map { out.weekBase.key(on: $0) }
+            .filter { $0 != Schedule.restOverride }
+        let customs = (try? database.read { db in try CustomSupplementRow.fetchAll(db) }) ?? []
+        let active = Supplements.active(customs.map(AppDatabase.custom), on: today)
+        out.trainingOnlyKeys = Array(Set((0..<7).flatMap { weekday in
+            Supplements.stackForDate(
+                Supplements.customSlotsForDate(active, weekday: weekday, isTraining: true),
+                isTraining: true, weekday: weekday
+            )
+            .flatMap(\.items)
+            .filter { $0.trainingOnly == true }
+            .map(\.key)
+        })).sorted()
 
         // ── Last week, for the Trends door's delta ──────────────────────────
         //

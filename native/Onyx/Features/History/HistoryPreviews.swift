@@ -104,6 +104,14 @@ enum HistoryPreviews {
                 WorkoutTabView(seededToday: "2026-09-05")
             }
             .environment(environment())
+        // ── W6: the week sheet, opened ──────────────────────────────────────
+        // A sheet cannot be photographed by launching the screen under it, so
+        // the harness presents it directly — the same trick `day-swap` and
+        // `session-atlas` use. Pinned to the same Thursday as `train`, so the
+        // seven rows in the shot are the seven cells in that one.
+        case "train-week":
+            PresentingWeek(today: "2026-09-03") { WeekOverrideSheet(week: $0) }
+                .environment(environment())
         case "library":
             NavigationStack { ExerciseLibraryView(seeded: PreviewHarness.sampleExercises) }
                 .environment(environment())
@@ -288,6 +296,39 @@ enum HistoryPreviews {
                 sessionId: id == "c-1" ? lastSession : nil,
                 inclinePct: incline
             ).insert(db)
+        }
+    }
+}
+
+/// The Workout tab with a sheet already up.
+///
+/// `WorkoutWeek` is built by `WorkoutTabView`'s own `.task` and is not reachable
+/// from outside it, so this builds a second one against the same seeded store
+/// and hands it to the sheet. Two instances read the same rows and neither
+/// writes here, which is the whole cost of photographing a modal.
+private struct PresentingWeek<Sheet: View>: View {
+    @Environment(AppEnvironment.self) private var environment
+    let today: String
+    @ViewBuilder let sheet: (WorkoutWeek) -> Sheet
+
+    @State private var week: WorkoutWeek?
+    @State private var shown = true
+
+    var body: some View {
+        NavigationStack {
+            WorkoutTabView(seededDay: PlanTemplates.program("onyx5")?.day(key: "cb_a"), seededToday: today)
+        }
+        .sheet(isPresented: $shown) {
+            if let week, week.loaded { sheet(week) }
+        }
+        .task {
+            if week == nil {
+                week = WorkoutWeek(
+                    database: environment.database, userId: environment.userIdString,
+                    phase: .cut, seededToday: today, seededDayKey: "cb_a"
+                )
+            }
+            await week?.refresh()
         }
     }
 }
