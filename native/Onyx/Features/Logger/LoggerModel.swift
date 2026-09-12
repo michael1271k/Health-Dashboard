@@ -435,6 +435,44 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
     /// Which exercise started the rest, so the bar can name it.
     private(set) var restingExercise: String?
 
+    // ── MEASURED REST ───────────────────────────────────────────────────────
+    //
+    /// When each exercise last had a set COMMITTED, keyed by deck identity.
+    ///
+    /// ── WHY THE COMMIT AND NOT THE TIMER ────────────────────────────────────
+    /// `restEndsAt` is a countdown: you can skip it, ignore it, or leave it
+    /// running through a phone call. It measures the PRESCRIPTION. The gap
+    /// between committing one set and committing the next is what actually
+    /// happened, which is the only thing worth writing down.
+    ///
+    /// In memory, and deliberately dying with the session. A set logged after
+    /// the app was killed and relaunched has no measurable predecessor — the
+    /// elapsed time would include however long the phone was in a pocket — and
+    /// nil is the honest answer there.
+    private var lastCommitAt: [String: Date] = [:]
+
+    /// The longest gap still counted as rest, in seconds.
+    ///
+    /// Fifteen minutes is deliberately generous: a heavy compound double can
+    /// legitimately take five, and a threshold tight enough to catch a slow
+    /// superset would discard real data. What it excludes is the phone call,
+    /// the commute and the overnight suspension — and it has to exclude them,
+    /// because one 40-minute outlier moves a six-set mean further than the
+    /// other five sets combined.
+    static let restGapCeilingSec: TimeInterval = 900
+
+    /// The measured gap since this exercise's last commit, or nil.
+    ///
+    /// Nil on the first set of a movement (nothing to rest from), on a gap past
+    /// the ceiling, and in edit mode — where "now" is days after the session
+    /// and the elapsed time measures the editing, not the training.
+    private func restGapSec(for exercise: ExerciseState, at now: Date) -> Int? {
+        guard !isEditing, let last = lastCommitAt[exercise.name] else { return nil }
+        let gap = now.timeIntervalSince(last)
+        guard gap > 0, gap <= Self.restGapCeilingSec else { return nil }
+        return Int(gap.rounded())
+    }
+
     // ── The seed ────────────────────────────────────────────────────────────
     //
     // What the deck OPENS with, and where each number came from. Built once —
@@ -2044,7 +2082,12 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
     }
 
-    private func snapshot(_ row: SetRow, in exercise: ExerciseState) -> SetSnapshot {
+    /// `actualRestSec` is passed only by the APPEND path. An amend rebuilds the
+    /// snapshot to diff it, and a measurement re-derived at edit time would be
+    /// the time since the last commit of whatever the athlete is editing now.
+    private func snapshot(
+        _ row: SetRow, in exercise: ExerciseState, actualRestSec: Int? = nil
+    ) -> SetSnapshot {
         SetSnapshot(
             exerciseId: storedId(for: exercise),
             setIndex: (exercise.rows.firstIndex { $0.id == row.id } ?? 0) + 1,
@@ -2066,7 +2109,8 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             durationSec: row.durationSec,
             incline: row.incline,
             distanceKm: row.distanceKm,
-            elevationM: row.elevationM
+            elevationM: row.elevationM,
+            actualRestSec: actualRestSec
         )
     }
 
@@ -2156,7 +2200,21 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
                     markDirty()
                 }
             } else {
-                try store.appendSet(sessionId: sessionId, setId: row.storeId, snapshot(row, in: exercise))
+                // ── THE MEASUREMENT, TAKEN ONCE, HERE ───────────────────────
+                // Read BEFORE the stamp is updated — `restGapSec` is the gap
+                // since the PREVIOUS commit, and writing `lastCommitAt` first
+                // would measure every set as zero.
+                let now = Date()
+                let rest = restGapSec(for: exercise, at: now)
+                try store.appendSet(
+                    sessionId: sessionId, setId: row.storeId,
+                    snapshot(row, in: exercise, actualRestSec: rest)
+                )
+                // Stamped only on a write that SUCCEEDED. A throw above leaves
+                // the previous stamp standing, so the next set measures from
+                // the last set actually recorded rather than from one that
+                // never reached the store.
+                lastCommitAt[exercise.name] = now
             }
             storeError = nil
         } catch {

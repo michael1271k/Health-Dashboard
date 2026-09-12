@@ -525,7 +525,15 @@ public extension AppDatabase {
                         durationSec: row.durationSec,
                         incline: row.incline,
                         distanceKm: row.distanceKm,
-                        elevationM: row.elevationM
+                        elevationM: row.elevationM,
+                        // Carried for the same reason, with one difference: a
+                        // seed is built from rows the SERVER holds, and the
+                        // server does not hold this column — so in practice
+                        // this is nil here and stays nil. It is passed anyway
+                        // because the day a local-first session is re-seeded
+                        // (a repair, an adoption) the measurement is on the row
+                        // and dropping it would erase it on the first edit.
+                        actualRestSec: row.actualRestSec
                     )
                 )
             )

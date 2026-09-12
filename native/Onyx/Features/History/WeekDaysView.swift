@@ -161,19 +161,34 @@ struct WeekDaysView: View {
             detail = seeded
             return
         }
-        guard loadedAt != environment.rescoreGeneration else { return }
+        /* ── THE LEDGER IS CACHED; THE EXPORT IS NOT ──────────────────────────
+           This guard used to cover the whole method, so the document was
+           rebuilt only when a rescore cascade had finished. `rescoreGeneration`
+           moves for a set edit and a scored day — it does NOT move for a
+           supplement tick, a joint flag, a cardio bout, a stress reading, or a
+           sync PULL bringing another device's edit down. Any of those left
+           `exportFile` pointing at the PREVIOUS `onyx-week-<date>.md` still
+           sitting in the temporary directory, so the share sheet handed over a
+           stale document that looked current.
+
+           The week's ledger is genuinely expensive and genuinely only changes
+           on a rescore, so it keeps the guard. The export is rebuilt on every
+           appearance: it is one read and one file write against a closed week,
+           and a wrong document is worse than a redundant render. */
+        let rebuildDetail = loadedAt != environment.rescoreGeneration
         loadedAt = environment.rescoreGeneration
         let database = environment.database
         let userId = environment.userIdString
         let window = self.window
-        let built = await Task.detached(priority: .userInitiated) { () -> (HistoryWeeks.WeekDetail, String?) in
-            let detail = HistoryWeeks.detail(database: database, window: window)
+        let current = detail
+        let built = await Task.detached(priority: .userInitiated) { () -> (HistoryWeeks.WeekDetail?, String?) in
+            let detail = rebuildDetail ? HistoryWeeks.detail(database: database, window: window) : nil
             let input = try? WeeklyExportBuilder(database: database, userId: userId)
                 .input(weekStart: window.start)
             let text = input.map { WeeklyExport.build($0) }
             return (detail, text)
         }.value
-        detail = built.0
+        if let fresh = built.0 { detail = fresh } else if current == nil { return }
         exportFile = built.1.flatMap { Self.writeExport($0, weekStart: window.start) }
     }
 

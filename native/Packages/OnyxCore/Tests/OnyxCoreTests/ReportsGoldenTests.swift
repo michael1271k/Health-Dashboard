@@ -197,14 +197,11 @@ struct ExportRenderersGoldenTests {
         }
     }
 
-    struct LedgerIn: Decodable { let weeks: [LedgerWeek] }
-
-    @Test("trendLedger matches")
-    func ledgerMatches() throws {
-        for c in try GoldenFixture<LedgerIn, [String]>.load("trend-ledger").cases {
-            #expect(WeeklyExport.trendLedger(c.input.weeks) == c.expected, "trendLedger — \(c.name)")
-        }
-    }
+    /* `trendLedger` and its `trend-ledger` vectors retired in v4.1 with the
+       `### Week over week` block they proved. The renderer no longer has the
+       function, so there is nothing left to hold to a vector. `LedgerWeek` and
+       `WeeklyExportInput.ledger` remain on the payload — `Derived` reads them
+       for the energy balance — and `derivedMatches` below still covers that. */
 
     struct NotesOut: Decodable {
         let training: [String]; let rest: [String]; let slots: [String]

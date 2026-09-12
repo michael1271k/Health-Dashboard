@@ -47,6 +47,102 @@ _Nothing yet._
 
 ---
 
+## [2.4.0] — 2026-09-12 · What Actually Happened
+
+An audit of the Week 7 export found the document confidently stating things the
+database did not say. Exercises came out in the wrong order. A supplement the
+wearer had explicitly refused was reported as taken. Every lifting session
+claimed no heart rate and no calories beside a day whose activity ring was full.
+None of it was a rendering bug: the renderer printed exactly what it was handed,
+and what it was handed was assembled wrong.
+
+### Fixed
+- **Exercises are printed in the order they were performed.** The native builder
+  never read `workout_sets.exercise_order` — it grouped by first appearance in
+  `fold_order`, which for a session pulled from the server is the *puller's*
+  arrival order. Upper A exported with Face Pull first and Chest Press last.
+  `SessionHistoryStore` was fixed for this in §U4.5; the export was the last
+  reader still grouping the wrong way. A session with no index falls back to
+  logged sequence and now SAYS so — `*(order: logged sequence)*` — rather than
+  presenting a guess as a record. The web had the same defect from the other
+  end: `(exercise_order ?? 0)` collapsed to a single key on legacy rows and
+  interleaved every exercise's first set. (`WeeklyExportBuilder.swift`,
+  `useWeeklyLoop.ts`)
+- **A skipped dose can no longer vanish.** Both builders wrote
+  `scheduled.filter(i => skipped.has(i.key))` — filtering the wearer's own
+  answer through a projection of today's protocol. When the two drift, which a
+  day swapped Train↔Rest or an item archived mid-week guarantees, the evidence
+  was deleted rather than reported. That is how Friday 2026-09-04 exported as
+  *9 of 9 — skipped: none logged* after L-Citrulline was declined. A refusal
+  the day's schedule does not name is now printed under its own label.
+- **Session heart rate and calories are read instead of nulled.**
+  `WeeklyExportBuilder` hardcoded `avgBpm` and `caloriesBurned` to null on the
+  reasoning that the columns are "not mirrored". True of the pull; irrelevant
+  here — `HealthSync.syncSessionMetrics` writes both on this device from the
+  overlapping `HKWorkout`, and has since Phase 3.
+- **`archived_at` is honoured.** `Supplements.active(_:on:)` and its TS twin
+  `activeOn` existed and were called by neither builder, so an item archived on
+  Wednesday stayed "scheduled" — and "taken" — through Saturday.
+- **A night the watch missed keeps its self-reported flags.** Both sleep toggles
+  live inside the Sleep row, which was gated on a duration existing, so ticking
+  *trouble falling asleep* on a night with no HealthKit data erased it.
+- **A retroactive edit reaches the document.** `['weekly_export']` hung off four
+  tables out of a dozen, so logging water or correcting a weigh-in for an
+  earlier day invalidated nothing and `staleTime: 60_000` served stale markdown.
+  Natively, the `.md` file was rebuilt only when a rescore cascade bumped
+  `rescoreGeneration` — so a supplement tick, a cardio bout or a sync pull left
+  the previous file in the temporary directory to be shared again.
+
+### Added
+- **Measured rest.** `workout_sets.actual_rest_sec` — the elapsed gap between
+  committing one set and the next of the same movement, written by the native
+  logger. The plan could always say what you were aiming for; it could never say
+  whether you held it. A block prescribed at 135 s and trained at 90 s is a
+  different block. Renders as `rest 135 s plan (avg 141 s actual)`, and as the
+  plan alone wherever nothing was measured. NOT the rest timer, which is a
+  countdown you can skip; and not the dead `rest_sec`, whose name still carries
+  the old semantics. Local-first: `docs/sql/actual-rest.sql` is the Postgres
+  half and the push waits on it, so a workout cannot fail to sync over a column
+  the server has not grown yet.
+- **Muscle tags on every session.** `Session #41 · Legs & Core A · [Quads,
+  Calves, Abs/core, *Hamstrings*, *Glutes*]` — direct work upright, indirect in
+  italics, because a bench press *trains* chest and *involves* triceps. Resolved
+  in the builders so `exercises.muscle_groups` overrides are honoured, and
+  repeated once at the top as a `**Sessions**` index, so the shape of the week
+  is legible before descending into any day.
+- **An implausible reading names the app that wrote it.** HealthKit dietary
+  queries now ask for `.separateBySource` in the same pass that computes the
+  total, and the ingest records the split beside the figure. Calcium arriving at
+  ~3,100 mg could be doubted but never traced, because `nutrition_entries`
+  stores a daily aggregate with no item breakdown. Future spikes read
+  `Calcium ⚠ 3,074 / 1,000 mg — implausible, mostly from <app> (3,100)`.
+
+### Changed
+- **"Head" is now "Stress".** The row is the Pulse Head control, but the
+  document is read by people who never saw that screen.
+- **The stack is three lines, not one.** The count, what was taken and what was
+  skipped each get a row, and the skipped row says which kind of refusal each
+  was — `(planned)` or `(not scheduled this day — logged anyway)`. The count
+  states the real four states: `7 of 9 scheduled · 1 still ahead · 1 skipped`.
+- **An implausible day is excluded from the weekly average.** It used to be
+  flagged AND counted, so the week's calcium mean read 2,012 mg against a
+  1,000 mg target — a figure produced almost entirely by days the same document
+  says not to believe. The Days column states the exclusion: `4 of 6 ⚠`.
+- **Sleep onset prints only when it is true.** `?? false` rendered "fell asleep
+  easily" for every night nobody was asked about.
+
+### Removed
+- **The week-over-week table and the "vs the previous week" paragraph.** Both
+  were correct; `trendLedger` and its vectors are deleted with them. This
+  document has one consumer — a person pasting a week into a chat window — and a
+  comparison table invites every reading of that week to be a reading of the
+  trend instead. A −40 % volume line at the top of a deload reads as a collapse;
+  the same week read alone reads as the deload it was planned to be. The ledger
+  stays on the payload: `derived.ts` needs the previous week for the energy
+  balance, which is a calculation and not a table. Four tables became three.
+
+---
+
 ## [2.3.0] — 2026-09-12 · The Week, Written Down
 
 The weekly export stops being a payload and becomes a document. The native

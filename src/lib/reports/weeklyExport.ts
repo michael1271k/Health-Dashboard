@@ -40,6 +40,7 @@ import { rpeLabel, cr10Label, RPE_LADDER } from '@/lib/training/effort'
 import { weighInSkipReason } from '@/lib/body/weighIn'
 import { TEF_FACTOR, tefKcal, tdeeKcal } from '@/lib/nutrition/energy'
 import { NUTRIENT_TARGETS } from '@/lib/nutrition/nutrientTargets'
+import { LANDMARK_MUSCLES } from '@/lib/training/landmarks'
 import { derivedWeek } from '@/lib/reports/derived'
 import type { TargetPeriod } from '@/lib/nutrition/levers'
 
@@ -224,11 +225,37 @@ export interface ExportDay {
    */
   supplementsLog?: Array<{ key: string; time: string | null }>
   /**
-   * Doses deliberately dropped — the only thing that now counts as a miss.
+   * Doses deliberately dropped that the protocol ASKED for — a real miss.
    *
    * Names, not keys, because this line is read by a human and `d3k2` is not one.
    */
   supplementsSkipped?: string[]
+  /**
+   * Doses refused that the day's resolved schedule did NOT ask for.
+   *
+   * ── WHY THE EVIDENCE IS NO LONGER FILTERED THROUGH THE PROJECTION ──────────
+   * A skip is a row in `supplement_log`: the wearer said no, and said it about
+   * a specific item on a specific date. The schedule is a PROJECTION — today's
+   * `custom_supplements` rows, resolved against that weekday and whether the
+   * day was trained. The two drift: a day swapped Train↔Rest after the fact
+   * drops every `trainingOnly` item out of the projection, and an item archived
+   * mid-week leaves it entirely.
+   *
+   * Both builders used to write `scheduled.filter(i => skipped.has(i.key))`,
+   * so any drift DELETED the wearer's own answer rather than reporting it.
+   * A skip logged against an item the day did not ask for is still a fact, and
+   * it lands here rather than on the floor.
+   */
+  supplementsSkippedUnplanned?: string[]
+  /**
+   * Scheduled doses whose slot had not come round yet — `DoseState.later`.
+   *
+   * Absence is the protocol, but only from the slot's own time: a 22:00
+   * magnesium is not "taken" at 18:00, it is pending. Always empty for a closed
+   * week, where every slot has passed; the clause exists so a partial week
+   * cannot silently round a pending dose up into an adherence figure.
+   */
+  supplementsLater?: string[]
   /**
    * The day's micronutrients, food and stack kept APART.
    *
@@ -412,6 +439,37 @@ export interface ExportExercise {
    */
   restTargetSec?: number | null
   restPlanSec?: number | null
+  /**
+   * The MEAN measured rest between this exercise's sets, in seconds.
+   *
+   * ── WHY THIS EXISTS AGAIN, AND WHAT IT IS NOT ────────────────────────────
+   * The note above is still true of `rest_sec`: that column died on
+   * 2026-08-19 and never held a value. `workout_sets.actual_rest_sec` is a
+   * different column with a different contract — the logger writes the elapsed
+   * gap between committing one set and committing the next, measured on the
+   * device that logged it, and only for sets logged AFTER the column shipped.
+   *
+   * Null therefore means "not measured", and it is null for every historical
+   * session and for every session committed from the web. The renderer prints
+   * the plan alone in that case rather than inventing a gap, which is why this
+   * is a separate optional field and not a widening of `restTargetSec`.
+   *
+   * A MEAN and not a list: the reader's question is "did I hold the
+   * prescription", and seven numbers do not answer it better than one does.
+   */
+  restActualSec?: number | null
+  /**
+   * The landmark muscles this movement trains, already spelled for a reader
+   * ("Side delts", "Abs/core") — `resolveMovers` → `toLandmarkMuscle`.
+   *
+   * Resolved in the BUILDER rather than the renderer so the stored
+   * `exercises.muscle_groups` override is honoured: `resolveMovers` reads the
+   * name dictionary first and falls back to the stored list, and only the
+   * builder has the stored list. A renderer working from the name alone would
+   * silently ignore a movement the user reclassified.
+   */
+  primaryMuscles?: string[]
+  secondaryMuscles?: string[]
   topKg: number | null
   /** Programmed rep window, when the exercise is in the active program. */
   repWindow: string | null
@@ -464,6 +522,22 @@ export interface ExportSession {
   avgBpmEstimated?: boolean | null
   /** Borg CR10 session effort, when rated. */
   sessionRpe: number | null
+  /**
+   * Where the order of `exercises` came from.
+   *
+   * `'index'` — every exercise carried `workout_sets.exercise_order`, the
+   * column a reorder writes, so the list is the sequence as it was performed
+   * (including any mid-session drag).
+   *
+   * `'logged'` — at least one exercise had no index, so the list falls back to
+   * first-appearance in logged order. That is usually right and is not
+   * guaranteed: a session pulled from the server arrives in fold order, which
+   * is the puller's arrival order rather than the deck's. The renderer says so
+   * on the header rather than presenting a guess as a record.
+   *
+   * Absent on a payload built by hand, which is treated as `'logged'`.
+   */
+  orderSource?: 'index' | 'logged' | null
   exercises: ExportExercise[]
   /**
    * Named PRs set in this session (no est-1RM VALUE — raw lift only).
@@ -1352,71 +1426,11 @@ export interface LedgerWeek {
   totals: TrendTotals
 }
 
-/**
- * ↑ / ↓ / → — DIRECTION ONLY, never a verdict.
- *
- * No green, no "good", no arrow that means "well done". Whether falling calories
- * are progress or a problem depends on the phase, and this file exports raw data
- * and lets the reader judge. The glyph says which way the number moved and
- * nothing else.
- */
-function directionGlyph(cur: number | null, prev: number | null): string {
-  if (cur == null || prev == null) return DASH
-  const d = cur - prev
-  return Math.abs(d) < 1e-9 ? '→' : d > 0 ? '↑' : '↓'
-}
-
-/**
- * THE CUMULATIVE LEDGER — one row per week, oldest at the top.
- *
- * PIVOTED from the old two-column layout (2026-08-06). Metric-per-row against
- * this-week/last-week answers "what changed since Sunday", which is the smallest
- * question the data can answer. A programme is a trajectory: whether a 500 kcal
- * deficit is holding, whether volume has been climbing for a month or stalled
- * three weeks ago, whether bodyweight is falling at a rate the training can
- * survive. None of that is visible in two columns, and all of it is visible in a
- * column read downwards.
- *
- * ONE Δ COLUMN, on bodyweight only. A delta beside every metric turns twelve
- * numbers into twenty-four and buries the series in its own first differences —
- * the trajectory IS the table now, and the reader can see it. Bodyweight keeps
- * one because week-to-week weight change is the single number a cut is steered
- * by, and it is a subtraction nobody should have to do in their head.
- */
-export function trendLedger(weeks: readonly LedgerWeek[]): string[] {
-  const kcal = (v: number | null) => (v == null ? DASH : `${n(v)}`)
-  const kg = (v: number | null) => (v == null ? DASH : `${n(v, 1)}`)
-  const kgExact = (v: number | null) => (v == null ? DASH : exact(Math.round((v ?? 0) * 100) / 100))
-  const steps = (v: number | null) => (v == null ? DASH : n(v))
-  const mins = (v: number | null) => (v == null ? DASH : n(v))
-  const litres = (v: number | null) => (v == null ? DASH : n((v ?? 0) / 1000, 2))
-
-  const header = ['Week', 'Kcal/day', 'Volume kg', 'Steps/day', 'Cardio min', 'Water L/day', 'Weight kg', 'Δ kg', '']
-  const align = ['left', 'right', 'right', 'right', 'right', 'right', 'right', 'right', 'center'] as const
-
-  const body = weeks.map((w, i) => {
-    const prev = weeks[i - 1]?.totals.avgWeightKg ?? null
-    const cur = w.totals.avgWeightKg
-    // Weight moves in tenths, so the delta is quoted to two places: a 0.15 kg
-    // week rounded to 0.1 or 0.2 is a 33% error on the only number a cut steers by.
-    const delta = cur == null || prev == null ? DASH
-      : Math.abs(cur - prev) < 1e-9 ? '0.00'
-      : `${cur > prev ? '+' : '−'}${Math.abs(cur - prev).toFixed(2)}`
-    return [
-      w.label,
-      kcal(w.totals.avgKcal),
-      kgExact(w.totals.totalVolumeKg),
-      steps(w.totals.avgSteps),
-      mins(w.totals.cardioMinutes),
-      litres(w.totals.avgWaterMl),
-      kg(cur),
-      delta,
-      directionGlyph(cur, prev),
-    ]
-  })
-
-  return markdownTable(header, body, align)
-}
+/* `trendLedger` — DELETED in v4.1, with the `### Week over week` block it
+ * rendered. The document is now strictly about the week on its cover, so the
+ * cumulative table has no reader. `LedgerWeek` and `WeeklyExportInput.ledger`
+ * stay: `derived.ts` reads the ledger to find the previous week's totals for
+ * the energy balance, which is a calculation and not a table. */
 
 /**
  * ── EXPORT v3, THE DENSE TOKEN GRAMMAR ───────────────────────────────────────
@@ -1784,6 +1798,43 @@ function exerciseLines(ex: ExportExercise): string[] {
   })
 }
 
+/**
+ * The muscles a session trained, as a bracketed tag list.
+ *
+ * `[Chest, Upper back, *Triceps*]` — direct work upright, indirect in italics,
+ * because the two are not the same claim: a bench press trains chest, and it
+ * involves triceps. Flattening them would let three sessions of pressing read
+ * as triceps volume.
+ *
+ * Ordered by the CANONICAL landmark order (`LANDMARK_MUSCLES`) rather than by
+ * first appearance, so two sessions that trained the same muscles tag them in
+ * the same order and a reader can compare two headers at a glance.
+ *
+ * A movement the dictionary has never seen contributes nothing rather than its
+ * own name — the tag list is a claim about tracked landmarks, and a bare
+ * exercise name inside it would read as a seventeenth muscle.
+ */
+function sessionTags(s: ExportSession): string {
+  const rank = (m: string) => {
+    const i = (LANDMARK_MUSCLES as readonly string[]).indexOf(m)
+    return i < 0 ? LANDMARK_MUSCLES.length : i
+  }
+  const primary = new Set<string>()
+  const secondary = new Set<string>()
+  for (const ex of s.exercises) {
+    for (const m of ex.primaryMuscles ?? []) primary.add(m)
+    for (const m of ex.secondaryMuscles ?? []) secondary.add(m)
+  }
+  // A muscle trained directly anywhere in the session is direct for the
+  // session, however many other movements only assisted it.
+  for (const m of primary) secondary.delete(m)
+  const tags = [
+    ...[...primary].sort((a, b) => rank(a) - rank(b)),
+    ...[...secondary].sort((a, b) => rank(a) - rank(b)).map((m) => `*${m}*`),
+  ]
+  return tags.length ? `[${tags.join(', ')}]` : ''
+}
+
 /** How a session's sets divide, counted the way each figure is counted. */
 interface SetTally { working: number; warmup: number; ghost: number; failure: number }
 
@@ -1851,6 +1902,14 @@ export interface WeeklyNutrient {
   days: number
   /** True where any single day's reading was judged implausible. */
   flagged: boolean
+  /**
+   * How many days were EXCLUDED from the mean for being implausible.
+   *
+   * Stated rather than silently absorbed: a mean over four days where two were
+   * discarded is a different claim from a mean over six, and a reader who can
+   * see the exclusion can decide whether to trust it.
+   */
+  excluded: number
 }
 
 /**
@@ -1865,25 +1924,39 @@ const microDp = (v: number): number => (Number.isInteger(v) ? 0 : v < 10 ? 1 : 0
 export function weeklyNutrients(days: readonly ExportDay[]): WeeklyNutrient[] {
   const out: WeeklyNutrient[] = []
   for (const t of NUTRIENT_TARGETS) {
-    let food = 0, stack = 0, counted = 0, flagged = false
+    let food = 0, stack = 0, counted = 0, flagged = false, excluded = 0
     for (const d of days) {
       const f = d.nutrientsFood?.[t.key]
       const k = d.nutrientsStack?.[t.key]
       if (f == null && k == null) continue
       const fv = typeof f === 'number' && Number.isFinite(f) && f > 0 ? f : 0
       const kv = typeof k === 'number' && Number.isFinite(k) && k > 0 ? k : 0
-      if (implausibleNutrient(t, fv, kv)) flagged = true
+      /* ── AN IMPLAUSIBLE DAY IS NOT AVERAGED ──────────────────────────────
+         It used to be flagged AND counted, so the week's calcium mean read
+         2,012 mg against a 1,000 mg target — a figure produced almost entirely
+         by two days the same document says not to believe. Marking a number as
+         untrustworthy and then letting it set the average is having it both
+         ways: the flag tells the reader to discount the day, and the mean
+         quietly puts it back.
+
+         The day is dropped from BOTH the numerator and the denominator, which
+         is the same rule this file already applies to a day with no reading at
+         all — "averaged over the days that carried a reading". A day the
+         document does not believe did not carry one. */
+      if (implausibleNutrient(t, fv, kv)) { flagged = true; excluded += 1; continue }
       food += fv
       stack += kv
       counted += 1
     }
-    if (!counted) continue
-    const mf = food / counted, mk = stack / counted
+    // Every reading excluded leaves no mean to print — but the key still
+    // appears, so the row can say the week had readings and none survived.
+    if (!counted && !excluded) continue
+    const mf = counted ? food / counted : 0, mk = counted ? stack / counted : 0
     out.push({
       key: t.key, label: t.label, unit: t.unit, kind: t.kind,
       food: mf, stack: mk, total: mf + mk, target: t.target,
-      pct: t.target > 0 ? ((mf + mk) / t.target) * 100 : null,
-      days: counted, flagged,
+      pct: t.target > 0 && counted ? ((mf + mk) / t.target) * 100 : null,
+      days: counted, flagged, excluded,
     })
   }
   return out
@@ -1898,6 +1971,31 @@ export function weeklyNutrients(days: readonly ExportDay[]): WeeklyNutrient[] {
  * ceiling that was exceeded, and anything the document itself doubts. The
  * complete picture moves to one weekly table, which is where an average belongs.
  */
+/**
+ * Which app contributed most of a nutrient, and how much — `mostly from
+ * MyFitnessPal (3,100 mg)`.
+ *
+ * Reads the `<key>@<source>` entries the HealthKit ingest writes beside the
+ * total. Null when nothing was attributed, which is every day ingested before
+ * the split existed and every figure typed in by hand.
+ */
+function dominantSource(
+  food: Record<string, number | undefined> | undefined, key: string,
+): string | null {
+  if (!food) return null
+  const prefix = `${key}@`
+  // Largest first, ties broken by NAME. Object key order is insertion order in
+  // JS and unordered in a Swift dictionary, so "whichever came first" would
+  // make two equal contributors render differently in the two languages — and
+  // byte parity is the gate.
+  const contenders = Object.entries(food)
+    .filter(([k, v]) => k.startsWith(prefix) && typeof v === 'number' && Number.isFinite(v) && v > 0)
+    .map(([k, v]) => ({ name: k.slice(prefix.length), amount: v as number }))
+    .sort((a, b) => b.amount - a.amount || a.name.localeCompare(b.name))
+  const best = contenders[0]
+  return best == null ? null : `mostly from ${best.name} (${grp(exact(best.amount))})`
+}
+
 function microExceptions(day: ExportDay): string[] {
   const out: string[] = []
   for (const t of NUTRIENT_TARGETS) {
@@ -1911,7 +2009,17 @@ function microExceptions(day: ExportDay): string[] {
     const flag = implausibleNutrient(t, fv, kv)
     if (!bad && !flag) continue
     const over = t.kind === 'ceiling' ? ' (ceiling)' : ''
-    out.push(`${t.label} ${flag ? '⚠ ' : ''}${grp(exact(total))} / ${grp(exact(t.target))} ${t.unit}${over}${flag ? ' — implausible' : ''}`)
+    /* A doubted figure names the app that wrote most of it.
+       `nutrition_entries.micros` is a daily AGGREGATE with no item breakdown,
+       so for a year this document could say a calcium reading was impossible
+       and nothing could say where it came from. The ingest now carries the
+       HealthKit per-source split in the same bundle under `<key>@<source>`
+       keys — invisible to every reader that looks nutrients up by exact key —
+       and this is the one place that goes looking, only for a figure it
+       already doubts. */
+    const blame = flag ? dominantSource(day.nutrientsFood, t.key) : null
+    out.push(`${t.label} ${flag ? '⚠ ' : ''}${grp(exact(total))} / ${grp(exact(t.target))} ${t.unit}${over}${
+      flag ? ` — implausible${blame ? `, ${blame}` : ''}` : ''}`)
   }
   return out
 }
@@ -1945,12 +2053,25 @@ function legendLines(): string[] {
     '**Set marks** — `W` warm-up · `G` ghost, planned and not performed · `drop set` · '
       + '`to failure` · a trailing word is the reported set quality.',
     '',
+    `**Muscle tags** — a session heading names the landmarks it trained: upright for direct `
+      + `work, *italic* for a muscle the movement only assists.${BR}`,
+    'A movement outside the exercise dictionary contributes no tag rather than its own name.',
+    '',
+    `**rest** — \`120 s plan\` is the prescription. \`(avg 118 s actual)\` is MEASURED: the mean `
+      + `gap between committing that movement's sets, recorded by the logger on the phone.${BR}`,
+    'It is absent on every session logged before the measurement existed, and on anything '
+      + 'committed from the web — which has no stopwatch.',
+    '',
+    `**(order: logged sequence)** — the movements are printed in the order they were logged `
+      + `because the session carried no deck index.${BR}`,
+    'Usually the order they were performed in; not guaranteed, which is why it is marked.',
+    '',
     '**Sets by muscle** — a set credits 1.0 to each muscle the movement trains directly and '
       + '0.5 to each it assists. Per-muscle tonnage does NOT sum to the week’s total: a '
       + 'compound lift is counted once against every muscle it trains.',
     '',
     `**Soreness** — 0–3, logged per muscle and per side, with the session it is attributed to.${BR}`,
-    `**Head** — self-reported psychological stress, 1 Relaxed to 5 Swamped, with what it was about.${BR}`,
+    `**Stress** — self-reported psychological stress, 1 Relaxed to 5 Swamped, with what it was about.${BR}`,
     '**Fatigue** — 1–5, three times a day. Reported, never scored.',
     '',
     `**Derived** — computed by Onyx, not measured. tdee = BMR (from the scale, carried across `
@@ -2054,6 +2175,21 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     summary.avgSessionRpe == null ? 'sRPE not reported'
       : `sRPE ${val(summary.avgSessionRpe, 1)} avg over ${summary.ratedSessions}`,
   )}${BR}`)
+  /* The week's training at a glance, one session per entry.
+     Answering "what did this week actually train" meant reading seven day
+     blocks and collecting the session headings out of them. The index states it
+     once, in session order, with the same tags each header carries — so the
+     shape of the week is legible before the reader descends into any day. */
+  if (sessions.length) {
+    // The tags ride on their label with a SPACE, and `·` separates one session
+    // from the next. Joining both with `·` made the line ambiguous: a reader
+    // could not tell where one session ended and the next began, and a session
+    // with no tags at all read as a stray label.
+    L.push(`**Sessions** ${sessions.map((s) => {
+      const tags = sessionTags(s)
+      return `${s.sessionNumber == null ? '' : `#${s.sessionNumber} `}${s.label}${tags ? ` ${tags}` : ''}`
+    }).join(SEP)}${BR}`)
+  }
   L.push(`**Cardio** ${cardio.length ? line(
     `${val(summary.cardioMinutes, 1) ?? NO_DATA} min`,
     `${val(summary.cardioActiveKcal) ?? NO_DATA} kcal`,
@@ -2175,19 +2311,23 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
       ['Nutrient', 'Food', 'Stack', 'Total', 'Target', '%', 'Days'],
       micros.map((m) => [
         m.kind === 'ceiling' ? `${m.label} (ceiling)` : m.label,
-        val(m.food, microDp(m.food)) ?? '—',
-        val(m.stack, microDp(m.stack)) ?? '—',
-        `${m.flagged ? '⚠ ' : ''}${val(m.total, microDp(m.total)) ?? '—'}`,
+        m.days ? val(m.food, microDp(m.food)) ?? '—' : '—',
+        m.days ? val(m.stack, microDp(m.stack)) ?? '—' : '—',
+        m.days ? val(m.total, microDp(m.total)) ?? '—' : '—',
         `${valExact(m.target) ?? '—'} ${m.unit}`,
         m.pct == null ? '—' : `${val(m.pct)} %`,
-        String(m.days),
+        // The denominator, and what was thrown out of it. `4 of 6` says more
+        // than `4` where two days were discarded: the reader can see that the
+        // week had readings and that this mean is not over all of them.
+        m.excluded ? `${m.days} of ${m.days + m.excluded} ⚠` : String(m.days),
       ]),
       ['left', 'right', 'right', 'right', 'right', 'right', 'right'],
     ))
     L.push('')
     L.push('*Averaged over the days that carried a reading, not over seven. '
-      + '⚠ marks a day whose figure the document judged implausible for the intake logged '
-      + 'beside it — treat it as unmeasured, not as a day that went badly.*')
+      + 'A day whose figure the document judged implausible for the intake logged beside it '
+      + 'is EXCLUDED from the mean and counted after the ⚠ — it is treated as unmeasured, '
+      + 'not as a day that went badly.*')
   }
 
   // ── THE STACK ─────────────────────────────────────────────────────────────
@@ -2198,22 +2338,24 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     for (const s of supps) L.push(`- ${s}`)
   }
 
-  // ── WEEK OVER WEEK ────────────────────────────────────────────────────────
+  /* ── WEEK OVER WEEK IS GONE, DELIBERATELY ───────────────────────────────
+     v4 closed `THE WEEK` with a `### Week over week` table of every prior week
+     and a `**vs the previous week**` delta paragraph. Both are removed in v4.1
+     and the document is now strictly about the week on its cover.
+
+     The argument for removing them is not that they were wrong — they were
+     correct, and `trendLedger` / `derivedWeek().deltas` still compute them for
+     the surfaces that show trends. It is that this document has ONE consumer,
+     a person pasting a week into a chat window, and a comparison table invites
+     every reading of that week to be a reading of the trend instead. A −40 %
+     volume line at the top of a deload reads as a collapse; the same week read
+     on its own reads as the deload it was planned to be.
+
+     `derivedWeek` is still called — the per-day battery and TDEE below need
+     it. Only the two blocks are gone. `LedgerWeek` and `input.ledger` stay on
+     the type: the payload is shared with surfaces that do want trends, and
+     narrowing it here would be a second reason to touch both builders. */
   const derived = derivedWeek(input)
-  if (input.ledger?.length) {
-    L.push('', '### Week over week', '')
-    L.push(...trendLedger(input.ledger))
-    const moved = derived.deltas.filter((d) => d.delta != null)
-    if (moved.length) {
-      L.push('')
-      L.push(`**vs the previous week** — ${moved.map((d) => {
-        const size = d.exact ? grp(exact(d.delta)) : grp(n(d.delta as number, d.digits))
-        const sign = (d.delta as number) < 0 ? '' : '+'
-        const pct = d.pct == null ? '' : ` (${signed(d.pct, 0)} %)`
-        return `${d.label.toLowerCase()} ${sign}${size.replace(/^-/, '−')} ${d.unit}${pct}`
-      }).join(SEP)}`)
-    }
-  }
 
   // ── THE DAYS ──────────────────────────────────────────────────────────────
   const bodyByDate = new Map(bodyComp.map((b) => [b.date, b]))
@@ -2235,7 +2377,15 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
   const pushSession = (s: ExportSession): void => {
         const t = tallySets(s)
         L.push('')
-        L.push(`### Session${s.sessionNumber == null ? '' : ` #${s.sessionNumber}`} · ${s.label}`)
+        L.push(`### Session${s.sessionNumber == null ? '' : ` #${s.sessionNumber}`} · ${s.label}${
+          sessionTags(s) ? ` · ${sessionTags(s)}` : ''}${
+          // The order the movements are printed in is a CLAIM, and it is only
+          // as good as `exercise_order`. Where that column was null the builder
+          // fell back to logged sequence, which is usually right and is not
+          // guaranteed — a session pulled from the server arrives in the
+          // puller's arrival order. Saying so costs four words and stops the
+          // reader treating a guess as a record.
+          s.orderSource === 'logged' ? ' *(order: logged sequence)*' : ''}`)
         L.push(line(
           s.startedAt || s.endedAt
             ? `${s.startedAt ? clock(s.startedAt) : NO_DATA} → ${s.endedAt ? clock(s.endedAt) : NO_DATA}`
@@ -2273,9 +2423,23 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
           L.push('')
           L.push(`**${ex.name}** · ${line(
             ex.repWindow ? `target ${ex.repWindow} reps` : `target ${NO_DATA}`,
-            ex.restTargetSec == null && ex.restPlanSec == null ? `rest ${NO_DATA}`
-              : ex.restTargetSec === ex.restPlanSec ? `rest ${val(ex.restTargetSec)} s`
-              : `rest ${val(ex.restTargetSec) ?? NO_DATA} s (plan ${val(ex.restPlanSec) ?? NO_DATA})`,
+            /* Rest: the plan, then what was measured against it.
+               `restActualSec` is the MEAN gap between committing this
+               movement's sets, and it is null for every historical session and
+               for anything the web committed — the logger writes it and the
+               logger is native. So the plan alone is still the ordinary line,
+               and the measurement appears only where one exists. */
+            ((): string => {
+              // One parenthesis, never two. An overridden target reads as
+              // prose — `150 s plan, programme 135` — so the measurement can
+              // keep the brackets to itself.
+              const plan = ex.restTargetSec == null ? null
+                : ex.restTargetSec === ex.restPlanSec ? `rest ${val(ex.restTargetSec)} s plan`
+                : `rest ${val(ex.restTargetSec)} s plan, programme ${val(ex.restPlanSec) ?? NO_DATA}`
+              const actual = ex.restActualSec == null ? null : `avg ${val(ex.restActualSec)} s actual`
+              if (plan == null) return actual == null ? `rest ${NO_DATA}` : `rest no plan (${actual})`
+              return actual == null ? plan : `${plan} (${actual})`
+            })(),
             ex.topKg == null ? `top ${NO_DATA}`
               : isUnloadedSet(ex.topKg) ? 'bodyweight'
               : `top ${valExact(ex.topKg)} kg`,
@@ -2326,17 +2490,32 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
       else missing.push(name)
     }
 
-    // SLEEP
+    /* ── SLEEP ────────────────────────────────────────────────────────────
+       The two self-reported flags are INSIDE this row, and this row used to be
+       gated on a duration existing. So a night the watch missed entirely —
+       phone on the bed, watch on the charger — dropped the row into `missing`
+       and took the wearer's own "trouble falling asleep" with it. The one
+       thing on the line that could not have come from the watch was the one
+       thing the watch's absence erased.
+
+       The gate now includes the flags, and the duration says it is missing
+       rather than the row vanishing. */
     put('sleep', some(day.sleepMin, day.deepMin, day.remMin, day.bedTime, day.wakeTime)
+      || day.sleepOnsetTrouble === true || day.sleepInaccurate === true
       ? dayRow('Sleep', line(
-        hm(day.sleepMin) ?? NO_DATA,
+        hm(day.sleepMin) ?? 'no duration recorded',
         some(day.deepMin, day.remMin, day.coreMin, day.awakeMin)
           ? `deep ${hm(day.deepMin) ?? NO_DATA} · REM ${hm(day.remMin) ?? NO_DATA}`
             + ` · core ${hm(day.coreMin) ?? NO_DATA} · awake ${hm(day.awakeMin) ?? NO_DATA}`
           : null,
         day.bedTime || day.wakeTime ? `${clock(day.bedTime)} → ${clock(day.wakeTime)}` : null,
-        day.sleepOnsetTrouble == null ? null
-          : day.sleepOnsetTrouble ? 'trouble falling asleep' : 'fell asleep easily',
+        // Only the flag, never its absence. `false` used to print "fell asleep
+        // easily", which on a day with no `daily_logs` row at all asserted
+        // something about a night nobody recorded — and on the ordinary night
+        // where the athlete simply did not have trouble, it was a line of noise
+        // six days a week that the reader had to scan past to find the one that
+        // mattered.
+        day.sleepOnsetTrouble === true ? 'trouble falling asleep' : null,
         day.sleepInaccurate ? '⚠ the wearer disputes this night' : null,
       ))
       : null)
@@ -2406,9 +2585,11 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
       `joints ${joints.length ? joints.join(SEP) : NONE}`,
     ].join(' — ')))
 
-    // HEAD
+    // STRESS — `**Head**` until v4.1. The row is the Pulse "Head" control, but
+    // the document is read by people who never saw that screen, and "Head" says
+    // nothing about what is on the line. `stress_logs` is what it reads.
     const head = (input.stress ?? []).filter((x) => x.date === day.date)
-    put('head', dayRow('Head', head.length
+    put('stress', dayRow('Stress', head.length
       ? head.map((h) => {
         const tags = h.tags?.length ? ` — ${h.tags.join(', ')}` : ''
         const note = phrase(h.note)
@@ -2452,23 +2633,53 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     // STACK
     const taken = (day.supplementsLog ?? []).map((s) =>
       `${supplementName(input.supplementProtocol, s.key)}${s.time ? ` ${s.time}` : ''}`)
+    /* ── THE STACK, ON THREE LINES ────────────────────────────────────────
+       v4 joined the count, the taken list and the skipped list with ` — ` onto
+       ONE line, so a nine-item protocol produced a paragraph the reader had to
+       parse to find the one item that was refused. Each clause is its own row
+       now; the two lists are indented under the count that summarises them.
+
+       The skipped line is the one that matters, and it distinguishes the two
+       kinds of refusal it can carry:
+         · `(planned)` — the protocol asked for it and it was declined. A miss.
+         · `(not scheduled this day — logged anyway)` — the day's resolved
+           schedule does not name it, but a refusal was logged against it. That
+           happens when a day was swapped Train↔Rest after the fact, or when the
+           item was archived mid-week. v4 silently DROPPED these, which is how
+           Friday 2026-09-04 exported as "9 of 9 — skipped: none logged". */
     const skipped = day.supplementsSkipped ?? []
-    put('stack', some(day.supplementsTaken, day.supplementsPlanned) || taken.length || skipped.length
-      ? dayRow('Stack', [
-        day.supplementsTaken != null && day.supplementsPlanned != null
-          ? `${val(day.supplementsTaken)} of ${val(day.supplementsPlanned)}`
-          : day.supplementsPlanned != null ? `${val(day.supplementsPlanned)} planned, ticks ${NO_DATA}`
-          : day.supplementsTaken != null ? `${val(day.supplementsTaken)} taken`
-          : null,
-        // A missing `supplement_log` row means TAKEN, not skipped — which is
-        // why an empty list here cannot say "none". It says the per-item ticks
-        // were never written, and the count beside it is the fact.
-        `**taken** ${taken.length ? taken.join(SEP) : 'no per-item log'}`,
-        // Absence is NOT a skip: only an explicit `taken = false` is one. The
-        // export once read a missing row as a miss and reported eight clean
-        // days of August as failures.
-        `**skipped** ${skipped.length ? skipped.join(SEP) : 'none logged'}`,
-      ].filter((x): x is string => x != null).join(' — '))
+    const skippedOff = day.supplementsSkippedUnplanned ?? []
+    const later = day.supplementsLater ?? []
+    const stackRows = [
+      day.supplementsTaken != null && day.supplementsPlanned != null
+        ? line(
+          `${val(day.supplementsTaken)} of ${val(day.supplementsPlanned)} scheduled`,
+          // Omitted when zero, which for a closed week is always: a slot still
+          // ahead of the clock cannot exist on a day that is over.
+          later.length ? `${later.length} still ahead` : null,
+          skipped.length + skippedOff.length ? `${skipped.length + skippedOff.length} skipped` : null,
+        )
+        : day.supplementsPlanned != null ? `${val(day.supplementsPlanned)} planned, ticks ${NO_DATA}`
+        : day.supplementsTaken != null ? `${val(day.supplementsTaken)} taken`
+        : null,
+      // A missing `supplement_log` row means TAKEN, not skipped — which is why
+      // an empty list here cannot say "none". It says the per-item ticks were
+      // never written, and the count above it is the fact.
+      `  **taken** ${taken.length ? taken.join(SEP) : 'no per-item log'}`,
+      // Absence is NOT a skip: only an explicit `taken = false` is one. The
+      // export once read a missing row as a miss and reported eight clean days
+      // of August as failures.
+      `  **skipped** ${skipped.length || skippedOff.length
+        ? [
+          ...skipped.map((s) => `${s} (planned)`),
+          ...skippedOff.map((s) => `${s} (not scheduled this day — logged anyway)`),
+        ].join(SEP)
+        : 'none logged'}`,
+    ].filter((x): x is string => x != null)
+    put('stack', some(day.supplementsTaken, day.supplementsPlanned)
+      || taken.length || skipped.length || skippedOff.length
+      ? stackRows.map((r, i) => (i === 0 ? dayRow('Stack', r) : `${r}${BR}`))
+        .filter((x): x is string => x != null).join('\n')
       : null)
 
     // ACTIVITY

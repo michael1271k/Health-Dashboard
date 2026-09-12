@@ -176,19 +176,30 @@ export function readiness(out: string, date: string): {
 }
 
 /** The `**Head**` row's readings, split — one per slot answered. */
-export const head = (out: string, date: string): string[] =>
-  dayField(out, date, 'Head').split(SEP)
+export const stress = (out: string, date: string): string[] =>
+  dayField(out, date, 'Stress').split(SEP)
 
-/** The two halves of a `**Stack**` row: what was ticked, and what was skipped. */
+/** The v4 spelling of `stress`, kept so an older test names the same row. */
+export const head = stress
+
+/**
+ * The three lines of a `**Stack**` block: the count, what was ticked, and what
+ * was skipped.
+ *
+ * v4 joined all three onto the `**Stack**` row with ` — `. v4.1 gives each its
+ * own line, the two lists indented two spaces under the count, so this reads
+ * the day's lines rather than splitting one field.
+ */
 export function stack(out: string, date: string): {
   count: string | null; taken: string[]; skipped: string[]
 } {
-  const parts = dayField(out, date, 'Stack').split(' — ')
+  const ls = dayLines(out, date)
   const after = (label: string): string[] => {
-    const hit = parts.find((p) => p.startsWith(`**${label}** `))
-    return hit == null ? [] : hit.slice(`**${label}** `.length).split(SEP)
+    const hit = ls.find((l) => l.trim().startsWith(`**${label}** `))
+    if (hit == null) return []
+    return hit.trim().slice(`**${label}** `.length).trim().split(SEP)
   }
-  const count = parts[0].startsWith('**') ? null : parts[0]
+  const count = ls.some((l) => l.startsWith('**Stack** ')) ? dayField(out, date, 'Stack') : null
   return { count, taken: after('taken'), skipped: after('skipped') }
 }
 

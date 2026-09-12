@@ -450,7 +450,7 @@ describe('buildWeeklyExport', () => {
     // completeness — nine independent `toContain` calls would pass on a
     // shuffled day.
     expect(rows).toEqual([
-      'Sleep', 'Vitals', 'Body', 'Readiness', 'Head',
+      'Sleep', 'Vitals', 'Body', 'Readiness', 'Stress',
       'Intake', 'Stack', 'Activity', 'Shape',
     ])
     // The work comes after them, and the day's computed figures close it —
@@ -477,7 +477,11 @@ describe('buildWeeklyExport', () => {
     // The denominator is NOT assumed: this fixture says three were taken and
     // never says how many were asked for, and "3 of 3" would be an invented
     // claim of perfect adherence.
-    expect(dayField(out, '2026-07-19', 'Stack')).toBe(`3 taken — **taken** no per-item log — **skipped** none logged`)
+    // The count is its own line now; the two lists are indented under it, so
+    // the field reader sees only the count.
+    expect(dayField(out, '2026-07-19', 'Stack')).toBe('3 taken')
+    expect(dayLines(out, '2026-07-19')).toContain('  **taken** no per-item log  ')
+    expect(dayLines(out, '2026-07-19')).toContain('  **skipped** none logged  ')
     expect(dayField(out, '2026-07-19', 'Body')).toContain('65.3 kg')
     // A training day asks the training questions; every unanswered slot says
     // so, and the slot is NAMED so a rest day's triple cannot be confused
@@ -895,136 +899,39 @@ describe('week-over-week ledger', () => {
     })
   })
 
-  it('is skipped entirely when there is no ledger to print', () => {
-    expect(headings(buildWeeklyExport(base({ days: [day({ calories: 1800 })] }))))
-      .not.toContain('## LEDGER')
-  })
+  /* ── THE WEEK-OVER-WEEK BLOCK IS GONE (v4.1) ────────────────────────────
+     Seven tests here asserted the `### Week over week` table and the
+     `**vs the previous week**` paragraph: their columns, their ordering, their
+     padding, their arrows. All of it rendered correctly and all of it has been
+     removed, because the document is now strictly about the week on its cover.
 
-  it('heads the block with the program and the app’s own week number', () => {
-    const out = buildWeeklyExport(base({
-      ledger: [week('Week 2', '2026-07-26'), week('Week 3', '2026-08-02')],
-    }))
-    // The programme and the week number identify the DOCUMENT, so they are
-    // stated once on the header rather than again over the table.
-    expect(title(out)).toBe('# ONYX · WEEK 3')
-    expect(metaCells(out)[1]).toBe('Helix Cut')
-    expect(hasSubsection(out, 'Week over week')).toBe(true)
-  })
+     They are replaced by their inverse. A comparison table is exactly the kind
+     of thing a later wave re-adds as an obvious improvement, so the absence is
+     asserted rather than merely achieved by deletion.
 
-  /**
-   * THE POINT OF THE PIVOT. Two columns answer "what changed since Sunday";
-   * a programme is a trajectory, and every week has to be on it.
-   */
-  it('gives EVERY week its own row, oldest first', () => {
+     `trendTotals` above is untouched and still tested: it feeds `derived.ts`,
+     which reads the ledger to find the previous week's totals for the energy
+     balance. That is a calculation, and calculations are not what was cut. */
+  it('prints no comparison table, however much ledger it is handed', () => {
     const out = buildWeeklyExport(base({
+      days: [day({ calories: 1800 })],
       ledger: [
         week('Week 0', '2026-07-12', [day({ calories: 2100 })]),
         week('Week 1', '2026-07-19', [day({ calories: 2000 })]),
         week('Week 2', '2026-07-26', [day({ calories: 1900 })]),
-        week('Week 3', '2026-08-02', [day({ calories: 1800 })]),
       ],
     }))
-    const rows = out.split('\n').filter((l) => l.startsWith('|'))
-    // Header, alignment rule, four weeks.
-    expect(rows).toHaveLength(6)
-    expect(rows[2]).toMatch(/^\| Week 0 /)
-    expect(rows[5]).toMatch(/^\| Week 3 /)
-    // Chronological, not reverse — the trend is read downwards.
-    expect(out.indexOf('| Week 0')).toBeLessThan(out.indexOf('| Week 3'))
+    expect(hasSubsection(out, 'Week over week')).toBe(false)
+    expect(out).not.toContain('vs the previous week')
+    // Nor the rows themselves under some other heading.
+    expect(out).not.toMatch(/^\| Week 0 /m)
+    expect(out).not.toMatch(/^\| Week 1 /m)
   })
 
-  it('closes the week block — the trend is read after the totals', () => {
-    const out = buildWeeklyExport(base({
-      sessions: [session(8000)],
-      ledger: [week('Week 3', '2026-08-02')],
-    }))
-    // v3 put the ledger below every measurement. v4 keeps it inside `## THE
-    // WEEK`, after the totals it compares against and before the days — a
-    // programme's trajectory belongs with the week's own numbers, and a reader
-    // who wants a Tuesday scrolls past both.
-    expect(out.indexOf('**Training**')).toBeLessThan(out.indexOf('### Week over week'))
-    expect(out.indexOf('### Week over week')).toBeLessThan(out.indexOf('## LEGEND'))
-  })
-
-  it('carries one column per metric', () => {
-    const out = buildWeeklyExport(base({
-      ledger: [week('Week 3', '2026-08-02',
-        [day({ calories: 1800, steps: 9000, weightKg: 64.0, waterMl: 3000 })],
-        [session(8000)], [walk(30)])],
-    }))
-    for (const c of ['Week', 'Kcal/day', 'Volume kg', 'Steps/day', 'Cardio min', 'Water L/day', 'Weight kg']) {
-      expect(out).toContain(c)
-    }
-    expect(out).toMatch(/\| +1800 \| +8000 \| +9000 \| +30 \| +3\.00 \| +64\.0 \|/)
-  })
-
-  /**
-   * ONE delta column, on bodyweight. A delta beside every metric doubles the
-   * table and buries the series in its own first differences — the trajectory
-   * IS the table now.
-   */
-  it('quotes the bodyweight delta against the row above, to two places', () => {
-    const out = buildWeeklyExport(base({
-      ledger: [
-        week('Week 2', '2026-07-26', [day({ weightKg: 65.0 })]),
-        week('Week 3', '2026-08-02', [day({ weightKg: 64.55 })]),
-      ],
-    }))
-    // A true minus sign, not a hyphen. 0.45 must not round to 0.5 — a third of
-    // the week's whole loss.
-    expect(out).toMatch(/−0\.45/)
-    // The first row has nothing above it, so it has no delta. (`| Week ` alone
-    // would also catch the header, whose own first cell is the word "Week".)
-    const rows = out.split('\n').filter((l) => /^\| Week \d/.test(l))
-    expect(rows[0]).toMatch(/\| +— \| — \|$/)
-  })
-
-  it('prints a flat week as 0.00, never as a blank', () => {
-    const out = buildWeeklyExport(base({
-      ledger: [
-        week('Week 2', '2026-07-26', [day({ weightKg: 64.2 })]),
-        week('Week 3', '2026-08-02', [day({ weightKg: 64.2 })]),
-      ],
-    }))
-    expect(out).toMatch(/0\.00/)
-    expect(out).toMatch(/→/)
-  })
-
-  it('leaves a cell blank when the measure was never recorded — never 0', () => {
-    const out = buildWeeklyExport(base({ ledger: [week('Week 3', '2026-08-02', [day({})])] }))
-    const row = out.split('\n').find((l) => l.startsWith('| Week 3'))!
-    expect(row).not.toMatch(/\b0\b/)
-    expect(row).toMatch(/—/)
-  })
-
-  /**
-   * DIRECTION, NOT VERDICT. Whether falling weight is progress or a problem
-   * depends on the phase; this file exports raw data and lets the reader judge.
-   */
-  it('uses neutral arrows and never labels a move good or bad', () => {
-    const out = buildWeeklyExport(base({
-      ledger: [
-        week('Week 2', '2026-07-26', [day({ weightKg: 65 })]),
-        week('Week 3', '2026-08-02', [day({ weightKg: 64 })]),
-      ],
-    }))
-    expect(out).toMatch(/↓/)
-    expect(out).not.toMatch(/\b(good|bad|on track|great)\b/i)
-  })
-
-  it('lays the table out so the RAW markdown lines up too', () => {
-    const out = buildWeeklyExport(base({
-      ledger: [
-        week('Week 2', '2026-07-26', [day({ calories: 1900, weightKg: 65 })]),
-        week('Week 3', '2026-08-02', [day({ calories: 1800, weightKg: 64 })]),
-      ],
-    }))
-    const rows = out.split('\n').filter((l) => l.startsWith('|'))
-    // Every row is the same width — the padding's whole job. Arrows and minus
-    // signs are single code points, so they must not skew it.
-    expect(new Set(rows.map((r) => [...r].length)).size).toBe(1)
-    // The week name left, numbers right — the alignment row says so.
-    expect(rows[1]).toMatch(/^\|:-+-\|-+:\|/)
+  it('still names the week it IS, on the header', () => {
+    const out = buildWeeklyExport(base({ ledger: [week('Week 2', '2026-07-26')] }))
+    expect(title(out)).toBe('# ONYX · WEEK 3')
+    expect(metaCells(out)[1]).toBe('Helix Cut')
   })
 })
 

@@ -22,7 +22,7 @@ import { activeProgram, eraForDate, isTrainingDay } from '@/lib/programs'
 import { getWeekPhase } from '@/lib/phases'
 import { repWindowFor } from '@/lib/training/ceilings'
 import { resolveMovers } from '@/lib/exercises/muscleMap'
-import { weeklyVolumeByMuscle, weeklyTonnageByMuscle, type MoverTokens, type ProgramPhase, type LandmarkMuscle } from '@/lib/training/landmarks'
+import { weeklyVolumeByMuscle, weeklyTonnageByMuscle, landmarkNames, type MoverTokens, type ProgramPhase, type LandmarkMuscle } from '@/lib/training/landmarks'
 import { leverPeriods, activeLeverOf } from '@/lib/nutrition/levers'
 import { DAILY_TARGET_COLUMNS, type DailyTarget } from '@/lib/nutrition/dailyTargets'
 import { SUPPLEMENT_PROTOCOL } from '@/lib/supplements'
@@ -31,7 +31,7 @@ import { normalizeSpO2 } from '@/lib/utils/units'
 import { nightOf } from '@/lib/sleep/nightWindow'
 import { supplementNutrients } from '@/lib/nutrition/supplementNutrients'
 import { customSlotsForDate, nutrientPayloads } from '@/lib/hooks/useCustomSupplements'
-import { stackForDate, supplementCountForDate } from '@/lib/supplements'
+import { stackForDate, supplementCountForDate, activeOn } from '@/lib/supplements'
 import { activeKcalOf } from '@/lib/cardio/metrics'
 import { volumeCredits, type PrAxis } from '@/lib/training/prEngine'
 import { isWorkingSet, isSetQuality } from '@/lib/training/setTags'
@@ -572,7 +572,15 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
       // A day with no `daily_logs` row has never been reported on, so it reads
       // `false` — the column is NOT NULL DEFAULT false and a missing row is the
       // same statement as an unticked one. Only an unreadable column is `null`.
-      sleepOnsetTrouble: onsetByDate === null ? null : (onsetByDate.get(date) ?? false),
+      /* ── PRESENT ONLY WHEN TRUE ──────────────────────────────────────────
+         This was `?? false`, and the renderer prints a false as "fell asleep
+         easily" — so every night with no answer claimed the athlete dropped
+         straight off. That is an assertion about a night nobody recorded, in a
+         document whose contract is that a gap is named and never invented.
+         An explicit `false` is also dropped: "did not have trouble" is the
+         ordinary case, and a row of it six nights a week is noise the reader
+         has to scan past to find the one night that matters. */
+      sleepOnsetTrouble: onsetByDate?.get(date) === true ? true : null,
       sleepInaccurate: inaccurateDates.has(date) || undefined,
       restingHrBaseline: baselineOf(date, (r) => r.avg_rest_heart_rate),
       hrvBaseline: baselineOf(date, (r) => r.hrv_ms),
@@ -662,7 +670,27 @@ function toSessions(d: RangeData): ExportSession[] {
     const mine = d.sets
       .filter((r) => r.session_id === s.id)
       .slice()
-      .sort((a, b) => (a.exercise_order ?? 0) - (b.exercise_order ?? 0) || (a.set_number ?? 0) - (b.set_number ?? 0))
+      .sort((a, b) => (a.set_number ?? 0) - (b.set_number ?? 0))
+    /* ── THE ORDER THE SESSION WAS PERFORMED IN ────────────────────────────
+       This used to sort on `(exercise_order ?? 0)` before `set_number`, which
+       looks right and collapses the moment the column is null — and it is null
+       on every row of a session logged before `v16`, and on any session a
+       client wrote without it. With every primary key equal to 0 the sort falls
+       through to `set_number`, so the rows come back as "every exercise's set
+       1, then every exercise's set 2", and the `byName` grouping below reads
+       its order off whichever movement happened to hold the first row.
+
+       A movement with no index now falls back to its FIRST-APPEARANCE position
+       instead — `RoutineOrder.save` has always done it this way — and the
+       session records which of the two answered so the renderer can mark a
+       fallback rather than present a guess as a record. */
+    const indexByName = new Map<string, number>()
+    let everyMovementIndexed = true
+    for (const r of mine) {
+      if (indexByName.has(r.exercises.name)) continue
+      if (r.exercise_order == null) everyMovementIndexed = false
+      indexByName.set(r.exercises.name, r.exercise_order ?? indexByName.size)
+    }
     const byName = new Map<string, ExportExercise>()
     for (const r of mine) {
       const e = byName.get(r.exercises.name) ?? {
@@ -681,6 +709,29 @@ function toSessions(d: RangeData): ExportSession[] {
         // you rested for on every session of that day. See `restTargets.ts`.
         restTargetSec: restTargetFor(r.exercises.name, s.day_key, undefined, s.started_at.slice(0, 10)),
         restPlanSec: programRestSec(r.exercises.name, s.day_key),
+        /* MEASURED rest is native-only and stays null here.
+           `workout_sets.actual_rest_sec` is written by the phone's logger and
+           deliberately NOT pushed (`v22.actualRest`) until the Postgres column
+           exists — so the web has nothing to read, and selecting a column the
+           server may not have would fail the whole sets query rather than one
+           field. Null is the honest answer and the renderer prints the plan
+           alone, which is what it did before. */
+        restActualSec: null,
+        /* The landmarks the movement trains, resolved HERE so the stored
+           `exercises.muscle_groups` override is honoured — `resolveMovers`
+           takes the name first and the stored list as its fallback, and only
+           the builder holds the stored list. */
+        ...(() => {
+          const m = resolveMovers(r.exercises.name, r.exercises.muscle_groups ?? undefined)
+          const primary = landmarkNames(m.primary)
+          return {
+            primaryMuscles: primary,
+            // A landmark already named as primary is not repeated as indirect:
+            // a cable row is `upper back` primary and `traps` secondary, and
+            // both fold to Upper back.
+            secondaryMuscles: landmarkNames(m.secondary).filter((x) => !primary.includes(x)),
+          }
+        })(),
       }
       e.sets.push({
         weightKg: r.weight_kg, reps: r.reps,
@@ -749,7 +800,13 @@ function toSessions(d: RangeData): ExportSession[] {
       caloriesEstimated: s.calories_estimated ?? false,
       avgBpmEstimated: s.avg_bpm_estimated ?? false,
       sessionRpe: rpeById.get(s.id) ?? null,
-      exercises: [...byName.values()],
+      orderSource: everyMovementIndexed ? ('index' as const) : ('logged' as const),
+      // Sorted by the deck index, ties broken by name so the result does not
+      // depend on Map insertion order where two movements share a position.
+      exercises: [...byName.values()].sort((a, b) => {
+        const ai = indexByName.get(a.name) ?? 0, bi = indexByName.get(b.name) ?? 0
+        return ai - bi || a.name.localeCompare(b.name)
+      }),
       // Named PRs, not a bare count. No est-1RM — the raw lift only.
       //
       // DEDUPLICATED PER EXERCISE. `is_pr` is a per-SET flag, so an exercise
@@ -986,7 +1043,13 @@ function withNutrients(
     // item — which is also why this resolves per date rather than once.
     const training = d.isTrainingDay
     const weekday = new Date(`${d.date}T12:00:00`).getDay()
-    const slots = stackForDate(customSlotsForDate(customs, weekday, training), training, weekday)
+    // ── THE PROTOCOL AS IT STOOD ON THAT DAY ────────────────────────────────
+    // `activeOn` was written for exactly this and was called by neither
+    // builder. Without it an item archived on the Wednesday is still
+    // "scheduled" on Thursday, Friday and Saturday — inflating the denominator
+    // AND appearing in the taken list of three days it had already left.
+    const liveCustoms = activeOn(customs, d.date)
+    const slots = stackForDate(customSlotsForDate(liveCustoms, weekday, training), training, weekday)
     const doses = new Map(slots.flatMap((sl) => sl.items.map((i) => [i.key, i.dose] as const)))
 
     // ── ADHERENCE, DERIVED FROM THE SCHEDULE ──────────────────────────────
@@ -1007,8 +1070,26 @@ function withNutrients(
       nutrientsStack,
       supplementsTaken: scheduled.length ? takenItems.length : null,
       supplementsLog: takenItems.map((i) => ({ key: i.key, time: i.time })),
+      /* ── THE SKIP IS NEVER FILTERED THROUGH THE SCHEDULE ─────────────────
+         `scheduled.filter(i => skippedKeys.has(i.key))` was the bug: a refusal
+         logged against an item the day's projection no longer names was
+         DELETED rather than reported. The log is the evidence and the schedule
+         is only a projection of it, so the evidence leads. A skip the protocol
+         asked for is a miss; one it did not ask for is still a fact, and it
+         gets its own list so the renderer can say which is which. */
       supplementsSkipped: scheduled.filter((i) => skippedKeys.has(i.key)).map((i) => i.name),
-      supplementsPlanned: supplementCountForDate(training, customSlotsForDate(customs, weekday, training)),
+      supplementsSkippedUnplanned: [...skippedKeys]
+        .filter((k) => !scheduled.some((i) => i.key === k))
+        .sort()
+        // Named from the protocol wherever it still exists — including an
+        // ARCHIVED row, which is precisely the case that lands here. Only a key
+        // nothing names at all falls back to the key itself.
+        .map((k) => customs.find((c) => (c.schedule?.key ?? c.id) === k)?.name ?? k),
+      // Always empty for a closed week: `later` needs a slot still ahead of the
+      // clock, and the export is gated on the week being over. Computed so a
+      // live-week render cannot round a pending dose up into adherence.
+      supplementsLater: [],
+      supplementsPlanned: supplementCountForDate(training, customSlotsForDate(liveCustoms, weekday, training)),
     }
   })
 }

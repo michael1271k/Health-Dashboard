@@ -351,25 +351,12 @@ public enum WeeklyExport {
         return abs(d) < 1e-9 ? "→" : d > 0 ? "↑" : "↓"
     }
 
-    /// THE CUMULATIVE LEDGER — one row per week, oldest at the top.
-    public static func trendLedger(_ weeks: [LedgerWeek]) -> [String] {
-        func kcal(_ v: Double?) -> String { v == nil ? dash : n(v) }
-        func kg(_ v: Double?) -> String { v == nil ? dash : n(v, 1) }
-        func kgExact(_ v: Double?) -> String { v == nil ? dash : exact(jsRound(v! * 100) / 100) }
-        func litres(_ v: Double?) -> String { v == nil ? dash : n(v! / 1000, 2) }
-        let header = ["Week", "Kcal/day", "Volume kg", "Steps/day", "Cardio min", "Water L/day", "Weight kg", "Δ kg", ""]
-        let align: [Align] = [.left, .right, .right, .right, .right, .right, .right, .right, .center]
-        let body = weeks.enumerated().map { i, w -> [String] in
-            let prev = i > 0 ? weeks[i - 1].totals.avgWeightKg : nil
-            let cur = w.totals.avgWeightKg
-            let delta: String
-            if let cur, let prev {
-                delta = abs(cur - prev) < 1e-9 ? "0.00" : "\(cur > prev ? "+" : "−")\(jsToFixed(abs(cur - prev), 2))"
-            } else { delta = dash }
-            return [w.label, kcal(w.totals.avgKcal), kgExact(w.totals.totalVolumeKg), kcal(w.totals.avgSteps), kcal(w.totals.cardioMinutes), litres(w.totals.avgWaterMl), kg(cur), delta, directionGlyph(cur, prev)]
-        }
-        return markdownTable(header: header, body: body, align: align)
-    }
+    /* `trendLedger` — DELETED in v4.1 with the `### Week over week` block it
+     * rendered. The document is strictly about the week on its cover, so the
+     * cumulative table has no reader. `LedgerWeek` and
+     * `WeeklyExportInput.ledger` stay: `Derived` reads the ledger for the
+     * previous week's totals in the energy balance, which is a calculation
+     * and not a table. */
 
     // MARK: - v3, the dense token grammar
 
@@ -636,28 +623,45 @@ public enum WeeklyExport {
         public var pct: Double?
         public var days: Int
         public var flagged: Bool
+        /// How many days were EXCLUDED from the mean for being implausible.
+        /// Stated rather than silently absorbed: a mean over four days where two
+        /// were discarded is a different claim from a mean over six.
+        public var excluded: Int
     }
 
     public static func weeklyNutrients(_ days: [ExportDay]) -> [WeeklyNutrient] {
         var out: [WeeklyNutrient] = []
         for t in NutrientTargets.all {
-            var food = 0.0, stack = 0.0, counted = 0, flagged = false
+            var food = 0.0, stack = 0.0, counted = 0, flagged = false, excluded = 0
             for d in days {
                 let f = d.nutrientsFood?[t.key]
                 let k = d.nutrientsStack?[t.key]
                 if f == nil && k == nil { continue }
                 let fv = (f?.isFinite == true && f! > 0) ? f! : 0
                 let kv = (k?.isFinite == true && k! > 0) ? k! : 0
-                if implausible(t, food: fv, stack: kv) { flagged = true }
+                /* ── AN IMPLAUSIBLE DAY IS NOT AVERAGED ──────────────────────
+                   It used to be flagged AND counted, so the week's calcium mean
+                   read 2,012 mg against a 1,000 mg target — a figure produced
+                   almost entirely by two days the same document says not to
+                   believe. Marking a number untrustworthy and then letting it
+                   set the average is having it both ways.
+
+                   Dropped from BOTH numerator and denominator, which is the
+                   rule this file already applies to a day with no reading: a
+                   day the document does not believe did not carry one. */
+                if implausible(t, food: fv, stack: kv) { flagged = true; excluded += 1; continue }
                 food += fv; stack += kv; counted += 1
             }
-            if counted == 0 { continue }
-            let mf = food / Double(counted), mk = stack / Double(counted)
+            // Every reading excluded leaves no mean — but the key still appears,
+            // so the row can say the week had readings and none survived.
+            if counted == 0 && excluded == 0 { continue }
+            let mf = counted == 0 ? 0 : food / Double(counted)
+            let mk = counted == 0 ? 0 : stack / Double(counted)
             out.append(WeeklyNutrient(
                 key: t.key, label: t.label, unit: t.unit, kind: t.kind,
                 food: mf, stack: mk, total: mf + mk, target: t.target,
-                pct: t.target > 0 ? ((mf + mk) / t.target) * 100 : nil,
-                days: counted, flagged: flagged))
+                pct: (t.target > 0 && counted > 0) ? ((mf + mk) / t.target) * 100 : nil,
+                days: counted, flagged: flagged, excluded: excluded))
         }
         return out
     }
@@ -672,6 +676,32 @@ public enum WeeklyExport {
     /// One day's micronutrients, reduced to what a reader has to act on: a
     /// floor missed, a ceiling exceeded, and anything the document doubts. The
     /// complete picture is the weekly table, which is where an average belongs.
+    /// Which app contributed most of a nutrient, and how much — `mostly from
+    /// MyFitnessPal (3,100 mg)`.
+    ///
+    /// Reads the `<key>@<source>` entries the HealthKit ingest writes beside
+    /// the total. Nil when nothing was attributed, which is every day ingested
+    /// before the split existed and every figure typed in by hand.
+    static func dominantSource(_ food: [String: Double]?, _ key: String) -> String? {
+        guard let food else { return nil }
+        let prefix = "\(key)@"
+        // Largest first, ties broken by NAME — a Swift dictionary has no order
+        // and a JS object has insertion order, so "whichever came first" would
+        // diverge between the two languages on equal contributors.
+        // Built step by step: the fluent chain tripped "unable to type-check
+        // this expression in reasonable time", which this file has hit before.
+        var contenders: [(name: String, amount: Double)] = []
+        for (k, v) in food {
+            guard k.hasPrefix(prefix), v.isFinite, v > 0 else { continue }
+            contenders.append((name: String(k.dropFirst(prefix.count)), amount: v))
+        }
+        contenders.sort { a, b in
+            a.amount != b.amount ? a.amount > b.amount : a.name < b.name
+        }
+        guard let best = contenders.first else { return nil }
+        return "mostly from \(best.name) (\(grp(exact(best.amount))))"
+    }
+
     static func microExceptions(_ day: ExportDay) -> [String] {
         var out: [String] = []
         for t in NutrientTargets.all {
@@ -686,7 +716,10 @@ public enum WeeklyExport {
             if !bad && !flag { continue }
             let over = t.kind == .ceiling ? " (ceiling)" : ""
             let mark = flag ? "⚠ " : ""
-            let tail = flag ? " — implausible" : ""
+            // A doubted figure names the app that wrote most of it — see the
+            // TS twin and `dominantSource`.
+            let blame = flag ? dominantSource(day.nutrientsFood, t.key) : nil
+            let tail = flag ? " — implausible\(blame == nil ? "" : ", \(blame!)")" : ""
             out.append("\(t.label) \(mark)\(grp(exact(total))) / \(grp(exact(t.target))) \(t.unit)\(over)\(tail)")
         }
         return out
@@ -697,6 +730,31 @@ public enum WeeklyExport {
     /// vanishing — the dose still happened.
     static func supplementName(_ protocolItems: [ExportSupplement]?, _ key: String) -> String {
         protocolItems?.first { $0.key == key }?.name ?? key
+    }
+
+    /// The muscles a session trained, as a bracketed tag list.
+    ///
+    /// `[Chest, Upper back, *Triceps*]` — direct work upright, indirect in
+    /// italics, because the two are not the same claim: a bench press trains
+    /// chest, and it involves triceps. Flattening them would let three sessions
+    /// of pressing read as triceps volume.
+    ///
+    /// Ordered by the CANONICAL landmark order rather than by first appearance,
+    /// so two sessions that trained the same muscles tag them in the same order.
+    static func sessionTags(_ s: ExportSession) -> String {
+        let order = LandmarkMuscle.allCases.map(\.displayName)
+        func rank(_ m: String) -> Int { order.firstIndex(of: m) ?? order.count }
+        var primary = Set<String>(), secondary = Set<String>()
+        for ex in s.exercises {
+            for m in ex.primaryMuscles ?? [] { primary.insert(m) }
+            for m in ex.secondaryMuscles ?? [] { secondary.insert(m) }
+        }
+        // A muscle trained directly anywhere in the session is direct for the
+        // session, however many other movements only assisted it.
+        secondary.subtract(primary)
+        let tags = primary.sorted { rank($0) < rank($1) }
+            + secondary.sorted { rank($0) < rank($1) }.map { "*\($0)*" }
+        return tags.isEmpty ? "" : "[\(tags.joined(separator: ", "))]"
     }
 
     // MARK: - v4 · the legend and the notes
@@ -718,12 +776,25 @@ public enum WeeklyExport {
             "**Set marks** — `W` warm-up · `G` ghost, planned and not performed · `drop set` · "
                 + "`to failure` · a trailing word is the reported set quality.",
             "",
+            "**Muscle tags** — a session heading names the landmarks it trained: upright for direct "
+                + "work, *italic* for a muscle the movement only assists.\(br)",
+            "A movement outside the exercise dictionary contributes no tag rather than its own name.",
+            "",
+            "**rest** — `120 s plan` is the prescription. `(avg 118 s actual)` is MEASURED: the mean "
+                + "gap between committing that movement's sets, recorded by the logger on the phone.\(br)",
+            "It is absent on every session logged before the measurement existed, and on anything "
+                + "committed from the web — which has no stopwatch.",
+            "",
+            "**(order: logged sequence)** — the movements are printed in the order they were logged "
+                + "because the session carried no deck index.\(br)",
+            "Usually the order they were performed in; not guaranteed, which is why it is marked.",
+            "",
             "**Sets by muscle** — a set credits 1.0 to each muscle the movement trains directly and "
                 + "0.5 to each it assists. Per-muscle tonnage does NOT sum to the week’s total: a "
                 + "compound lift is counted once against every muscle it trains.",
             "",
             "**Soreness** — 0–3, logged per muscle and per side, with the session it is attributed to.\(br)",
-            "**Head** — self-reported psychological stress, 1 Relaxed to 5 Swamped, with what it was about.\(br)",
+            "**Stress** — self-reported psychological stress, 1 Relaxed to 5 Swamped, with what it was about.\(br)",
             "**Fatigue** — 1–5, three times a day. Reported, never scored.",
             "",
             "**Derived** — computed by Onyx, not measured. tdee = BMR (from the scale, carried across "
@@ -882,6 +953,21 @@ public enum WeeklyExport {
             weekly.avgSessionRpe == nil ? "sRPE not reported"
                 : "sRPE \(val(weekly.avgSessionRpe, 1) ?? noData) avg over \(weekly.ratedSessions)",
         ]) + br)
+        /* The week's training at a glance, one session per entry.
+           Answering "what did this week actually train" meant reading seven day
+           blocks and collecting the headings out of them. The index states it
+           once, in session order, with the same tags each header carries.
+
+           The tags ride on their label with a SPACE and `·` separates one
+           session from the next: joining both with `·` made the line ambiguous,
+           and a session with no tags read as a stray label. */
+        if !sessions.isEmpty {
+            L.append("**Sessions** " + sessions.map { s -> String in
+                let tags = sessionTags(s)
+                let number = s.sessionNumber == nil ? "" : "#\(n(s.sessionNumber)) "
+                return "\(number)\(s.label)" + (tags.isEmpty ? "" : " \(tags)")
+            }.joined(separator: sep) + br)
+        }
         L.append("**Cardio** " + (cardio.isEmpty ? none : line([
             "\(val(weekly.cardioMinutes, 1) ?? noData) min",
             "\(val(weekly.cardioActiveKcal) ?? noData) kcal",
@@ -1011,12 +1097,14 @@ public enum WeeklyExport {
             let body: [[String]] = micros.map { m in
                 [
                     m.kind == .ceiling ? "\(m.label) (ceiling)" : m.label,
-                    val(m.food, microDp(m.food)) ?? dash,
-                    val(m.stack, microDp(m.stack)) ?? dash,
-                    "\(m.flagged ? "⚠ " : "")\(val(m.total, microDp(m.total)) ?? dash)",
+                    m.days == 0 ? dash : (val(m.food, microDp(m.food)) ?? dash),
+                    m.days == 0 ? dash : (val(m.stack, microDp(m.stack)) ?? dash),
+                    m.days == 0 ? dash : (val(m.total, microDp(m.total)) ?? dash),
                     "\(valExact(m.target) ?? dash) \(m.unit)",
                     m.pct == nil ? dash : "\(val(m.pct) ?? dash) %",
-                    String(m.days),
+                    // The denominator, and what was thrown out of it. `4 of 6`
+                    // says more than `4` where two days were discarded.
+                    m.excluded > 0 ? "\(m.days) of \(m.days + m.excluded) ⚠" : String(m.days),
                 ]
             }
             L.append(contentsOf: markdownTable(
@@ -1025,8 +1113,9 @@ public enum WeeklyExport {
                 align: [.left, .right, .right, .right, .right, .right, .right]))
             L.append("")
             L.append("*Averaged over the days that carried a reading, not over seven. "
-                + "⚠ marks a day whose figure the document judged implausible for the intake logged "
-                + "beside it — treat it as unmeasured, not as a day that went badly.*")
+                + "A day whose figure the document judged implausible for the intake logged beside it "
+                + "is EXCLUDED from the mean and counted after the ⚠ — it is treated as unmeasured, "
+                + "not as a day that went badly.*")
         }
 
         // ── THE STACK ─────────────────────────────────────────────────────────
@@ -1039,25 +1128,23 @@ public enum WeeklyExport {
             for s in supps { L.append("- \(s)") }
         }
 
-        // ── WEEK OVER WEEK ────────────────────────────────────────────────────
+        /* ── WEEK OVER WEEK IS GONE, DELIBERATELY (v4.1) ──────────────────
+           v4 closed `THE WEEK` with a `### Week over week` table of every prior
+           week and a `**vs the previous week**` delta paragraph. Both are
+           removed: the document is now strictly about the week on its cover.
+
+           Not because they were wrong — they were correct, and `Derived.week`
+           still computes the deltas for the surfaces that show trends. Because
+           this document has ONE consumer, a person pasting a week into a chat
+           window, and a comparison table invites every reading of that week to
+           be a reading of the trend instead. A −40 % volume line at the top of a
+           deload reads as a collapse; the same week read alone reads as the
+           deload it was planned to be.
+
+           `Derived.week` is still called — the per-day battery and TDEE need it.
+           `LedgerWeek` and `input.ledger` stay on the payload: `Derived` reads
+           the ledger for the previous week's totals in the energy balance. */
         let derived = Derived.week(input)
-        if !(input.ledger ?? []).isEmpty {
-            L.append("")
-            L.append("### Week over week")
-            L.append("")
-            L.append(contentsOf: trendLedger(input.ledger ?? []))
-            let moved = derived.deltas.filter { $0.delta != nil }
-            if !moved.isEmpty {
-                L.append("")
-                L.append("**vs the previous week** — " + moved.map { d -> String in
-                    let size = d.exact == true ? grp(exact(d.delta)) : grp(n(d.delta, d.digits))
-                    let sign = (d.delta ?? 0) < 0 ? "" : "+"
-                    let pct = d.pct == nil ? "" : " (\(signed(d.pct, 0) ?? dash) %)"
-                    let body = size.hasPrefix("-") ? "−" + String(size.dropFirst()) : size
-                    return "\(d.label.lowercased()) \(sign)\(body) \(d.unit)\(pct)"
-                }.joined(separator: sep))
-            }
-        }
 
         // ── ONE SESSION, WHEREVER IT BELONGS ──────────────────────────────────
         // Extracted because a session can land in two places: normally inside
@@ -1066,7 +1153,13 @@ public enum WeeklyExport {
         func pushSession(_ s: ExportSession) {
             let t = tallySets(s)
             L.append("")
-            L.append("### Session\(s.sessionNumber == nil ? "" : " #\(n(s.sessionNumber))") · \(s.label)")
+            let tags = sessionTags(s)
+            // The order the movements are printed in is a CLAIM, and only as
+            // good as `exercise_order`. Where that was null the builder fell
+            // back to logged sequence — usually right, not guaranteed.
+            let orderNote = s.orderSource == "logged" ? " *(order: logged sequence)*" : ""
+            L.append("### Session\(s.sessionNumber == nil ? "" : " #\(n(s.sessionNumber))") · \(s.label)"
+                + (tags.isEmpty ? "" : " · \(tags)") + orderNote)
             L.append(line([
                 (s.startedAt != nil || s.endedAt != nil)
                     ? "\(s.startedAt == nil ? noData : clock(s.startedAt)) → \(s.endedAt == nil ? noData : clock(s.endedAt))"
@@ -1099,12 +1192,20 @@ public enum WeeklyExport {
             for ex in s.exercises {
                 L.append("")
                 let restCell: String
-                if ex.restTargetSec == nil && ex.restPlanSec == nil {
-                    restCell = "rest \(noData)"
-                } else if ex.restTargetSec == ex.restPlanSec {
-                    restCell = "rest \(val(ex.restTargetSec) ?? noData) s"
+                // One parenthesis, never two. An overridden target reads as prose
+                // so the measurement can keep the brackets to itself.
+                let planCell: String? = ex.restTargetSec == nil ? nil
+                    : (ex.restTargetSec == ex.restPlanSec
+                        ? "rest \(val(ex.restTargetSec) ?? noData) s plan"
+                        : "rest \(val(ex.restTargetSec) ?? noData) s plan, programme \(val(ex.restPlanSec) ?? noData)")
+                let actualCell: String? = ex.restActualSec == nil
+                    ? nil : "avg \(val(ex.restActualSec) ?? noData) s actual"
+                if let planCell {
+                    restCell = actualCell == nil ? planCell : "\(planCell) (\(actualCell!))"
+                } else if let actualCell {
+                    restCell = "rest no plan (\(actualCell))"
                 } else {
-                    restCell = "rest \(val(ex.restTargetSec) ?? noData) s (plan \(val(ex.restPlanSec) ?? noData))"
+                    restCell = "rest \(noData)"
                 }
                 let topCell: String
                 if let top = ex.topKg {
@@ -1174,18 +1275,22 @@ public enum WeeklyExport {
             }
 
             // SLEEP
+            // The two self-reported flags live INSIDE this row, and the row used
+            // to be gated on a duration existing — so a night the watch missed
+            // took the wearer's own "trouble falling asleep" down with it.
             let hasSleep = some([day.sleepMin, day.deepMin, day.remMin])
                 || day.bedTime != nil || day.wakeTime != nil
+                || day.sleepOnsetTrouble == true || day.sleepInaccurate == true
             put("sleep", hasSleep ? dayRow("Sleep", line([
-                hm(day.sleepMin) ?? noData,
+                hm(day.sleepMin) ?? "no duration recorded",
                 some([day.deepMin, day.remMin, day.coreMin, day.awakeMin])
                     ? "deep \(hm(day.deepMin) ?? noData) · REM \(hm(day.remMin) ?? noData)"
                         + " · core \(hm(day.coreMin) ?? noData) · awake \(hm(day.awakeMin) ?? noData)"
                     : nil,
                 (day.bedTime != nil || day.wakeTime != nil)
                     ? "\(clock(day.bedTime)) → \(clock(day.wakeTime))" : nil,
-                day.sleepOnsetTrouble == nil ? nil
-                    : (day.sleepOnsetTrouble! ? "trouble falling asleep" : "fell asleep easily"),
+                // Only the flag, never its absence — see the TS twin.
+                day.sleepOnsetTrouble == true ? "trouble falling asleep" : nil,
                 day.sleepInaccurate == true ? "⚠ the wearer disputes this night" : nil,
             ])) : nil)
 
@@ -1265,7 +1370,7 @@ public enum WeeklyExport {
                 let note = phrase(h.note)
                 return "\(h.slot) \(n(h.level)) \(h.label)\(tags)\(note.isEmpty ? "" : " — “\(note)”")"
             }
-            put("head", dayRow("Head", headCells.isEmpty ? noData : headCells.joined(separator: sep)))
+            put("stress", dayRow("Stress", headCells.isEmpty ? noData : headCells.joined(separator: sep)))
 
             // INTAKE
             // The rung in force ON THIS DAY, not the goal row as it stands
@@ -1305,10 +1410,30 @@ public enum WeeklyExport {
             let taken = (day.supplementsLog ?? []).map { s -> String in
                 "\(supplementName(input.supplementProtocol, s.key))\(s.time == nil ? "" : " \(s.time!)")"
             }
+            /* ── THE STACK, ON THREE LINES ────────────────────────────────
+               v4 joined the count and both lists onto ONE row with ` — `, so a
+               nine-item protocol produced a paragraph the reader had to parse to
+               find the one item that was refused. Each clause is its own line
+               now, the two lists indented under the count.
+
+               The skipped line distinguishes the two kinds of refusal:
+                 · `(planned)` — the protocol asked for it and it was declined.
+                 · `(not scheduled this day — logged anyway)` — the day's
+                   resolved schedule does not name it, but a refusal was logged.
+                   A day swapped Train↔Rest after the fact, or an item archived
+                   mid-week. v4 silently DROPPED these. */
             let skipped = day.supplementsSkipped ?? []
+            let skippedOff = day.supplementsSkippedUnplanned ?? []
+            let later = day.supplementsLater ?? []
             let countCell: String?
             if day.supplementsTaken != nil && day.supplementsPlanned != nil {
-                countCell = "\(val(day.supplementsTaken)!) of \(val(day.supplementsPlanned)!)"
+                countCell = line([
+                    "\(val(day.supplementsTaken)!) of \(val(day.supplementsPlanned)!) scheduled",
+                    // Omitted when zero, which for a closed week is always.
+                    later.isEmpty ? nil : "\(later.count) still ahead",
+                    (skipped.count + skippedOff.count) == 0
+                        ? nil : "\(skipped.count + skippedOff.count) skipped",
+                ])
             } else if day.supplementsPlanned != nil {
                 countCell = "\(val(day.supplementsPlanned)!) planned, ticks \(noData)"
             } else if day.supplementsTaken != nil {
@@ -1317,15 +1442,21 @@ public enum WeeklyExport {
                 countCell = nil
             }
             let hasStack = some([day.supplementsTaken, day.supplementsPlanned])
-                || !taken.isEmpty || !skipped.isEmpty
-            put("stack", hasStack ? dayRow("Stack", [
+                || !taken.isEmpty || !skipped.isEmpty || !skippedOff.isEmpty
+            let skippedCell = (skipped.map { "\($0) (planned)" }
+                + skippedOff.map { "\($0) (not scheduled this day — logged anyway)" })
+            let stackRows: [String] = [
                 countCell,
                 // A missing `supplement_log` row means TAKEN, not skipped —
                 // which is why an empty list here cannot say "none". It says
                 // the per-item ticks were never written.
-                "**taken** \(taken.isEmpty ? "no per-item log" : taken.joined(separator: sep))",
-                "**skipped** \(skipped.isEmpty ? "none logged" : skipped.joined(separator: sep))",
-            ].compactMap { $0 }.joined(separator: " — ")) : nil)
+                "  **taken** \(taken.isEmpty ? "no per-item log" : taken.joined(separator: sep))",
+                "  **skipped** \(skippedCell.isEmpty ? "none logged" : skippedCell.joined(separator: sep))",
+            ].compactMap { $0 }
+            put("stack", hasStack
+                ? stackRows.enumerated().map { i, r in i == 0 ? (dayRow("Stack", r) ?? "") : "\(r)\(br)" }
+                    .joined(separator: "\n")
+                : nil)
 
             // ACTIVITY
             put("activity", partialRow("Activity", [

@@ -33,7 +33,7 @@ import { derivedWeek } from '@/lib/reports/derived'
 import { SLOT_LABEL, FATIGUE_SLOTS } from '@/lib/hooks/useFatigue'
 import {
   dayField, dayFieldOrNull, dayHeadings, setsOf, subsectionLines, tableRow,
-  readiness, head, stack, legendText, notRecorded, notMeasured, NO_DATA, NONE,
+  readiness, stress, stack, legendText, notRecorded, notMeasured, hasSubsection, NO_DATA, NONE,
 } from './exportGrammar'
 
 const emptyDay = (date: string, weekdayLabel: string): ExportDay => ({
@@ -418,7 +418,7 @@ describe('the Head row, which only the native app could write', () => {
         },
       ],
     })
-    expect(head(out, '2026-08-23')).toEqual([
+    expect(stress(out, '2026-08-23')).toEqual([
       'morning 2 Okay',
       'evening 4 Strained — work, money — “deadline slipped”',
     ])
@@ -426,7 +426,7 @@ describe('the Head row, which only the native app could write', () => {
 
   it('says "no data" on a day nobody answered, rather than a calm one', () => {
     const out = buildWeeklyExport({ ...base, stress: [] })
-    expect(dayField(out, '2026-08-23', 'Head')).toBe(NO_DATA)
+    expect(dayField(out, '2026-08-23', 'Stress')).toBe(NO_DATA)
     // And the legend explains the scale, which is 1–5 and not the 0–3 soreness
     // uses two clauses above it.
     expect(legendText(out)).toContain('1 Relaxed to 5 Swamped')
@@ -575,7 +575,7 @@ describe('measurements the export never asked for', () => {
         : d)),
     })
     const s = stack(out, '2026-08-27')
-    expect(s.count).toBe('9 of 9')
+    expect(s.count).toBe('9 of 9 scheduled')
     expect(s.taken).toEqual(['Multivitamin 10:30', 'L-Citrulline 11:45', 'Caffeine 11:45'])
   })
 
@@ -611,11 +611,11 @@ describe('measurements the export never asked for', () => {
         : d)),
     })
     const s = stack(out, '2026-08-27')
-    expect(s.count).toBe('8 of 9')
+    expect(s.count).toBe('8 of 9 scheduled · 1 skipped')
     expect(s.taken).toEqual(['Multivitamin 10:30'])
     // Its own clause, so a skip is never something the reader has to infer from
     // a short log.
-    expect(s.skipped).toEqual(['Caffeine'])
+    expect(s.skipped).toEqual(['Caffeine (planned)'])  // the protocol asked for it and it was declined
   })
 
   it('does not call an empty tick list "none taken"', () => {
@@ -674,13 +674,15 @@ describe('the computed figures are named as computed', () => {
     expect(volume.current).toBe(26340)
     expect(volume.delta).toBe(2160)
     expect(volume.pct).toBeCloseTo(8.93, 1)
-    // The ledger still prints every week it was handed, later ones included:
-    // the trajectory is the table, and the comparison is not.
+    // `derivedWeek` still resolves the previous week — `derived.ts` needs it
+    // for the energy balance — but NONE of it reaches the document any more.
+    // v4.1 removed the comparison table and the delta paragraph: the week is
+    // read on its own terms, and a trajectory is a different document.
     const out = buildWeeklyExport(input)
-    expect(out).toContain('| Week 4 ')
-    expect(out).toContain('| Week 6 ')
-    expect(subsectionLines(out, 'Week over week').join('\n'))
-      .toContain('**vs the previous week** — total volume +2,160 kg')
+    expect(out).not.toContain('| Week 4 ')
+    expect(out).not.toContain('| Week 6 ')
+    expect(out).not.toContain('vs the previous week')
+    expect(hasSubsection(out, 'Week over week')).toBe(false)
   })
 
   /**
@@ -703,10 +705,13 @@ describe('the computed figures are named as computed', () => {
     // discounted — and the doubt names the day it was on.
     expect(dayField(out, '2026-08-27', 'Micros'))
       .toBe('Calcium ⚠ 3,074 / 1,000 mg — implausible')
-    // The weekly average carries the mark too, so a reader who only reads the
-    // table is not handed a clean-looking 3,074.
-    expect(tableRow(out, 'Micronutrients — weekly average vs target', 'Calcium').Total)
-      .toBe('⚠ 3,074')
+    // …and it is EXCLUDED from the weekly mean rather than averaged into it.
+    // Marking a figure untrustworthy and then letting it set the average is
+    // having it both ways. One reading, discarded, leaves no mean at all — and
+    // the Days column says so rather than printing a confident blank.
+    const row = tableRow(out, 'Micronutrients — weekly average vs target', 'Calcium')
+    expect(row.Total).toBe('—')
+    expect(row.Days).toBe('0 of 1 ⚠')
   })
 
   it('leaves an ordinary reading, and an exceeded CEILING, unflagged', () => {

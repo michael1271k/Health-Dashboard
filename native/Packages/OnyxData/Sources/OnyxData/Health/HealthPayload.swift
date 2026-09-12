@@ -17,12 +17,21 @@ public struct HealthPayload: Sendable, Equatable {
     /// window (readiness v9) rather than the calendar day's average. False
     /// when the watch was not worn to sleep and the daily mean stood in.
     public var hrvOvernight: Bool
+    /// For a dietary micro, how much each SOURCE APP contributed — the answer
+    /// to "which app wrote 3,100 mg of calcium", which `nutrition_entries`
+    /// cannot give because it stores a daily aggregate with no item breakdown.
+    ///
+    /// Only populated for the micros, and only where more than nothing came
+    /// back. Empty is the ordinary state and means "not attributed".
+    public var microSources: [HealthKey: [String: Double]]
 
-    public init(date: String, values: [HealthKey: Double] = [:], sleep: SleepNight? = nil, hrvOvernight: Bool = false) {
+    public init(date: String, values: [HealthKey: Double] = [:], sleep: SleepNight? = nil,
+                hrvOvernight: Bool = false, microSources: [HealthKey: [String: Double]] = [:]) {
         self.date = date
         self.values = values
         self.sleep = sleep
         self.hrvOvernight = hrvOvernight
+        self.microSources = microSources
     }
 
     public subscript(key: HealthKey) -> Double? {

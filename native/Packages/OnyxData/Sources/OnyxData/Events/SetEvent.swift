@@ -225,6 +225,7 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
         case incline
         case distanceKm = "distance_km"
         case elevationM = "elevation_m"
+        case actualRestSec = "actual_rest_sec"
     }
 
     public var exerciseId: String
@@ -301,6 +302,20 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
     /// A build that has never heard of this key decodes `nil` and re-encodes
     /// without it. Still no new `Kind`; that remains the one-way door.
     public var elevationM: Double?
+    /// MEASURED rest before this set, in seconds — the elapsed gap between
+    /// committing the previous set of the same exercise and committing this
+    /// one (`LoggerModel.restGapSec`).
+    ///
+    /// A FIFTH optional key, on the same terms as the four above and for the
+    /// same reason: the projection is a fold, so a field the snapshot cannot
+    /// carry is a field `seedEventLog` drops and `reproject` writes back as
+    /// null over the server's copy at the first edit of the session.
+    ///
+    /// **`nil` is the normal case and it means "not measured"** — every set
+    /// logged before `v22.actualRest`, every FIRST set of an exercise (there is
+    /// no predecessor to rest from), every set committed from the web, and any
+    /// gap the logger judged an outlier rather than a rest.
+    public var actualRestSec: Int?
 
     public init(
         exerciseId: String,
@@ -317,7 +332,8 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
         durationSec: Int? = nil,
         incline: Double? = nil,
         distanceKm: Double? = nil,
-        elevationM: Double? = nil
+        elevationM: Double? = nil,
+        actualRestSec: Int? = nil
     ) {
         self.exerciseId = exerciseId
         self.setIndex = setIndex
@@ -334,6 +350,7 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
         self.incline = incline
         self.distanceKm = distanceKm
         self.elevationM = elevationM
+        self.actualRestSec = actualRestSec
     }
 }
 

@@ -996,6 +996,33 @@ public final class AppDatabase: Sendable {
             ])
         }
 
+        // ── v22 ─────────────────────────────────────────────────────────────
+        // "Did I actually hold the rest I prescribed?"
+        //
+        // The plan's rest target has been in the export since v4; what it can
+        // never say is whether the block was TRAINED at it. This column is the
+        // measurement: the elapsed gap between committing one set and the next
+        // of the same exercise, written by the native logger.
+        //
+        // NOT `rest_sec`, which is dead. That column held the web deck's
+        // client stopwatch until 2026-08-19, never carried a value, and its
+        // name still means the old thing — reusing it would make nil ambiguous
+        // between "never measured" and "measured by a tool we deleted".
+        //
+        // NULLABLE with no default, the `sleep_inaccurate` rule (v20): a nil is
+        // what `encodeIfPresent` needs to keep the column OUT of the push body
+        // until Postgres grows it. `docs/sql/actual-rest.sql` is the Postgres
+        // half and the founder runs it by hand; until they do the measurement
+        // lives on this device, the push drops it, and the export prints the
+        // plan alone — which is exactly what it did before.
+        migrator.registerMigration("v22.actualRest") { db in
+            let existing = Set(try db.columns(in: "workout_sets").map(\.name))
+            guard !existing.contains("actual_rest_sec") else { return }
+            try db.alter(table: "workout_sets") { t in
+                t.add(column: "actual_rest_sec", .integer)
+            }
+        }
+
         return migrator
     }
 }
