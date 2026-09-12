@@ -1,7 +1,11 @@
 # UX Sprint — Week Wrapped, Colour Glow-Up, In-App Stacks, Nutrition
 
 Status: findings measured + founder decisions locked 2026-09-12. Waves + prompts
-in §Waves. Onyx 2.3.0 is the shipping version.
+in §Waves. W1a shipped as 2.5.0 on 2026-09-12.
+
+**Version numbers moved once.** This document was written against 2.3.0 and
+assigned W1a 2.4.0. The concurrent export-v4.1 audit merged first and took
+2.4.0, so every wave here shifted up one minor: W1a 2.5.0, W1b 2.6.0, W2 2.7.0.
 
 ## Founder decisions (2026-09-12)
 
@@ -198,9 +202,10 @@ goods. FatSecret — 1.9 M foods, free tier 5 000 calls/day, paid above that.
   `concurrent-waves-shared-checkout` rule applies: two sessions share the git
   index, so check `MERGE_HEAD` before `git add` and always pass `SHOT_DERIVED`.
   **No wave in this document may touch the export renderer or its types.**
-- **`graphify` is not installed on this machine** (`command not found`), though
-  `graphify-out/graph.json` is committed and a hook demands it. `graphify update .`
-  at the end of a wave will fail. Report it; do not fake it.
+- **`graphify` IS installed**, at `~/.local/bin/graphify` — an earlier note here
+  said otherwise and was wrong. What is missing is `timeout`, which this macOS
+  shell does not have, so a command prefixed with it fails with
+  `command not found` and looks like the CLI is absent.
 - **`docs/sql/actual-rest.sql` is untracked**, awaiting a founder paste. Not this
   sprint's work, but it is sitting in the tree.
 
@@ -214,7 +219,7 @@ files, finish with the version bump in `package.json` → `npm run version:sync`
 version:check`. `swift:core` + `swift:data` green; the `OnyxTests` baseline is 5
 pre-existing failures, which are not regressions.
 
-### W1a — Opus (extra high) · Week Wrapped curation · v2.4.0
+### W1a — Opus (extra high) · Week Wrapped curation · v2.5.0 — SHIPPED
 
 Branch `onyx/w1a-week-wrapped`.
 
@@ -274,7 +279,7 @@ Files: `WeeklyWrap.swift` · `WorkoutWeek.swift` · `WeeklyWrapView.swift` ·
 Gate: screenshot loop at 375 pt and AX5 of the 560 detent, the `.large` detent,
 the ring and the legend. Eight family hues distinguishable in one ring.
 
-### W1b — Opus (extra high) · Week-detail glow-up · v2.5.0
+### W1b — Opus (extra high) · Week-detail glow-up · v2.6.0
 
 Branch `onyx/w1b-week-detail`. **Depends on W1a** — the wrap chip opens W1a's view.
 
@@ -326,7 +331,7 @@ arbitrary-week call needs it).
 Gate: screenshot loop at 375 pt and AX5 of the hero, the tinted day rows, the
 chip row, and the disabled export chip on a live week.
 
-### W2 — Opus (extra high) · In-app Smart Stack carousel · v2.6.0
+### W2 — Opus (extra high) · In-app Smart Stack carousel · v2.7.0
 
 Branch `onyx/w2-smart-stack`. Independent of Wave 1; shares no files, so it may
 run in parallel on its own branch.
@@ -487,7 +492,7 @@ DO NOT TOUCH: OnyxCore/Reports/ExportTypes.swift, WeeklyExport.swift,
 WeeklyExportBuilder.swift, or anything under src/lib/reports/ — a concurrent
 session owns those files. Check MERGE_HEAD before any git add.
 
-Branch onyx/w1a-week-wrapped. Version v2.4.0 + changelog. Report: screenshots at
+Branch onyx/w1a-week-wrapped. Version v2.5.0 + changelog. Report: screenshots at
 375 pt and AX5 of the 560 detent, the .large detent, the ring and the legend.
 ```
 
@@ -521,7 +526,7 @@ report — do not force the refactor.
 
 DO NOT TOUCH: the export renderer or its types (see F8).
 
-Branch onyx/w1b-week-detail. Version v2.5.0 + changelog. Report: screenshots at
+Branch onyx/w1b-week-detail. Version v2.6.0 + changelog. Report: screenshots at
 375 pt and AX5 of the hero, the tinted day rows, the chip row, and the disabled
 export chip on a live week — plus the wrap chip opening a month-old week.
 ```
@@ -553,7 +558,7 @@ stackSlots / unstackFace / reorderFace are pure OnyxCore functions with tests �
 change NONE of them; this wave is the UI that calls them. SmartStackView.swift's
 header comment (lines 5-22) is the spec: update it, never contradict it.
 
-Branch onyx/w2-smart-stack. Version v2.6.0 + changelog. Report, on device or
+Branch onyx/w2-smart-stack. Version v2.7.0 + changelog. Report, on device or
 simulator: a stack created from a long press with no drag; a swipe that pages
 without scrolling the dashboard; a background-and-resume that rotates 9 s later
 rather than 9 s + stagger; and a reorder that does not change the visible face.

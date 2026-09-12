@@ -47,6 +47,53 @@ _Nothing yet._
 
 ---
 
+## [2.5.0] — 2026-09-12 · Five Seconds Of The Week
+
+The Week Wrapped screen used to be a document: a navigation push carrying every
+movement of the week, one row each, thirty rows on a full week. Nobody reads a
+document on the evening they finished the work it describes. It is a sheet now,
+and the first thing in it is a reel you can read before the phone goes back in
+your pocket. Nothing was deleted — the document is one drag and one tap away.
+
+### Added
+- **Where the work went** — the Week Wrapped sheet draws the week's weighted
+  sets as a ring of eight muscle families, and names any family that got nothing
+  rather than drawing it as an invisible sliver. Dragging the sheet up breaks it
+  out into all sixteen landmarks with their set counts. The numbers come from
+  the same accumulator the Today tile, the muscle focus sheet and the Trends
+  atlas already share, so all four surfaces count a week the same way.
+- **Best e1RM, beside the heaviest set.** They are different questions and the
+  answers diverge constantly — 80 kg for four is the heaviest set of a week
+  whose best estimated max came off 70 for fifteen. The reel prints both, under
+  labels that say which is a fact and which is an inference.
+- **The biggest session of the week**, under the ring, by the same volume rule
+  the week's own tonnage uses — every non-ghost set, warm-ups included.
+- **"Show all 16 muscles"** under the ring. The legend is otherwise behind a
+  drag, and a drag is not a gesture VoiceOver or Switch Control can perform.
+
+### Changed
+- **Week Wrapped opens as a bottom sheet, not a screen.** The tile on the Train
+  tab is still the door and still permanent; tapping it now lifts a sheet to
+  560 pt with the tab visible behind it, instead of replacing the tab and
+  charging a back tap to leave. Drag up for the full breakdown.
+- **The three movement lists moved below the fold**, into one disclosure that
+  says how many rows it is holding. The top of the sheet is the Top 3
+  progressions; the disclosure carries every movement of the week, including
+  the ones that simply held — which the old screen never showed at all.
+- The share card is now rendered when you scroll to it rather than when the
+  sheet opens, and is not re-rendered on every re-open.
+
+### Fixed
+- The Week Wrapped stat row broke `SESSIONS` across three lines and printed the
+  week's tonnage as `42,…` at the largest accessibility size. It collapses to
+  one column now, the way the History week's vitals row already did.
+- `WeeklyMuscleRing`'s arc arithmetic crashed rather than failed when called off
+  the main actor: conforming to `View` infers `@MainActor` onto a type's static
+  constants too, and reading them from a `map` closure trips Swift 6's isolation
+  check. The geometry is `nonisolated`, where it always belonged.
+
+---
+
 ## [2.4.0] — 2026-09-12 · What Actually Happened
 
 An audit of the Week 7 export found the document confidently stating things the

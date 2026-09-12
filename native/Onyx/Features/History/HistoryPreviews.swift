@@ -117,14 +117,27 @@ enum HistoryPreviews {
         // progression, a regression and a PR in it — and the engine behind it
         // has its own unit suite. Building a fixture whose four planned days
         // all happen to be logged would make this shot hostage to the seed.
+        //
+        // Presented as a REAL sheet since W1a, the same trick `train-week`
+        // uses. The wrap is a detent sheet now, and a shot of the view on its
+        // own photographs neither the 560 height it opens at nor the drag
+        // indicator that is the only cue there is more below — which is most of
+        // what this wave changed.
         case "train-wrap":
-            NavigationStack {
-                WeeklyWrapView(summary: wrapSummary, program: PlanTemplates.program("onyx5") ?? Program(id: "", label: "Onyx 5", days: []))
+            PresentingWeek(today: "2026-09-03") { _ in
+                WeeklyWrapView(summary: wrapSummary, program: wrapProgram)
             }
             .environment(environment())
+        // The dragged-up state. Not a sheet: a shot cannot perform the drag,
+        // and the harness's own detent override is the only way to reach the
+        // legend. What it photographs is the CONTENT at `.large`, which is the
+        // half that needed reviewing.
+        case "train-wrap-large":
+            WeeklyWrapView(summary: wrapSummary, program: wrapProgram, detent: .large)
+                .environment(environment())
         case "train-wrap-deload":
-            NavigationStack {
-                WeeklyWrapView(summary: deloadSummary, program: PlanTemplates.program("onyx5") ?? Program(id: "", label: "Onyx 5", days: []))
+            PresentingWeek(today: "2026-09-03") { _ in
+                WeeklyWrapView(summary: deloadSummary, program: wrapProgram)
             }
             .environment(environment())
         case "share-card":
@@ -345,12 +358,36 @@ private var wrapSummary: WeeklyWrap.Summary {
         prCount: 2, isDeload: false,
         movements: [
             .init(name: "Incline DB Press", dayKey: "cb_a", weightKg: 42, reps: 11, e1rm: 57.4, previousE1rm: 53.3),
-            .init(name: "Lat Pulldown", dayKey: "cb_a", weightKg: 65, reps: 11, e1rm: 88.8, previousE1rm: 88),
-            .init(name: "Leg Press", dayKey: "legs_a", weightKg: 70, reps: 12, e1rm: 98, previousE1rm: 110),
+            .init(name: "Lat Pulldown", dayKey: "cb_a", weightKg: 80, reps: 4, e1rm: 90.7, previousE1rm: 88),
+            .init(name: "Leg Press", dayKey: "legs_a", weightKg: 70, reps: 15, e1rm: 105, previousE1rm: 110),
             .init(name: "Seated Cable Row", dayKey: "cb_a", weightKg: 40, reps: 12, e1rm: 56, previousE1rm: 52),
             .init(name: "Side Plank", dayKey: "legs_a", weightKg: 0, reps: 61),
         ],
-        bodyweightKg: 64.2, bodyweightDeltaKg: -0.4
+        bodyweightKg: 64.2, bodyweightDeltaKg: -0.4,
+        muscle: wrapMuscle,
+        topSession: .init(dayKey: "legs_a", date: "2026-09-04", volumeKg: 12_480)
+    )
+}
+
+private var wrapProgram: Program {
+    PlanTemplates.program("onyx5") ?? Program(id: "", label: "Onyx 5", days: [])
+}
+
+/// A week with every case the ring has to survive in it: a dominant family, a
+/// family at half a set that has to be floored to stay visible, and two
+/// landmarks at zero whose family therefore draws no arc at all and has to be
+/// named in words instead.
+private var wrapMuscle: MuscleFocusSummary {
+    let week: [(LandmarkMuscle, Double, Int)] = [
+        (.chest, 5, 10), (.lats, 4, 8), (.upperBack, 3, 6), (.lowerBack, 1, 4),
+        (.frontDelts, 2, 6), (.sideDelts, 4, 8), (.rearDelts, 1.5, 6),
+        (.biceps, 3, 8), (.triceps, 4, 8), (.forearms, 0.5, 4),
+        (.quads, 6, 10), (.hamstrings, 4, 8), (.glutes, 3, 8),
+        (.adductors, 0, 0), (.calves, 0, 6), (.absCore, 0, 6),
+    ]
+    return MuscleFocusSummary(
+        weekStart: "2026-08-30",
+        rows: week.map { MuscleFocusRow(muscle: $0.0, sets: $0.1, target: $0.2) }
     )
 }
 

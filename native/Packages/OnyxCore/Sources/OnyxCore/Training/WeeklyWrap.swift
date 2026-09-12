@@ -69,6 +69,27 @@ public enum WeeklyWrap {
         }
     }
 
+    /// The week's single biggest session, by the volume rule the rest of the
+    /// app uses — every non-ghost row, warm-ups included.
+    ///
+    /// ── WHY IT CARRIES A DAY KEY AND NOT A LABEL ────────────────────────────
+    /// "Legs A" is what the athlete's own `Program` calls `legs_a`, and a
+    /// program can be renamed. Storing the rendered word would freeze one
+    /// week's copy of a name the athlete may change tomorrow, and would put a
+    /// presentation decision inside a pure summary. `Movement.dayKey` already
+    /// set this precedent and the view already resolves it.
+    public struct TopSession: Equatable, Sendable {
+        public var dayKey: String
+        public var date: String
+        public var volumeKg: Double
+
+        public init(dayKey: String, date: String, volumeKg: Double) {
+            self.dayKey = dayKey
+            self.date = date
+            self.volumeKg = volumeKg
+        }
+    }
+
     /// What a movement did, once the deload rule has had its say.
     public enum Verdict: Equatable, Sendable {
         /// Beat last week by more than the threshold.
@@ -133,10 +154,32 @@ public enum WeeklyWrap {
         public var bodyweightKg: Double?
         public var bodyweightDeltaKg: Double?
 
+        /// Where the week's work landed, in weighted sets per landmark.
+        ///
+        /// Carried on the summary rather than read beside it, for the reason
+        /// stated above bodyweight: this is one object the view cannot assemble
+        /// half of. Nil when the builder could not reach a store — a preview,
+        /// or a summary assembled by hand in a test — and the ring simply does
+        /// not draw, which is honest. A ring of zeroes is not.
+        ///
+        /// It is `MuscleFocusSummary` and NOT a bespoke tally, because
+        /// `MuscleCredit.weightedSets` is the one accumulator every other
+        /// surface counts a week with, and a fourth currency here would be the
+        /// exact failure that consolidation ended.
+        public var muscle: MuscleFocusSummary?
+
+        /// The week's heaviest session by volume.
+        ///
+        /// Nil in a week with no rows — and equally in one where nothing was
+        /// loaded, a bodyweight or cardio week, since a session of zero
+        /// kilograms is not the biggest anything.
+        public var topSession: TopSession?
+
         public init(
             weekStart: String, sessions: Int, tonnageKg: Double, tonnageDeltaKg: Double? = nil,
             prCount: Int = 0, isDeload: Bool = false, movements: [Movement] = [],
-            bodyweightKg: Double? = nil, bodyweightDeltaKg: Double? = nil
+            bodyweightKg: Double? = nil, bodyweightDeltaKg: Double? = nil,
+            muscle: MuscleFocusSummary? = nil, topSession: TopSession? = nil
         ) {
             self.bodyweightKg = bodyweightKg
             self.bodyweightDeltaKg = bodyweightDeltaKg
@@ -147,6 +190,8 @@ public enum WeeklyWrap {
             self.prCount = prCount
             self.isDeload = isDeload
             self.movements = movements
+            self.muscle = muscle
+            self.topSession = topSession
         }
 
         public func movements(_ verdict: Verdict) -> [Movement] {
@@ -164,10 +209,33 @@ public enum WeeklyWrap {
         ///
         /// By LOAD and not by e1RM: the headline is "the heaviest thing you
         /// picked up", which is a fact, where the best estimated max is an
-        /// inference and belongs in the list where it can be read with its reps.
+        /// inference and belongs beside the reps it was inferred from.
+        ///
+        /// ── AND WHY `bestE1rm` SITS BESIDE IT RATHER THAN REPLACING IT ──────
+        /// The reel shows BOTH, under different labels, because they answer two
+        /// questions whose answers diverge constantly: 100 kg × 3 is the
+        /// heaviest set of a week whose best estimated max came off 85 kg × 10.
+        /// One figure under a label that could mean either is how "my heaviest
+        /// lift" comes to name a set the lifter never performed.
         public var topSet: Movement? {
             movements.filter { $0.weightKg > 0 }.max { $0.weightKg < $1.weightKg }
         }
+
+        /// The week's best estimated one-rep max — an INFERENCE, labelled as one.
+        ///
+        /// `> 0` and not `!= nil`: unloaded work has no estimate, and a lift
+        /// carrying a stored zero has one that means the same thing. Both are
+        /// excluded for the reason `topSet` excludes a zero load — a 61-second
+        /// side plank is not in the running for either title.
+        public var bestE1rm: Movement? {
+            movements.filter { ($0.e1rm ?? 0) > 0 }.max { ($0.e1rm ?? 0) < ($1.e1rm ?? 0) }
+        }
+
+        /// The one movement that moved most.
+        ///
+        /// `progressions` is already sorted by the SIZE of the change, so this
+        /// is its head and not a second sort with a second chance to disagree.
+        public var topProgressed: Movement? { progressions.first }
 
         /// "Five sessions · 42,180 kg · 2 PRs" — one line, for the share card.
         public var headline: String {

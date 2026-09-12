@@ -465,7 +465,8 @@ final class WorkoutWeek {
         out.wrap = wrap(
             database, weekStart: weekStart, dates: dates, finished: finished,
             base: out.weekBase, tonnageKg: out.weekTonnageKg, deltaKg: out.weekDeltaKg,
-            phases: context.phases, analysis: analysis, userId: database.localUserId()
+            phases: context.phases, analysis: analysis, userId: database.localUserId(),
+            programId: context.programId, phase: context.phase
         )
 
         // ── What the card prints where the rep window used to be ────────────
@@ -603,7 +604,8 @@ final class WorkoutWeek {
         _ database: AppDatabase, weekStart: String, dates: [String],
         finished: [String: WorkoutSession], base: WeekAssignment,
         tonnageKg: Double, deltaKg: Double?, phases: [PhaseDef],
-        analysis: SessionAnalysis.Context, userId: String
+        analysis: SessionAnalysis.Context, userId: String,
+        programId: String, phase: ProgramPhase
     ) -> WeeklyWrap.Summary? {
         let planned = Set(dates.filter { base.key(on: $0) != Schedule.restOverride })
         guard WeeklyWrap.isWrapped(
@@ -620,9 +622,30 @@ final class WorkoutWeek {
 
         var movements: [String: WeeklyWrap.Movement] = [:]
         var prCount = 0
-        for session in finished.values {
-            let rows = ((try? database.historySets(sessionId: session.id)) ?? [])
-                .filter { SetTags.isWorkingSet($0.setType) }
+        var topSession: WeeklyWrap.TopSession?
+        var topVolume = 0.0
+        // Sorted, because `Dictionary.values` is unordered and two sessions of
+        // equal volume would otherwise name a different "biggest" between two
+        // refreshes of a week whose data never changed.
+        for session in finished.keys.sorted().compactMap({ finished[$0] }) {
+            let all = (try? database.historySets(sessionId: session.id)) ?? []
+            // ── THE SAME VOLUME RULE AS THE WEEK'S OWN TONNAGE ──────────────
+            // Every non-ghost row, warm-ups included — `SessionVolume`'s rule.
+            // Taken off `all` BEFORE the working-set filter below, because the
+            // week's tonnage a few lines up is computed that way and a "biggest
+            // session" that disagreed with the total it is part of would be the
+            // 8,815-versus-9,715 defect again, at session grain.
+            let volume = SessionVolume.sessionVolumeKg(all.map(SessionAnalysis.volumeSet))
+            // Compared UNROUNDED and rounded once at the end: comparing a raw
+            // volume against a stored rounded one makes two sessions half a
+            // kilogram apart swap places depending on which was read first.
+            if volume > topVolume {
+                topVolume = volume
+                topSession = WeeklyWrap.TopSession(
+                    dayKey: session.dayKey ?? "", date: session.date, volumeKg: jsRound(volume)
+                )
+            }
+            let rows = all.filter { SetTags.isWorkingSet($0.setType) }
             guard !rows.isEmpty else { continue }
             let groups = SessionAnalysis.grouped(rows)
 
@@ -668,12 +691,72 @@ final class WorkoutWeek {
         // against a Wednesday and call it a week's change.
         let weight = try? database.bodyweight(onOrBefore: dates.last ?? weekStart)
         let before = ISODate.addDays(weekStart, -1).flatMap { try? database.bodyweight(onOrBefore: $0) }
+
+        // ── WHERE THE WEEK'S WORK LANDED, VIA THE ONE ACCUMULATOR (W1a) ─────
+        // `TodayFeedBuilder.muscleFocus` and nothing else. The tile, the muscle
+        // focus sheet and the Trends atlas all count a week through it, and
+        // before W3 each counted it its own way and the three disagreed about
+        // the same session. A fourth tally written here would restart that, so
+        // this reads what that function wants rather than tallying what is
+        // already in hand.
+        //
+        // UNFILTERED rows, deliberately. `muscleFocus` drops ghosts itself and
+        // warm-ups COUNT — two warm-up sets of leg press are two sets as far as
+        // the quads are concerned. Handing it the working-set filter used in
+        // the loop above would undercount every warm-up-heavy session.
+        // ── FINISHED SESSIONS, WHICH IS NARROWER THAN THE TODAY TILE ───────
+        // The Today tab counts every session in the week including one still
+        // open, because its question is "how is the week going" and work in
+        // progress is still work. This summary's question is what the week
+        // AMOUNTED to, and its tonnage and its biggest session are both read
+        // off `finished` a few lines up. Counting the ring differently from the
+        // two figures beside it would be the disagreement, not this.
+        // No empty check: `isWrapped` above already refused a week with no
+        // planned days and a week whose planned days are not all logged, so
+        // `finished` cannot be empty here.
+        let sessionIds = Set(finished.values.map(\.id))
+        let muscle: MuscleFocusSummary? = try? database.read { db in
+            let sets = try WorkoutSet.filter(sessionIds.contains(Column("session_id"))).fetchAll(db)
+            let exercises = try Exercise.fetchAll(db)
+            // The catalogue AND the slug map. A phone-logged set carries a
+            // `helix5-<slug>` id the catalogue does not name, and naming only
+            // the catalogue is what once made an Upper B session report
+            // "Side delts 0/7" — see `WidgetSnapshotBuilder.exerciseNames`.
+            let names = Dictionary(
+                exercises.map { ($0.id, $0.name) }
+                    + ExerciseSlug.nameBySlug(exercises).map { ($0.key, $0.value) },
+                uniquingKeysWith: { first, _ in first }
+            )
+            // ── THE ONE READ IN THIS FILE THAT DOES FILTER ON `user_id` ────
+            // `build`'s header argues against the clause and is right about
+            // every table it covers. This one has a SECOND reader —
+            // `TodayFeedBuilder.build`, which filters — and two readers of one
+            // table disagreeing about an athlete's targets is a worse failure
+            // than a read that comes back empty: the tile would say a muscle is
+            // unasked-for in the same week the wrap says it is behind. Matching
+            // the other reader exactly is what makes them impossible to split.
+            let targets = try PlanPhaseVolumeRow
+                .filter(
+                    Column("user_id") == userId
+                        && Column("plan_id") == programId
+                        && Column("phase") == phase.rawValue
+                )
+                .fetchAll(db)
+            return TodayFeedBuilder.muscleFocus(
+                weekStart: weekStart, sets: sets, names: names, phase: phase,
+                overrides: Dictionary(
+                    targets.map { ($0.muscle, $0.targetSets) }, uniquingKeysWith: { _, last in last }
+                )
+            )
+        }
+
         return WeeklyWrap.Summary(
             weekStart: weekStart, sessions: finished.count, tonnageKg: tonnageKg,
             tonnageDeltaKg: deltaKg, prCount: prCount, isDeload: isDeload,
             movements: movements.values.sorted { $0.name < $1.name },
             bodyweightKg: weight,
-            bodyweightDeltaKg: (weight != nil && before != nil) ? jsRound1(weight! - before!) : nil
+            bodyweightDeltaKg: (weight != nil && before != nil) ? jsRound1(weight! - before!) : nil,
+            muscle: muscle, topSession: topSession
         )
     }
 
