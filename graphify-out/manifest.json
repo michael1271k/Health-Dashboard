@@ -3745,8 +3745,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/App/PreviewHarness.swift": {
-    "mtime": 1789143429.0026636,
-    "ast_hash": "e94f7aed2e5e9c7de923e2e8bda5350c",
+    "mtime": 1789207172.3049645,
+    "ast_hash": "2f1819452777654697a4c5120fa539f5",
     "semantic_hash": ""
   },
   "native/Onyx/App/SyncCoordinating.swift": {
@@ -3815,8 +3815,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/History/HistoryPreviews.swift": {
-    "mtime": 1789134309.6115582,
-    "ast_hash": "6777485d86872120d0d4bfb1f03dc3a6",
+    "mtime": 1789207168.0509727,
+    "ast_hash": "0f74de3cd57cd834063941ea2ae83b8b",
     "semantic_hash": ""
   },
   "native/Onyx/Features/History/HistoryView.swift": {
@@ -4100,13 +4100,13 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Workout/WorkoutTabView.swift": {
-    "mtime": 1789206541.3131104,
-    "ast_hash": "2a47229333e666f15ffae278189b68eb",
+    "mtime": 1789207068.646688,
+    "ast_hash": "be1b539f741f8d5196fe20be4873cfe8",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Workout/WorkoutWeek.swift": {
-    "mtime": 1789207019.5302012,
-    "ast_hash": "c55312ebbcca722657c2e0f75d345233",
+    "mtime": 1789207289.6949863,
+    "ast_hash": "d0d341ee57e3c51f78f2a508019bd439",
     "semantic_hash": ""
   },
   "native/Onyx/Resources/Assets.xcassets/AppIcon.appiconset/Contents.json": {
@@ -4390,8 +4390,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Sources/OnyxCore/Schedule/Swap.swift": {
-    "mtime": 1789206954.4211109,
-    "ast_hash": "e863235a30dc87cdd274043f0f1112e4",
+    "mtime": 1789207289.694798,
+    "ast_hash": "1de0bfb6b8ab1a15100f0ac8c5bd13ec",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Sources/OnyxCore/Scoring/Battery.swift": {
@@ -7945,8 +7945,28 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Workout/WeekOverrideSheet.swift": {
-    "mtime": 1789207035.2808206,
-    "ast_hash": "03cc67688db5c0c60be41f7162b889a3",
+    "mtime": 1789207400.0725782,
+    "ast_hash": "2a5ac33d74048adf33e9fa8dec026d04",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/train-week-ax5.png": {
+    "mtime": 1789207431.2354484,
+    "ast_hash": "54e81b39067baf62c9aa4a690c83e5d9",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/train-week.png": {
+    "mtime": 1789207421.6269102,
+    "ast_hash": "05551609d2f7daacca1cbf3103f90933",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Sources/OnyxCore/Training/Warmup.swift": {
+    "mtime": 1789207484.0627944,
+    "ast_hash": "a6413640a1c69153fb3c138f76a90cdd",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Tests/OnyxCoreTests/WarmupTests.swift": {
+    "mtime": 1789207523.7075942,
+    "ast_hash": "edce00dea1aa6b219a616bc7a6adea5c",
     "semantic_hash": ""
   }
 }
