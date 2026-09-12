@@ -394,7 +394,8 @@ enum PreviewHarness {
              "today-sheet-steps", "today-sheet-muscle", "today-sheet-records",
              "today-weighin", "today-board":
             TodayPreviews.view(screen)
-        case "history", "history-week", "session", "session-ledger", "exercise-history",
+        case "history", "history-week", "history-week-live", "history-week-wrapped",
+             "history-week-wrap-open", "session", "session-ledger", "exercise-history",
              "session-atlas", "session-edit", "session-records":
             HistoryPreviews.view(screen)
         case "trends", "trends-empty", "trends-maintenance":

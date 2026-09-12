@@ -47,6 +47,70 @@ _Nothing yet._
 
 ---
 
+## [2.6.0] — 2026-09-12 · The Week, In Colour
+
+The week detail was black on black. Eight small numbers, seven grey rows, and
+the only colour on the screen was an 8 × 8 pt dot — while a 16-hue muscle
+palette and a five-colour split palette sat in the design system, unused by this
+screen. It now opens with the four figures a week is actually opened for, every
+day you trained wears its own split's colour, and the actions are chips instead
+of list rows.
+
+And the wrap-up stopped expiring. A week that closed a month ago opens the same
+highlight reel the Train tab shows on the Sunday night — the screen is a
+permanent door to it rather than a notification you had to catch.
+
+### Added
+
+- **A hero on the week detail.** Tonnage as the screen's one 28 pt figure, then
+  average bodyweight, training strain and the fat delta beneath it. The existing
+  eight-cell register is unchanged underneath: the hero answers "what was this
+  week", the register is still there to be scanned.
+- **Weekly training load, from the battery's own series.** Foster's weekly
+  strain with the acute:chronic ratio as its sub-caption — one cell, two
+  figures, the way tonnage already carries its delta. Read through
+  `Readiness.loadSignal`, the public path, against the same 49-day series the
+  battery is scored from, so the two cannot disagree.
+- **The week's mean bodyweight**, which existed nowhere before — in Swift or in
+  the web app. The delta beside it says which way; the mean says where.
+- **Every logged day wears its split's colour.** The house muscle wash, on the
+  row rather than in it, so the tint spans the whole row including the chevron.
+  A rest day, a missed day and a day from a routine this build does not know all
+  get no wash — a grey rail says nothing, and on a logged day it would be a lie.
+- **A wrap door on any week that wrapped** (founder decision 8). The chip opens
+  the same detent sheet the Train tab opens, built from that week's own rows.
+- **Three new screenshot fixtures**: a week that wrapped, a live week with the
+  export locked, and the wrap door open on a three-week-old week.
+
+### Changed
+
+- **The week's actions are a chip row**, not `LabeledContent` rows in a list
+  section. Report · Wrapped · Export, under the hero.
+- **The locked export states its own date.** On a running week the chip stays,
+  wears a lock, reads `Export opens Sun 13 Sept` and refuses the tap. A control
+  that vanishes reads as a bug; the answer to "where did the button go" is a
+  date, so the control carries it.
+- **`OnyxChip` gained a disabled state** — outline without fill, full-strength
+  label. Greying the label would have said "broken"; this says "not yet".
+- **`OnyxChipRow.face(_:)` is public**, so the one control in the row that
+  cannot be a `Button` — a `ShareLink`, which is a view and needs its item up
+  front — wears the row's real capsule instead of a copy that drifts.
+- **`WorkoutWeek.wrap` is callable for any week**, through one entry point that
+  assembles its arguments. Its body was already week-agnostic; only the
+  assembly and its visibility were not. The Train tab's own path is untouched.
+
+### Fixed
+
+- **The wrap's two "best" cells could never stack.** W1a used `ViewThatFits`
+  over cells that declare `.frame(maxWidth: .infinity)`, which tells the
+  container the row fits any width — so it took the horizontal branch at every
+  size including AX5, and the stacked branch was dead code no screenshot could
+  reach. It asks the type size now, like every other collapse in the app.
+- **A live week no longer fabricates a detraining signal.** The load series is
+  clamped to today rather than run to the week's future end, where days that
+  have not happened would have entered as real zeros and decayed the acute side
+  of the ratio. The hero says so, on the live week only, in one line.
+
 ## [2.5.0] — 2026-09-12 · Five Seconds Of The Week
 
 The Week Wrapped screen used to be a document: a navigation push carrying every

@@ -213,9 +213,24 @@ struct WeeklyWrapView: View {
     @ViewBuilder
     private var bestsCard: some View {
         if summary.topSet != nil || summary.bestE1rm != nil {
-            let cells = ViewThatFits(in: .horizontal) {
-                HStack(alignment: .top, spacing: OnyxSpace.m) { bestCells }
-                VStack(alignment: .leading, spacing: OnyxSpace.m) { bestCells }
+            // ── NOT `ViewThatFits`, WHICH COULD NEVER HAVE STACKED ──────────
+            // It was one until W1b measured it. `bestCell` ends in
+            // `.frame(maxWidth: .infinity)`, which makes the HStack's ideal
+            // width flexible — so `ViewThatFits` is told the row fits any width
+            // and takes the first candidate at every size, leaving the VStack
+            // branch dead. The two cells never stacked at AX5 and no screenshot
+            // could show it, because the container reported success.
+            //
+            // This is the same trap W4 hit, and the fix is the same one every
+            // other collapse in this app already uses: ask the TYPE SIZE, which
+            // is the actual question, rather than asking a layout container to
+            // infer it from a width its children have declared elastic.
+            let cells = Group {
+                if typeSize.isAccessibilitySize {
+                    VStack(alignment: .leading, spacing: OnyxSpace.m) { bestCells }
+                } else {
+                    HStack(alignment: .top, spacing: OnyxSpace.m) { bestCells }
+                }
             }
             cells
                 .frame(maxWidth: .infinity, alignment: .leading)

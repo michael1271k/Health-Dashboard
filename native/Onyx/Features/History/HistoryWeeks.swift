@@ -106,6 +106,18 @@ enum HistoryWeeks {
         var stepsMean: Double?
         var tonnageKg: Double = 0
         var sessions: Int = 0
+        /// The week's MEAN scale reading — not its last, and not its delta.
+        ///
+        /// The delta beside it answers "which way", which is the question a cut
+        /// is scanned for day to day. The mean answers "where", which is the
+        /// one a week is scanned for: a fortnight of means is a trend a reader
+        /// can hold, and a fortnight of last-readings is mostly water.
+        var weightMeanKg: Double?
+        /// Foster's weekly strain for this week, and the EWMA acute:chronic
+        /// ratio as of its last day. Both from `Readiness.loadSignal`, which is
+        /// the ONE public door to either — `fosterWeek` stays internal.
+        var strain: Double?
+        var acwr: Double?
     }
 
     struct WeekDetail: Sendable, Equatable {
@@ -252,12 +264,83 @@ enum HistoryWeeks {
         let fats = readings.compactMap(\.fatPct)
         out.vitals.weightDeltaKg = weights.count >= 2 ? weights.last! - weights.first! : nil
         out.vitals.fatDeltaPct = fats.count >= 2 ? fats.last! - fats.first! : nil
+        // No `>= 2` gate, deliberately, unlike the delta directly above it. The
+        // gate up there is the DELTA's own correctness condition — one reading
+        // cannot express a direction — and it is not a house rule that a figure
+        // needs two readings. A mean of one weigh-in is that weigh-in, which is
+        // a true statement about the week. `mean(_:)` is nil only on empty.
+        out.vitals.weightMeanKg = mean(weights)
         out.vitals.batteryMean = mean(scores.compactMap { $0.batteryPct.map(Double.init) })
         out.vitals.sleepScoreMean = mean(scores.compactMap { $0.sleepScore.map(Double.init) })
         out.vitals.sleepMeanMinutes = mean(logs.compactMap { $0.sleepMinutes.map(Double.init) })
         out.vitals.stepsMean = mean(logs.compactMap { $0.steps.map(Double.init) })
         out.vitals.tonnageKg = out.days.reduce(0) { $0 + $1.tonnageKg }
         out.vitals.sessions = out.days.filter(\.isLogged).count
+
+        // ── TRAINING LOAD, THROUGH THE BATTERY'S OWN SERIES ─────────────────
+        // `AppDatabase.loadSignal` is a door onto `readinessHistory`, which is
+        // the ONE place on the phone that turns rows into the 49-day series the
+        // battery is scored from. A second series assembled here is how two
+        // screens start disagreeing about the same fortnight.
+        //
+        // ── WHY THE ENDPOINT IS CLAMPED TO TODAY ───────────────────────────
+        // `LoadSignal.strain` is Foster's over the series' last seven entries,
+        // so ending on `window.end` is what makes it THIS week's strain. On a
+        // week that has closed that is exactly right and it is what runs.
+        //
+        // On the LIVE week `window.end` is in the future, and `dailyLoads` is
+        // explicit that "a date with nothing on it is a REAL zero". Ending
+        // there would feed three or four zeros for days that have not happened
+        // into both figures — and they do not merely thin out:
+        //
+        //   · strain is `weeklyLoad × monotony`, and monotony is `mean / sd`.
+        //     Trailing zeros cut the mean and raise the sd, so the number falls
+        //     by a different factor every day of the week. A running total like
+        //     tonnage is comparable to itself mid-week; this is not.
+        //   · the EWMA behind `acwr` decays the ACUTE side through every one of
+        //     those zeros — `acute = 0 × λ + (1 − λ) × acute` — so a Wednesday
+        //     would report a falling ratio off days that have not occurred.
+        //
+        // Reporting a shorter window beats reporting days that have not been
+        // lived, so the live week reads to TODAY. That window crosses back into
+        // last week, so it is no longer "this week's" strain and the hero says
+        // as much — see `WeekHeroCard.liveNote`.
+        //
+        // What this does NOT do is make a low ratio impossible. A real rest day
+        // inside the week decays the acute side exactly as an unlived one does,
+        // and it should: that is a true reading about a week being rested
+        // through. The clamp only stops the app inventing the input.
+        //
+        // ── AND WHY THIS ONE READ FILTERS ON `user_id` ─────────────────────
+        // Against this file's own header, and on purpose. The rule up there is
+        // about the TRAINING ledger, where the id in hand may not be the id the
+        // rows were written under. This series is the READINESS domain's, it
+        // has been filtered since v9, and the battery, the stress index and the
+        // export all read it that way. An unfiltered copy would be a second
+        // accumulator with different arithmetic, which is the thing the door
+        // exists to prevent.
+        //
+        // The id comes from `localUserId()`, which reads `user_goals` and then
+        // `plans` — NOT the ledger. So it is the right id whenever those rows
+        // exist and were written under the same account as the sessions, which
+        // is every real store and both preview seeds. It is NOT a guarantee:
+        // a store holding sessions but no goals and no plan answers `""`, and
+        // these two figures then come back empty while the tonnage and session
+        // count beside them render from the unfiltered reads. That asymmetry is
+        // the price of reading the battery's series instead of a second one,
+        // and an empty load cell is a better failure than a disagreeing one.
+        //
+        // `min` guards the endpoint, and the `window.start <= today` test
+        // guards the whole read: a future window would otherwise print today's
+        // load figures under a future week's title with no note, since
+        // `isCurrent` is false there and `liveNote` would not fire. No such
+        // window is reachable from `capsules`, which stops at this week — this
+        // is a fence around a gap, not a fix for a live defect.
+        if window.start <= today,
+           let load = try? database.loadSignal(userId: database.localUserId(), date: min(window.end, today)) {
+            out.vitals.strain = load.strain
+            out.vitals.acwr = load.acwr
+        }
 
         // `period_start` is the week the report was written FOR. Any weekly row
         // whose span covers this window counts, because the web wrote some of

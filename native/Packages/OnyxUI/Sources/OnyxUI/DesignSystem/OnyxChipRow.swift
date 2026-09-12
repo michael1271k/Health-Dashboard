@@ -12,6 +12,14 @@ import SwiftUI
 /// The chip is also honest about state in a way a menu item cannot be: "Skip
 /// rest" is simply ABSENT when nothing is resting, rather than present and
 /// disabled, and the row springs closed around the gap.
+///
+/// ── AND WHY ONE OF THEM IS DISABLED RATHER THAN ABSENT (W1b) ────────────────
+/// That rule is about a CONTEXTUAL action, and it holds: there is no answer to
+/// "when will Skip rest come back", so a gap is the honest shape. A GATED one
+/// is the other case. The week export opens on a date, and the answer to "where
+/// did the button go" is that date — so it stays, states it, and refuses the
+/// tap. The two rules agree once the question is asked: vanish when the absence
+/// explains itself, remain when it needs a sentence. See `WeekDaysView`.
 public struct OnyxChip: Identifiable {
     public let id: String
     public let title: String
@@ -21,6 +29,9 @@ public struct OnyxChip: Identifiable {
     /// Filled rather than outlined — the one action that ENDS the screen.
     /// At most one per row, for the same reason a screen has one hero.
     public let isProminent: Bool
+    /// A control that exists and is not available yet. Defaulted, so every
+    /// call site written before this existed still compiles.
+    public let isEnabled: Bool
     public let action: () -> Void
 
     public init(
@@ -29,6 +40,7 @@ public struct OnyxChip: Identifiable {
         systemImage: String,
         tint: Color? = nil,
         isProminent: Bool = false,
+        isEnabled: Bool = true,
         action: @escaping () -> Void
     ) {
         self.id = id ?? title
@@ -36,6 +48,7 @@ public struct OnyxChip: Identifiable {
         self.systemImage = systemImage
         self.tint = tint
         self.isProminent = isProminent
+        self.isEnabled = isEnabled
         self.action = action
     }
 }
@@ -58,11 +71,28 @@ public struct OnyxChip: Identifiable {
 /// options, and it is the reason the scroll CLIPS rather than bleeding.
 public struct OnyxChipRow: View {
     private let chips: [OnyxChip]
-    private let pinned: OnyxChip?
+    private let pinned: AnyView?
 
     public init(_ chips: [OnyxChip], pinned: OnyxChip? = nil) {
         self.chips = chips
-        self.pinned = pinned
+        self.pinned = pinned.map { AnyView(Self.button($0)) }
+    }
+
+    /// The pinned slot, for a control that cannot be an `OnyxChip`.
+    ///
+    /// `ShareLink` is the case this exists for: it is a VIEW, not an action —
+    /// it needs its item up front and builds its own button — so it can never
+    /// travel in `chips`. Before this, a caller wanting a share beside its
+    /// chips had to rebuild the pinned arm's own `fixedSize` / `layoutPriority`
+    /// / trailing-pad at the call site, which put the same control in a
+    /// different place depending on whether it happened to be enabled.
+    ///
+    /// Wear `OnyxChipRow.face(...)` inside the closure and the control is the
+    /// row's real capsule rather than one that looks like it until a token
+    /// moves.
+    public init<Pinned: View>(_ chips: [OnyxChip], @ViewBuilder pinned: () -> Pinned) {
+        self.chips = chips
+        self.pinned = AnyView(pinned())
     }
 
     public var body: some View {
@@ -73,7 +103,7 @@ public struct OnyxChipRow: View {
             ScrollView(.horizontal) {
                 HStack(spacing: OnyxSpace.s) {
                     ForEach(chips) { chip in
-                        button(chip)
+                        Self.button(chip)
                     }
                 }
                 .padding(.leading, OnyxSpace.l)
@@ -99,7 +129,7 @@ public struct OnyxChipRow: View {
             )
 
             if let pinned {
-                button(pinned)
+                pinned
                     // Never squeezed by the scroll beside it: at an
                     // accessibility size the row would otherwise spend its last
                     // points truncating the one chip that must stay readable —
@@ -114,13 +144,44 @@ public struct OnyxChipRow: View {
         .frame(maxWidth: .infinity)
     }
 
-    private func button(_ chip: OnyxChip) -> some View {
-        Button(action: chip.action) { label(chip) }
+    private static func button(_ chip: OnyxChip) -> some View {
+        Button(action: chip.action) { face(chip) }
+            // A disabled `Button` never reports `isPressed`, so `OnyxPressStyle`
+            // never springs — the lock needs no separate suppression, and the
+            // order of these two lines does not matter.
+            .disabled(!chip.isEnabled)
             .onyxPress()
             .accessibilityLabel(chip.title)
     }
 
-    private func label(_ chip: OnyxChip) -> some View {
+    /// The capsule on its own, for the one control that cannot be a `Button`.
+    ///
+    /// `ShareLink` is a VIEW and not an action — it needs its item up front and
+    /// builds its own button — so a share cannot travel in `chips`. Rather than
+    /// re-spell the material, the hairline and the two clip shapes at a call
+    /// site (which is how a design system grows a second chip that drifts from
+    /// the first), the face is public and the caller wraps it:
+    ///
+    ///     OnyxChipRow(chips) {
+    ///         ShareLink(item: file) { OnyxChipRow.face(title: "Export", systemImage: "square.and.arrow.up") }
+    ///     }
+    ///
+    /// It takes the fields it draws rather than a whole `OnyxChip`, because a
+    /// chip carries an `action` this never calls and the only way to supply one
+    /// is an empty closure — a lie in the value, written at every call site, to
+    /// satisfy a parameter nothing reads.
+    public static func face(
+        title: String, systemImage: String, tint: Color? = nil,
+        isProminent: Bool = false, isEnabled: Bool = true
+    ) -> some View {
+        let chip = OnyxChip(
+            title: title, systemImage: systemImage, tint: tint,
+            isProminent: isProminent, isEnabled: isEnabled, action: {}
+        )
+        return face(chip)
+    }
+
+    private static func face(_ chip: OnyxChip) -> some View {
         let ink = chip.tint ?? Color.onyx.textSecondary
         return HStack(spacing: OnyxSpace.xs) {
             Image(systemName: chip.systemImage)
@@ -129,6 +190,12 @@ public struct OnyxChipRow: View {
                 .lineLimit(1)
         }
         .onyxType(.caption).fontWeight(.semibold)
+        // ── A LOCKED CHIP KEEPS ITS INK ─────────────────────────────────────
+        // Greying the LABEL is the reflex and it is wrong twice over:
+        // `textTertiary` is 3.66:1 on this ground and its own token rule says
+        // "never a control label", and grey text is the universal signal for
+        // BROKEN. This control is not broken, it is not yours yet. So the text
+        // stays at full strength and the CAPSULE carries the state.
         .foregroundStyle(chip.isProminent ? Color.onyx.base : ink)
         .padding(.horizontal, OnyxSpace.m)
         .padding(.vertical, OnyxSpace.s)
@@ -138,7 +205,10 @@ public struct OnyxChipRow: View {
             if chip.isProminent {
                 Capsule().fill(ink)
             } else {
-                Capsule().fill(.ultraThinMaterial)
+                // The outline is the promise that the control still exists;
+                // the missing material is what says it is not available. Two
+                // signals, and the glyph the caller picks is the third.
+                if chip.isEnabled { Capsule().fill(.ultraThinMaterial) }
                 Capsule().strokeBorder(Color.onyx.hairline, lineWidth: 0.5)
             }
         }
