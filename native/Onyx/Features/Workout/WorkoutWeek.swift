@@ -153,6 +153,12 @@ final class WorkoutWeek {
         /// The day keys the plan asks for this week, in plan order — what a
         /// draft is checked against for a session it has left homeless.
         var scheduledKeys: [String] = []
+        /// The week's summary, once every planned session is logged.
+        ///
+        /// Nil is the ordinary state — a week with work left in it. Non-nil is
+        /// what turns the This-week tile into the wrap-up door.
+        var wrap: WeeklyWrap.Summary?
+
         /// Training-only supplement keys, unioned over the week's seven days.
         ///
         /// The day tier passes ONE date's keys. A week batch touches seven
@@ -451,6 +457,16 @@ final class WorkoutWeek {
             }
         }
 
+        // ── The wrap-up (W6) ────────────────────────────────────────────────
+        // Built here, off the rows this pass already holds, and only when the
+        // week has actually closed — a summary of a week with work left in it
+        // is the thing `WeeklyWrap.isWrapped` exists to refuse.
+        out.wrap = wrap(
+            database, weekStart: weekStart, dates: dates, finished: finished,
+            base: out.weekBase, tonnageKg: out.weekTonnageKg, deltaKg: out.weekDeltaKg,
+            phases: context.phases, analysis: analysis, userId: database.localUserId()
+        )
+
         // ── What the card prints where the rep window used to be ────────────
         out.previous = previousSession(database, dayKey: out.todayKey, before: today)
 
@@ -564,6 +580,118 @@ final class WorkoutWeek {
         }
 
         return out
+    }
+
+    // MARK: - The week, wrapped (W6)
+
+    /// The summary, or nil while the week still has work in it.
+    ///
+    /// ── WHY IT COSTS A PR REPLAY PER SESSION ────────────────────────────────
+    /// `personal_records` is a CURRENT-BEST table: it answers "none" for any
+    /// session whose records have since been beaten, so a week's PR count read
+    /// from it shrinks as the weeks after it go well. The only honest count is
+    /// the replay the save path already performs — records detected against
+    /// everything logged before that session — which is what `.done` does for
+    /// today and what this does four or five times for the week.
+    ///
+    /// ponytail: four replays, each a read over one movement's whole history.
+    /// It runs once per refresh, detached, and only on a week that has closed.
+    /// If it ever shows up in a trace, cache the count on `workout_sessions` at
+    /// close time and read it back — the number never changes after the fact.
+    private nonisolated static func wrap(
+        _ database: AppDatabase, weekStart: String, dates: [String],
+        finished: [String: WorkoutSession], base: WeekAssignment,
+        tonnageKg: Double, deltaKg: Double?, phases: [PhaseDef],
+        analysis: SessionAnalysis.Context, userId: String
+    ) -> WeeklyWrap.Summary? {
+        let planned = Set(dates.filter { base.key(on: $0) != Schedule.restOverride })
+        guard WeeklyWrap.isWrapped(
+            weekStart: weekStart, logged: Set(finished.keys), isTrainingDay: { planned.contains($0) }
+        ) else { return nil }
+
+        // A DELOAD week relabels every drop. Both halves of the rule, because
+        // the app has two ways to declare one and a wrap-up that honoured only
+        // the phase table would file a lever-driven release week in red.
+        let ladder = (try? database.leverLadder(userId: userId)) ?? LeverLadder()
+        let isDeload = dates.contains {
+            Maintenance.isMaintenanceDate($0, today: dates.last ?? weekStart, ladder: ladder, phases: phases)
+        }
+
+        var movements: [String: WeeklyWrap.Movement] = [:]
+        var prCount = 0
+        for session in finished.values {
+            let rows = ((try? database.historySets(sessionId: session.id)) ?? [])
+                .filter { SetTags.isWorkingSet($0.setType) }
+            guard !rows.isEmpty else { continue }
+            let groups = SessionAnalysis.grouped(rows)
+
+            let prior = ((try? database.historySets(exerciseIds: groups.map(\.exerciseId))) ?? [])
+                .filter { $0.sessionId != session.id }
+            prCount += SessionAnalysis.detect(
+                groups: groups, prior: prior, dayKey: session.dayKey, date: session.date, in: analysis
+            ).prCount
+
+            for group in groups {
+                let name = SessionAnalysis.displayName(id: group.exerciseId, stored: group.name)
+                guard let best = topSet(group.sets) else { continue }
+                // Keyed by movement AND split: a lift that appears in two
+                // splits is two rows, because the comparison this summary makes
+                // is same-movement-same-day_key against last week.
+                let key = "\(name.lowercased())|\(session.dayKey ?? "")"
+                let movement = WeeklyWrap.Movement(
+                    name: name, dayKey: session.dayKey ?? "",
+                    weightKg: best.weightKg, reps: best.reps,
+                    e1rm: Epley.oneRepMax(weight: best.weightKg, reps: best.reps),
+                    previousE1rm: previousE1rm(
+                        database, name: name, dayKey: session.dayKey, before: weekStart
+                    )
+                )
+                // A movement trained twice on one split in a week keeps its
+                // best set, for the same reason the top set is the heaviest.
+                if let held = movements[key], held.weightKg >= movement.weightKg { continue }
+                movements[key] = movement
+            }
+        }
+
+        // The weigh-ins that BOUND the week: the last one in it, and the last
+        // one before it. A delta taken inside the week would report a Friday
+        // against a Wednesday and call it a week's change.
+        let weight = try? database.bodyweight(onOrBefore: dates.last ?? weekStart)
+        let before = ISODate.addDays(weekStart, -1).flatMap { try? database.bodyweight(onOrBefore: $0) }
+        return WeeklyWrap.Summary(
+            weekStart: weekStart, sessions: finished.count, tonnageKg: tonnageKg,
+            tonnageDeltaKg: deltaKg, prCount: prCount, isDeload: isDeload,
+            movements: movements.values.sorted { $0.name < $1.name },
+            bodyweightKg: weight,
+            bodyweightDeltaKg: (weight != nil && before != nil) ? jsRound1(weight! - before!) : nil
+        )
+    }
+
+    /// The same movement's top-set e1RM in the most recent session of the same
+    /// split BEFORE this week. Nil when the split did not run, or the movement
+    /// was not in it — which is a movement with no verdict, not a zero.
+    private nonisolated static func previousE1rm(
+        _ database: AppDatabase, name: String, dayKey: String?, before weekStart: String
+    ) -> Double? {
+        guard let previous = previousSession(database, dayKey: dayKey, before: weekStart),
+              let top = previous.top(for: name)
+        else { return nil }
+        return Epley.oneRepMax(weight: top.weightKg, reps: top.reps)
+    }
+
+    /// The heaviest set of a group, ties to reps — `previousSession`'s rule,
+    /// and `ExerciseSummary`'s before it.
+    private nonisolated static func topSet(_ rows: [HistorySetRow]) -> (weightKg: Double, reps: Double)? {
+        var best: (weightKg: Double, reps: Double)?
+        for candidate in collapsed(rows) {
+            guard let held = best else { best = (candidate.weightKg, candidate.reps); continue }
+            if candidate.weightKg > held.weightKg
+                || (candidate.weightKg == held.weightKg && candidate.reps > held.reps) {
+                best = (candidate.weightKg, candidate.reps)
+            }
+        }
+        guard let best, best.reps > 0 || best.weightKg > 0 else { return nil }
+        return best
     }
 
     // MARK: - The last time this split was trained

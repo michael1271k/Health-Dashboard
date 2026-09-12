@@ -234,6 +234,29 @@ struct WorkoutTabView: View {
             // Text, so the tap target is the full width of the panel's top
             // line — a 60 pt word is not a target at the end of an arm holding
             // a phone in a gym.
+            // ── THE TILE IS THE WRAP-UP DOOR ONCE THE WEEK CLOSES ──────────
+            // A wrap-up modal that appears on its own gets dismissed by reflex
+            // and is then gone — a summary of the week you just trained, shown
+            // once, at a moment you did not choose. The panel transforms
+            // instead: same tile, same place, now a door that stays.
+            //
+            // The rearrange sheet moves to a long press. It is the everyday
+            // action for six days of the week and the wrap-up is the news on
+            // the seventh, so the seventh takes the tap.
+            if let wrap = week?.snapshot.wrap {
+                NavigationLink {
+                    WeeklyWrapView(summary: wrap, program: week?.snapshot.program ?? Program(id: "", label: "", days: []))
+                } label: {
+                    wrapLabel(wrap)
+                }
+                .buttonStyle(.plain)
+                .onyxPress()
+                .contextMenu {
+                    Button { weekSheetOpen = true } label: {
+                        Label("Rearrange this week", systemImage: "calendar.badge.clock")
+                    }
+                }
+            } else {
             Button { weekSheetOpen = true } label: {
                 // Label beside the tally until the tally alone is a line wide. At
                 // AX5 an `HStack` broke "THIS WEEK" and "12,510 kg" across four
@@ -255,6 +278,7 @@ struct WorkoutTabView: View {
             .onyxPress()
             .accessibilityLabel("This week")
             .accessibilityHint("Rearrange this week's days")
+            }
             HStack(spacing: OnyxSpace.xs) {
                 ForEach(week?.snapshot.cells ?? []) { cell in
                     dayCell(cell)
@@ -267,6 +291,42 @@ struct WorkoutTabView: View {
         .onyxGlass(.tile)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("This week")
+    }
+
+    /// The closed week's header line: the news, the tally, and a chevron.
+    ///
+    /// Deliberately the same three parts in the same places as the open week's
+    /// — only the word changes. A tile that re-lays itself out when its state
+    /// flips reads as a different tile arriving, rather than as this one having
+    /// something new to say.
+    private func wrapLabel(_ wrap: WeeklyWrap.Summary) -> some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: OnyxSpace.s) {
+                wrapTitle(wrap)
+                Spacer(minLength: OnyxSpace.s)
+                tally
+            }
+            VStack(alignment: .leading, spacing: OnyxSpace.xs) {
+                wrapTitle(wrap)
+                tally
+            }
+        }
+        .contentShape(.rect)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Week wrapped. \(wrap.headline)")
+        .accessibilityHint("Open the weekly summary")
+    }
+
+    private func wrapTitle(_ wrap: WeeklyWrap.Summary) -> some View {
+        HStack(spacing: OnyxSpace.xs) {
+            Text(wrap.isDeload ? "Deload wrapped" : "Week wrapped")
+                .onyxMicro()
+                .foregroundStyle(OnyxDomain.train.accent)
+            Image(systemName: "chevron.right")
+                .onyxType(.micro)
+                .foregroundStyle(OnyxDomain.train.accent.opacity(0.7))
+                .accessibilityHidden(true)
+        }
     }
 
     /// The header's own line. A chevron beside it, because a heading that opens

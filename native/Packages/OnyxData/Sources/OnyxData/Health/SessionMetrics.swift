@@ -145,10 +145,12 @@ extension AppDatabase {
         }
     }
 
-    /// The most recent scale reading on or before the session's day, for the
-    /// MET fallback. Absent, only the personal median can fire — which is the
-    /// right order of preference anyway.
-    func bodyweight(onOrBefore date: String) throws -> Double? {
+    /// The most recent scale reading on or before a date.
+    ///
+    /// The MET fallback's, originally, and now also the weekly wrap's: the same
+    /// question — "what did the scale last say by this day" — asked by two
+    /// callers, one of which lives in the app target and needs it public.
+    public func bodyweight(onOrBefore date: String) throws -> Double? {
         try writer.read { db in
             try Double.fetchOne(
                 db,
