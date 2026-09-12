@@ -16,14 +16,52 @@ import OnyxData
 /// now saying "Week wrapped" with a chevron. Nothing interrupts, the door is
 /// permanent, and a week from March is reachable by the same route as this one.
 ///
+/// ── WHY IT IS NOW A SHEET, WHICH IS NOT A CONTRADICTION (W1a) ───────────────
+/// That argument is against a modal that arrives UNINVITED. It says nothing
+/// about what happens after the tile is tapped, and a push turns out to be the
+/// wrong answer there: the wrap-up is a thing you glance at and put down, and a
+/// push replaces the Train tab, costs a back tap to leave, and buries the
+/// screen the reader came to use. A detent sheet says what this is — the reel
+/// at 560 pt, the breakdown if you drag for it, and the tab visible behind it
+/// the whole time. The door is still permanent and still the reader's to open.
+///
 /// ── AND WHY THE WEEK CLOSES ON FRIDAY ───────────────────────────────────────
 /// `WeeklyWrap.isWrapped`, not the calendar: on a plan that rests Saturday the
 /// training week ends on Friday evening, and a summary that waits for Sunday
 /// arrives after you have stopped thinking about the week it describes. Cardio
 /// does not gate it — a walk is not something the training week waits for.
+///
+/// ── WHAT THE 560 DETENT IS FOR ──────────────────────────────────────────────
+/// It used to render three uncapped lists: every movement of the week, one
+/// 48 pt row each, thirty rows on a full week. That is a document, and nobody
+/// reads a document on the evening they finished the work it describes. The
+/// reel above the fold answers "how did the week go" in five seconds; the
+/// document is still there, one drag and one disclosure away, unabridged.
 struct WeeklyWrapView: View {
     let summary: WeeklyWrap.Summary
     let program: Program
+
+    /// The reel's height. One constant used by both the detent SET and the
+    /// initial selection — `PresentationDetent.height` is value-equal, so two
+    /// literals would compile and then drift apart at the first tweak.
+    private static let reel = PresentationDetent.height(560)
+
+    @State private var detent: PresentationDetent
+
+    /// `detent` is settable only so the screenshot harness can photograph the
+    /// `.large` state, which has no other route in a shot — the same reason
+    /// `WorkoutTabView` takes a seeded day. Every app call site takes the
+    /// default and opens on the reel.
+    init(
+        summary: WeeklyWrap.Summary, program: Program,
+        detent: PresentationDetent = WeeklyWrapView.reel
+    ) {
+        self.summary = summary
+        self.program = program
+        _detent = State(initialValue: detent)
+    }
+    /// Every movement of the week. Closed by default; opening it raises the sheet.
+    @State private var breakdownOpen = false
 
     /// Off by default. A share card is the one surface in this app that leaves
     /// the phone, and the figures on it are the user's to choose — so the
@@ -36,36 +74,63 @@ struct WeeklyWrapView: View {
     /// and rendering a 540×960 composition on every layout pass to supply one
     /// would re-rasterise the card every time the screen scrolls.
     @State private var card: Image?
+    /// Which toggle state `card` was rendered for. A sheet is opened and closed
+    /// far more casually than a screen is pushed, and without this every open
+    /// pays the 18 MB rasterise again for a card nothing asked to change.
+    @State private var renderedFor: Bool?
 
     @Environment(\.displayScale) private var displayScale
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: OnyxSpace.l) {
-                headline
-                if let top = summary.topSet { topSetCard(top) }
-                movementList("Progressed", summary.progressions, tone: .good, symbol: "arrow.up.right")
-                movementList("Eased off", summary.deloaded, tone: .textSecondary, symbol: "moon.zzz")
-                movementList("Regressed", summary.regressions, tone: .danger, symbol: "arrow.down.right")
-                shareSection
+        NavigationStack {
+            ScrollView {
+                // LAZY, and it is load-bearing rather than an optimisation: a
+                // plain VStack builds every subview on presentation, which
+                // fires `shareSection`'s render task in the same turn that lays
+                // the sheet out. The share control is below the 560 fold by
+                // construction, so lazily is the only way it is honestly last.
+                LazyVStack(alignment: .leading, spacing: OnyxSpace.l) {
+                    headline
+                    bestsCard
+                    ringCard
+                    topThree
+                    breakdown
+                    shareSection
+                }
+                .padding(.horizontal, OnyxSpace.l)
+                .padding(.bottom, OnyxSpace.xl)
             }
-            .padding(.horizontal, OnyxSpace.l)
-            .padding(.bottom, OnyxSpace.xl)
+            .onyxScreen(.train)
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            // Without this the inline bar draws its own material band over the
+            // mesh the moment content scrolls under it.
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
         }
-        .onyxScreen(.train)
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
-        // `task(id:)` and not `onChange`: it also fires on appear, so the card
-        // exists before the first tap rather than one render after it.
-        .task(id: showBodyweight) {
-            // Yield first. `render()` is synchronous and lays out and
-            // rasterises a 540 × 960 view at `displayScale` — roughly 18 MB —
-            // on the main actor, and without this it does so in the same turn
-            // as the navigation push, which is the one frame budget on this
-            // screen that is already spent.
-            await Task.yield()
-            guard !Task.isCancelled else { return }
-            card = render()
+        .presentationDetents([Self.reel, .large], selection: $detent)
+        .presentationDragIndicator(.visible)
+        .presentationBackground(Color.onyx.base)
+        // The OPPOSITE of `MuscleDistributionSheet` and `DomainSheet`, on
+        // purpose. Those two are lists meant to be READ at the small detent, so
+        // they suppress resizing and let a drag scroll. This one is a reel whose
+        // breakdown is meant to be dragged up into, which is the behaviour they
+        // were suppressing.
+        .presentationContentInteraction(.resizes)
+        .preferredColorScheme(.dark)
+        .onChange(of: breakdownOpen) { _, open in
+            // Expanding raises the sheet, so the rows arrive in the same
+            // gesture that asked for them rather than one drag later.
+            // Collapsing does NOT lower it: shrinking the sheet out from under
+            // a thumb that just tapped "hide" is a second thing nobody asked
+            // for.
+            if open { withAnimation(OnyxMotion.move) { detent = .large } }
         }
     }
 
@@ -73,7 +138,7 @@ struct WeeklyWrapView: View {
         "Week of \(Swap.shortDayLabel(summary.weekStart))"
     }
 
-    // MARK: - The numbers
+    // MARK: - The reel
 
     private var headline: some View {
         VStack(alignment: .leading, spacing: OnyxSpace.m) {
@@ -86,18 +151,31 @@ struct WeeklyWrapView: View {
                     .onyxType(.caption)
                     .foregroundStyle(Color.onyx.textSecondary)
             }
-            HStack(spacing: OnyxSpace.m) {
-                stat("SESSIONS", "\(summary.sessions)", delta: nil)
-                // "TONNAGE KG" and not a bare "TONNAGE": the delta beneath it
-                // carries its unit, and a figure whose unit is stated one line
-                // down but not on itself reads as two different quantities.
-                stat("TONNAGE KG", OnyxFormat.volume(summary.tonnageKg), delta: summary.tonnageDeltaKg)
-                stat("PRs", "\(summary.prCount)", delta: nil, tint: summary.prCount > 0 ? Color.onyx.record : nil)
+            // ── ONE COLUMN AT AN ACCESSIBILITY SIZE (W1a) ───────────────────
+            // Three cells across a 375 pt card is 117 pt each, and at AX5 that
+            // broke "SESSIONS" into SES / SIO / NS and printed the week's
+            // tonnage as "42,…". The same collapse `WeekVitalsRow` already
+            // makes, for the reason it states: a figure shown as an ellipsis is
+            // worse than one not shown.
+            if typeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: OnyxSpace.m) { stats }
+            } else {
+                HStack(spacing: OnyxSpace.m) { stats }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(OnyxSpace.l)
         .onyxGlass(.tile)
+    }
+
+    @ViewBuilder
+    private var stats: some View {
+        stat("SESSIONS", "\(summary.sessions)", delta: nil)
+        // "TONNAGE KG" and not a bare "TONNAGE": the delta beneath it carries
+        // its unit, and a figure whose unit is stated one line down but not on
+        // itself reads as two different quantities.
+        stat("TONNAGE KG", OnyxFormat.volume(summary.tonnageKg), delta: summary.tonnageDeltaKg)
+        stat("PRs", "\(summary.prCount)", delta: nil, tint: summary.prCount > 0 ? Color.onyx.record : nil)
     }
 
     private func stat(_ label: String, _ value: String, delta: Double?, tint: Color? = nil) -> some View {
@@ -120,30 +198,182 @@ struct WeeklyWrapView: View {
         .accessibilityElement(children: .combine)
     }
 
-    private func topSetCard(_ movement: WeeklyWrap.Movement) -> some View {
+    /// The two best lifts of the week, side by side and labelled differently.
+    ///
+    /// ── WHY BOTH, AND WHY IN ONE CARD ───────────────────────────────────────
+    /// `topSet` is the heaviest thing picked up — a fact. `bestE1rm` is the best
+    /// estimated max — an inference off a rep count. They disagree constantly:
+    /// 100 kg × 3 is the heaviest set of a week whose best estimate came from
+    /// 85 kg × 10. Showing one of them under a label that could mean either is
+    /// how "my heaviest lift" comes to name a set nobody performed.
+    ///
+    /// One card and not two, because at 375 pt two full-width hero cards put the
+    /// ring below the fold — and the ring is the half of the reel that cannot be
+    /// read anywhere else in the app.
+    @ViewBuilder
+    private var bestsCard: some View {
+        if summary.topSet != nil || summary.bestE1rm != nil {
+            let cells = ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top, spacing: OnyxSpace.m) { bestCells }
+                VStack(alignment: .leading, spacing: OnyxSpace.m) { bestCells }
+            }
+            cells
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(OnyxSpace.l)
+                .background(alignment: .top) {
+                    // The heaviest set's split colours the card, as it did when
+                    // this was the heaviest set's own card.
+                    LinearGradient(
+                        colors: [Color.onyx.day(summary.topSet?.dayKey ?? "").opacity(0.22), .clear],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                    .frame(height: 72)
+                }
+                .onyxGlass(.tile)
+        }
+    }
+
+    @ViewBuilder
+    private var bestCells: some View {
+        if let top = summary.topSet {
+            bestCell(
+                "HEAVIEST SET", top.name,
+                "\(OnyxFormat.kg(top.weightKg)) kg × \(jsIntegerString(top.reps))",
+                change: nil
+            )
+        }
+        if let best = summary.bestE1rm, let e1rm = best.e1rm {
+            bestCell(
+                "BEST e1RM", best.name,
+                "\(OnyxFormat.kg(jsRound1(e1rm))) kg est.",
+                change: best.change
+            )
+        }
+    }
+
+    private func bestCell(
+        _ label: String, _ name: String, _ detail: String, change: Double?
+    ) -> some View {
         VStack(alignment: .leading, spacing: OnyxSpace.xs) {
-            Text("HEAVIEST SET").onyxMicro()
-            Text(movement.name)
-                .onyxType(.hero)
+            Text(label).onyxMicro()
+            Text(name)
+                .onyxType(.secondary).fontWeight(.semibold)
                 .foregroundStyle(Color.onyx.textPrimary)
-                .lineLimit(2).minimumScaleFactor(0.7)
-            Text("\(OnyxFormat.kg(movement.weightKg)) kg × \(jsIntegerString(movement.reps))")
+                .lineLimit(2).minimumScaleFactor(0.8)
+            Text(detail)
                 .onyxType(.body).onyxNumeral()
                 .foregroundStyle(Color.onyx.textSecondary)
+                .lineLimit(1).minimumScaleFactor(0.7)
+            if let change, abs(change) > WeeklyWrap.regressionThreshold {
+                Text("\(change > 0 ? "+" : "−")\(jsIntegerString(jsRound(abs(change) * 100)))% vs last week")
+                    .onyxType(.micro).onyxNumeral()
+                    .foregroundStyle(change > 0 ? Color.onyx.good : Color.onyx.textSecondary)
+                    .lineLimit(1)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(OnyxSpace.l)
-        .background(alignment: .top) {
-            LinearGradient(
-                colors: [Color.onyx.day(movement.dayKey).opacity(0.22), .clear],
-                startPoint: .top, endPoint: .bottom
-            )
-            .frame(height: 72)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// Where the week's work landed, and which day carried most of it.
+    @ViewBuilder
+    private var ringCard: some View {
+        if let muscle = summary.muscle, muscle.doneSets > 0 {
+            VStack(alignment: .leading, spacing: OnyxSpace.m) {
+                Text("WHERE THE WORK WENT").onyxMicro()
+                WeeklyMuscleRing(summary: muscle, showLegend: detent == .large) {
+                    withAnimation(OnyxMotion.move) { detent = .large }
+                }
+                if let session = summary.topSession, session.volumeKg > 0 {
+                    Label(
+                        "Biggest session · \(sessionLabel(session)) · \(OnyxFormat.volume(session.volumeKg)) kg",
+                        systemImage: "flame"
+                    )
+                    .onyxType(.caption).onyxNumeral()
+                    .foregroundStyle(Color.onyx.textSecondary)
+                    .lineLimit(2)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(OnyxSpace.l)
+            .onyxGlass(.tile)
         }
-        .onyxGlass(.tile)
+    }
+
+    /// The athlete's own word for the split — resolved here rather than stored,
+    /// precisely so a renamed programme renames this too.
+    ///
+    /// `SessionAnalysis.dayLabel` and not `program.day(key:)?.label ?? key`: the
+    /// helper refuses an empty key and tidies one the program does not know
+    /// (a Onyx-4 or PPL session) into "Legs A" rather than leaking `legs_a`.
+    /// A finished session CAN carry a null `day_key`, and the naive version
+    /// rendered that as "Biggest session ·  · 9,715 kg". The date is the
+    /// fallback, because a day with no name still happened on a Tuesday.
+    private func sessionLabel(_ session: WeeklyWrap.TopSession) -> String {
+        SessionAnalysis.dayLabel(session.dayKey, in: program)
+            ?? Swap.shortDayLabel(session.date)
     }
 
     // MARK: - The lists
+
+    /// Three rows, and a count of what is not being shown.
+    ///
+    /// Three and not five: the reel above has already answered how the week
+    /// went, and this is the follow-up question — which lifts moved. A reader
+    /// who wants the fourth wants all of them, and that is what the disclosure
+    /// under it is for.
+    @ViewBuilder
+    private var topThree: some View {
+        let progressions = summary.progressions
+        if !progressions.isEmpty {
+            movementList(
+                "Progressed", Array(progressions.prefix(3)),
+                tone: .good, symbol: "arrow.up.right"
+            )
+        }
+    }
+
+    /// Everything, unabridged — the screen this one replaced, demoted.
+    ///
+    /// Nothing was cut and one thing was added. The three lists that used to be
+    /// the whole screen are the same `movementList` calls in the same order,
+    /// simply no longer the first thing the reader meets — and a fourth joins
+    /// them, the movements that HELD, which the old screen filed nowhere and
+    /// therefore never showed at all.
+    @ViewBuilder
+    private var breakdown: some View {
+        let hidden = summary.movements.count - min(3, summary.progressions.count)
+        if hidden > 0 {
+            DisclosureGroup(isExpanded: $breakdownOpen) {
+                VStack(alignment: .leading, spacing: OnyxSpace.l) {
+                    movementList("Progressed", summary.progressions, tone: .good, symbol: "arrow.up.right")
+                    movementList("Eased off", summary.deloaded, tone: .textSecondary, symbol: "moon.zzz")
+                    movementList("Regressed", summary.regressions, tone: .danger, symbol: "arrow.down.right")
+                    movementList("Held", summary.movements(.held), tone: .textSecondary, symbol: "equal")
+                }
+                .padding(.top, OnyxSpace.m)
+            } label: {
+                // "+3 more" only reads as more when something is shown above
+                // it. A week where nothing progressed shows no rows at all, and
+                // there the honest word is "all".
+                Label(breakdownLabel, systemImage: "list.bullet")
+                .onyxType(.caption).fontWeight(.semibold)
+                .foregroundStyle(OnyxDomain.train.accent)
+                .frame(minHeight: 44)
+            }
+            .tint(OnyxDomain.train.accent)
+            .accessibilityHint("Shows every movement of the week, with its change")
+        }
+    }
+
+    private var breakdownLabel: String {
+        if breakdownOpen { return "Hide the full week" }
+        let shown = min(3, summary.progressions.count)
+        let total = summary.movements.count
+        if shown == 0 { return "See all \(total) movement\(total == 1 ? "" : "s")" }
+        let hidden = total - shown
+        return "+\(hidden) more movement\(hidden == 1 ? "" : "s")"
+    }
 
     /// An empty list draws nothing. A "Regressed — none" heading is a heading
     /// that makes the reader check a thing that did not happen.
@@ -228,6 +458,23 @@ struct WeeklyWrapView: View {
         }
         .padding(OnyxSpace.l)
         .onyxGlass(.tile)
+        // On the SECTION and not on the ScrollView, which is what makes the
+        // `LazyVStack` above worth having: the render happens when the reader
+        // scrolls to the control, not in the turn that presents the sheet.
+        //
+        // `task(id:)` and not `onChange`: it also fires on appear, so the card
+        // exists before the first tap rather than one render after it.
+        .task(id: showBodyweight) {
+            guard renderedFor != showBodyweight else { return }
+            // Yield first. `render()` is synchronous and lays out and
+            // rasterises a 540 × 960 view at `displayScale` — roughly 18 MB —
+            // on the main actor, and without this it does so in the same turn
+            // as the scroll that revealed it.
+            await Task.yield()
+            guard !Task.isCancelled else { return }
+            card = render()
+            renderedFor = showBodyweight
+        }
     }
 
     /// The 9:16 card, rendered off-screen.

@@ -315,7 +315,8 @@ enum PreviewHarness {
             BackfillSheet(model: .preview).environment(AppEnvironment.preview)
         case "you":
             NavigationStack { SettingsTabView(seeded: model) }.environment(AppEnvironment.preview)
-        case "train", "train-empty", "train-week", "train-wrap", "train-wrap-deload", "share-card":
+        case "train", "train-empty", "train-week", "train-wrap", "train-wrap-large",
+             "train-wrap-deload", "share-card":
             // Seeded from the history store: the This-week panel and the
             // Ready-to-progress box are both reads over the ledger, so an empty
             // database photographs the empty states rather than the screen.

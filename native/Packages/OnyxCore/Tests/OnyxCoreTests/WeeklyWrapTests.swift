@@ -135,6 +135,64 @@ struct WeeklyWrapTests {
         #expect(summary.topSet?.weightKg == 70)
     }
 
+    /// The same week, with the heaviest LOAD and the best ESTIMATE on two
+    /// different lifts: 80 kg for four beats 70 for fifteen on the bar, and 70
+    /// for fifteen beats it on the estimate. The reel prints both figures
+    /// precisely because weeks like this one are ordinary.
+    private var diverging: WeeklyWrap.Summary {
+        WeeklyWrap.Summary(
+            weekStart: weekStart, sessions: 4, tonnageKg: 42_180, prCount: 1,
+            movements: [
+                .init(name: "Lat Pulldown", dayKey: "cb_a", weightKg: 80, reps: 4, e1rm: 90.7, previousE1rm: 88),
+                .init(name: "Leg Press", dayKey: "legs_a", weightKg: 70, reps: 15, e1rm: 105, previousE1rm: 110),
+                .init(name: "Chest Press", dayKey: "cb_a", weightKg: 40, reps: 10, e1rm: 53.3, previousE1rm: 44),
+                .init(name: "Side Plank", dayKey: "legs_a", weightKg: 0, reps: 61),
+            ]
+        )
+    }
+
+    @Test("the best e1RM and the heaviest set are allowed to be different lifts")
+    func bestE1rmIsNotTopSet() {
+        #expect(diverging.topSet?.name == "Lat Pulldown")
+        #expect(diverging.bestE1rm?.name == "Leg Press")
+        // And they coincide without complaint when the week is simpler — the
+        // reel shows the same name twice with two different figures under it,
+        // which is still two answers to two questions.
+        #expect(summary.topSet?.name == "Leg Press")
+        #expect(summary.bestE1rm?.name == "Leg Press")
+    }
+
+    @Test("nothing without an estimate can be the best estimate")
+    func bestE1rmSkipsTheUnestimable() {
+        // The 61-second plank has no e1RM, and a stored zero on an unloaded
+        // lift means the same thing — `> 0` covers both, which is the same
+        // exclusion `topSet` makes with its load.
+        let planksOnly = WeeklyWrap.Summary(
+            weekStart: weekStart, sessions: 1, tonnageKg: 0,
+            movements: [
+                .init(name: "Side Plank", dayKey: "legs_a", weightKg: 0, reps: 61),
+                .init(name: "Dead Hang", dayKey: "cb_a", weightKg: 0, reps: 40, e1rm: 0),
+            ]
+        )
+        #expect(planksOnly.bestE1rm == nil)
+        #expect(planksOnly.topSet == nil)
+    }
+
+    @Test("the top progression is the biggest mover, not the first logged")
+    func topProgressedIsTheBiggestMover() {
+        // Chest Press gained 21%, Lat Pulldown 3%. `progressions` is already
+        // sorted by the size of the change and this is its head — a second sort
+        // here would be a second chance to disagree with the list below it.
+        #expect(diverging.topProgressed?.name == "Chest Press")
+        #expect(diverging.progressions.map(\.name) == ["Chest Press", "Lat Pulldown"])
+        // A week where nothing progressed has no top progression rather than a
+        // movement that merely held.
+        var deload = summary
+        deload.isDeload = true
+        #expect(WeeklyWrap.Summary(weekStart: weekStart, sessions: 0, tonnageKg: 0).topProgressed == nil)
+        #expect(deload.topProgressed?.name == "Chest Press")
+    }
+
     @Test("the headline reads as a sentence and omits what did not happen")
     func headlineOmitsZeroes() {
         #expect(summary.headline == "4 sessions · 42180 kg · 2 PRs")

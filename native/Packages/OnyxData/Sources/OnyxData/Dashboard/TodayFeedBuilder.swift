@@ -53,60 +53,6 @@ public struct TodayFeed: Sendable, Equatable {
     }
 }
 
-/// One muscle's week: what landed on it, and what the plan asked for.
-public struct MuscleFocusRow: Sendable, Equatable, Identifiable {
-    public let muscle: LandmarkMuscle
-    /// WEIGHTED sets — a primary mover earns 1.0 and a secondary 0.5
-    /// (`MuscleCredit.secondarySetCredit`), which is the same currency the
-    /// targets are denominated in. Fractional on purpose; rounding it here
-    /// would make five half-credits disappear.
-    public let sets: Double
-    /// The athlete's override for this (plan, phase), else the program's own
-    /// number. Zero is a real answer — Adductors is 0 on a cut — and a muscle
-    /// with a zero target is not behind, it is unasked-for.
-    public let target: Int
-    public var id: String { muscle.rawValue }
-    /// Never negative: work past the target is done, not "minus three left".
-    public var remaining: Double { max(0, Double(target) - sets) }
-
-    public init(muscle: LandmarkMuscle, sets: Double, target: Int) {
-        self.muscle = muscle
-        self.sets = sets
-        self.target = target
-    }
-}
-
-public struct MuscleFocusSummary: Sendable, Equatable {
-    public var weekStart: String
-    /// Every one of the sixteen landmarks, in the canonical order, present
-    /// whether or not the week touched it. A muscle that vanishes from the
-    /// list when it is untrained is the one you most need to see.
-    public var rows: [MuscleFocusRow]
-
-    public init(weekStart: String = "", rows: [MuscleFocusRow] = []) {
-        self.weekStart = weekStart
-        self.rows = rows
-    }
-
-    public var doneSets: Double { rows.reduce(0) { $0 + $1.sets } }
-    public var targetSets: Int { rows.reduce(0) { $0 + $1.target } }
-    public var remainingSets: Double { rows.reduce(0) { $0 + $1.remaining } }
-    /// Intensity per landmark for the atlas, 0…1 against its OWN target.
-    ///
-    /// Against the target and not against the busiest muscle, which is what
-    /// the tile does: this sheet's question is "is the week done", so a quad
-    /// at 10 of 10 and a bicep at 8 of 8 must both read full even though one
-    /// is a bigger number. An untargeted muscle grades against the biggest
-    /// target in the plan instead — it still HAPPENED, and fading it out
-    /// would report trained work as untrained.
-    public var worked: [LandmarkMuscle: Double] {
-        MuscleCredit.worked(
-            sets: Dictionary(rows.map { ($0.muscle, $0.sets) }, uniquingKeysWith: { a, _ in a }),
-            targets: Dictionary(rows.map { ($0.muscle, $0.target) }, uniquingKeysWith: { a, _ in a })
-        )
-    }
-}
-
 public struct WeekSoFarSummary: Sendable, Equatable {
     public var weekStart: String
     public var weekNumber: Int
@@ -251,7 +197,13 @@ public struct TodayFeedBuilder: Sendable {
     ///
     /// A ghost set counts for nothing, here as everywhere. Warm-ups DO count —
     /// see `MuscleDistribution`, which states the same rule for a live session.
-    static func muscleFocus(
+    ///
+    /// `public` since W1a: the Week Wrapped sheet is the FOURTH surface, and it
+    /// is built in `Features/Workout`, outside this module. Widening the
+    /// visibility is the whole point of having one accumulator — a fourth
+    /// caller that cannot reach it writes a fourth counter instead, which is
+    /// the state this function was created to end.
+    public static func muscleFocus(
         weekStart: String, sets: [WorkoutSet], names: [String: String],
         phase: ProgramPhase, overrides: [String: Int]
     ) -> MuscleFocusSummary {

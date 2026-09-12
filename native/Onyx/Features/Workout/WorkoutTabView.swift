@@ -82,6 +82,18 @@ struct WorkoutTabView: View {
     /// `Identifiable` and making it so retroactively would reach every string
     /// in the app; this reaches one property.
     struct Review: Identifiable { let id: String }
+
+    /// The closed week being read, in a sheet from the This-week tile.
+    @State private var wrapped: WrapDoor?
+
+    /// The same box as `Review` above, for the same reason: `WeeklyWrap.Summary`
+    /// is an OnyxCore value and making an OnyxCore type `Identifiable` to
+    /// present one sheet reaches every caller of that type. The Monday the week
+    /// starts on already names it uniquely.
+    struct WrapDoor: Identifiable {
+        let summary: WeeklyWrap.Summary
+        var id: String { summary.weekStart }
+    }
     /// Bumped when a dismissal turns out to have finished the session. The
     /// haptic lived on the finish button, which was torn down in the same
     /// transaction that fired it, so it very likely never played.
@@ -175,6 +187,20 @@ struct WorkoutTabView: View {
                 WeekOverrideSheet(week: week)
             }
         }
+        // `item:` and not `isPresented:`, for the reason spelled out above the
+        // logger cover: a sheet whose content is `if let` over a separate piece
+        // of state can come up empty. The summary IS the presentation here.
+        //
+        // The view owns its own `NavigationStack` and its own detents, unlike
+        // the session review above — W1b opens the same reel from a past week
+        // in History, and chrome spelled at each call site is chrome that
+        // drifts between them.
+        .sheet(item: $wrapped) { door in
+            WeeklyWrapView(
+                summary: door.summary,
+                program: week?.snapshot.program ?? Program(id: "", label: "", days: [])
+            )
+        }
         .sheet(isPresented: $loggingCardio) {
             if let week {
                 CardioLogSheet(
@@ -248,9 +274,19 @@ struct WorkoutTabView: View {
             // action for six days of the week and the wrap-up is the news on
             // the seventh, so the seventh takes the tap.
             if let wrap = week?.snapshot.wrap {
-                NavigationLink {
-                    WeeklyWrapView(summary: wrap, program: week?.snapshot.program ?? Program(id: "", label: "", days: []))
-                } label: {
+                // ── A SHEET AND NOT A PUSH (W1a) ────────────────────────────
+                // The wrap-up is not a place you navigate INTO — it is a thing
+                // you glance at and put down, and a push says the opposite: it
+                // replaces the tab, takes a back tap to leave, and buries the
+                // Train screen the reader came here to use. A detent sheet says
+                // what it is: the reel at 560 pt, the breakdown if you drag for
+                // it, and the tab still behind it the whole time.
+                //
+                // The argument against a MODAL is in `WeeklyWrapView`'s header
+                // and it still holds — it is an argument against a modal that
+                // appears UNINVITED. This one opens because the tile was
+                // tapped, and the tile is still a door that stays.
+                Button { wrapped = WrapDoor(summary: wrap) } label: {
                     wrapLabel(wrap)
                 }
                 .buttonStyle(.plain)
