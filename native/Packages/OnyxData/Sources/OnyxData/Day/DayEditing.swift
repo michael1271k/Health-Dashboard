@@ -374,6 +374,22 @@ public extension AppDatabase {
         })
     }
 
+    /// One date's bouts, oldest first — the same order and filter the stream
+    /// gives, without an observation behind it.
+    ///
+    /// The automatic ingest needs the day's rows ONCE, inside an actor, to
+    /// decide what is already there; subscribing to a stream for a question
+    /// asked once per launch would leave an observation open for the life of
+    /// the sync.
+    func cardioRows(userId: String, date: String) throws -> [CardioLogRow] {
+        try writer.read { db in
+            try CardioLogRow
+                .filter(Column("user_id") == userId && Column("date") == date)
+                .order(Column("created_at"))
+                .fetchAll(db)
+        }
+    }
+
     /// Log a cardio bout. `kcal` is written alongside `active_kcal` on purpose:
     /// historical readers and the weekly export's pre-migration fallback still
     /// read the old column for the active figure.

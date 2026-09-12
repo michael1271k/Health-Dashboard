@@ -141,11 +141,17 @@ public enum HealthCatalogue {
     /// this is the one name the reader maps to it.
     public static let workoutTypeIdentifier = "HKWorkoutTypeIdentifier"
 
+    /// Resting energy over a bout's own window — the other half of a TOTAL
+    /// figure. Read per bout by the cardio ingest, never into the daily row:
+    /// `daily_logs` already carries active energy and adding basal to it would
+    /// double-count the day against itself.
+    public static let restingEnergyIdentifier = "HKQuantityTypeIdentifierBasalEnergyBurned"
+
     static let extraReadTypes = [
         "HKCategoryTypeIdentifierSleepAnalysis",
         workoutTypeIdentifier,
         "HKQuantityTypeIdentifierFlightsClimbed",
-        "HKQuantityTypeIdentifierBasalEnergyBurned",
+        restingEnergyIdentifier,
         "HKQuantityTypeIdentifierAppleMoveTime",
         "HKQuantityTypeIdentifierWalkingHeartRateAverage",
         "HKQuantityTypeIdentifierHeight",

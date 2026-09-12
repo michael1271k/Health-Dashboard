@@ -2,8 +2,9 @@
 import Foundation
 import HealthKit
 
-/// Background delivery for the three readings that change while the app is
-/// closed: the night's sleep, the morning's HRV, the day's steps.
+/// Background delivery for the four things that change while the app is
+/// closed: the night's sleep, the morning's HRV, the day's steps, and any
+/// workout the watch finished without the phone open.
 ///
 /// ── GATED ON `ONYX_ADP` ────────────────────────────────────────────────────
 /// `enableBackgroundDelivery` needs the `com.apple.developer.healthkit.
@@ -23,6 +24,11 @@ public final class HealthObservers {
         "HKCategoryTypeIdentifierSleepAnalysis",
         "HKQuantityTypeIdentifierHeartRateVariabilitySDNN",
         "HKQuantityTypeIdentifierStepCount",
+        // The cardio ingest's own wake-up. Without it a walk finished at 18:00
+        // reaches the ledger whenever the app is next opened, which is the
+        // "automatic" the feature is allowed to be until the entitlement lands
+        // — see the gate above. With it, the walk is filed as it ends.
+        HealthCatalogue.workoutTypeIdentifier,
     ]
 
     private let store = HKHealthStore()
@@ -44,9 +50,11 @@ public final class HealthObservers {
             }
             store.execute(query)
             queries.append(query)
-            // Sleep lands once a morning; the other two accrue all day and an
-            // hourly wake is plenty for a score that is read a few times a day.
-            let frequency: HKUpdateFrequency = identifier.contains("Sleep") ? .immediate : .hourly
+            // Sleep lands once a morning and a workout ends at a moment worth
+            // reacting to; steps and HRV accrue all day and an hourly wake is
+            // plenty for a score that is read a few times a day.
+            let immediate = identifier.contains("Sleep") || identifier == HealthCatalogue.workoutTypeIdentifier
+            let frequency: HKUpdateFrequency = immediate ? .immediate : .hourly
             store.enableBackgroundDelivery(for: type, frequency: frequency) { _, _ in }
         }
     }

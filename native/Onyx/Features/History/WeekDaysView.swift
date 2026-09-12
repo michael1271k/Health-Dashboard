@@ -147,7 +147,10 @@ struct WeekDaysView: View {
     /// Strictly after this week's final day, in the device's own calendar —
     /// the same rule the web's export gate reads.
     private var weekIsComplete: Bool {
-        WeekReady.isComplete(weekStart: window.start, today: LogicalDayISO.today())
+        // `environment.today` and not a fresh clock read: it is the app's one
+        // answer to "what day is it", and it is observed — so a week that
+        // closes while this screen is open opens its export without a reload.
+        WeekReady.isComplete(weekStart: window.start, today: environment.today)
     }
 
     // MARK: - Loading

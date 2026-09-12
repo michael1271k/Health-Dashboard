@@ -41,6 +41,26 @@ final class SyncStatus {
     /// When the last sync FINISHED, successfully. Nil until one has.
     private(set) var lastSync: Date?
 
+    /// What the last automatic cardio ingest brought in, waiting to be said.
+    ///
+    /// ── WHY THE APP ANNOUNCES A ROW IT WROTE ON ITS OWN ─────────────────────
+    /// The ingest is the one write in this app that nobody asked for. A bout
+    /// simply appears in the ledger, and a ledger that grows rows with no
+    /// account of where they came from is one people stop trusting — the same
+    /// instinct that makes an unexplained charge worse than a large one.
+    ///
+    /// So it is stated, once, and never blocks: `takeCardioNotice` clears it,
+    /// so three walks are announced on the foreground that found them and not
+    /// again for the rest of the day.
+    private(set) var cardioNotice: CardioIngestReport?
+
+    func noticeCardio(_ report: CardioIngestReport) {
+        guard !report.isEmpty else { return }
+        cardioNotice = report
+    }
+
+    func clearCardioNotice() { cardioNotice = nil }
+
     /// How many syncs are in flight.
     ///
     /// A bool would be wrong the first time two of them overlap — and they do:

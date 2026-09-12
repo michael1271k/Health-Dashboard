@@ -114,6 +114,9 @@ struct WorkoutTabView: View {
             .padding(.bottom, OnyxSpace.xl)
         }
         .onyxScreen(.train)
+        // The bout arrived without being asked for; the tab it belongs to says
+        // so once and then forgets. Train and Pulse only — see the modifier.
+        .cardioIngestNotice()
         .navigationTitle("Train")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom, spacing: 0) { footer }

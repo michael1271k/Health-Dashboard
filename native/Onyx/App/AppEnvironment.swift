@@ -366,6 +366,9 @@ public final class AppEnvironment {
             return
         }
         sync.finish(error: failure)
+        // Read and cleared inside the actor, so two overlapping syncs cannot
+        // announce the same three walks twice. Nil on almost every pass.
+        if let ingest = await coordinator.takeCardioIngest() { sync.noticeCardio(ingest) }
     }
 
     /// Build the coordinator for this user and run the first sync.
