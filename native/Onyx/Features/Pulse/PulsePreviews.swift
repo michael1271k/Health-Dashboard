@@ -409,7 +409,14 @@ enum PulsePreviews {
                 .navigationBarTitleDisplayMode(.inline)
             }
             .task {
-                if model == nil { model = PulsePreviews.fullDay() }
+                // `withSession: true` since §W6, and it is load-bearing. The
+                // tile now draws TWO channels — the modelled fatigue as a fill,
+                // the reported soreness as a ring — and the default fixture
+                // logs no session at all, so the first shot of the composite
+                // photographed a body with rings on it and nothing underneath.
+                // A screen whose new half is invisible in its own review shot is
+                // a screen that gets reviewed as though the half were missing.
+                if model == nil { model = PulsePreviews.fullDay(withSession: true) }
                 await model?.observe()
             }
         }

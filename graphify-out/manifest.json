@@ -3745,8 +3745,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/App/PreviewHarness.swift": {
-    "mtime": 1789207172.3049645,
-    "ast_hash": "2f1819452777654697a4c5120fa539f5",
+    "mtime": 1789208400.3628433,
+    "ast_hash": "45c37472ed8fbf2063b772816b4ef785",
     "semantic_hash": ""
   },
   "native/Onyx/App/SyncCoordinating.swift": {
@@ -3815,8 +3815,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/History/HistoryPreviews.swift": {
-    "mtime": 1789207168.0509727,
-    "ast_hash": "0f74de3cd57cd834063941ea2ae83b8b",
+    "mtime": 1789208504.167263,
+    "ast_hash": "9e4d763c28b44c4735ded3a0f6e88647",
     "semantic_hash": ""
   },
   "native/Onyx/Features/History/HistoryView.swift": {
@@ -4100,8 +4100,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Workout/WorkoutTabView.swift": {
-    "mtime": 1789207068.646688,
-    "ast_hash": "be1b539f741f8d5196fe20be4873cfe8",
+    "mtime": 1789208252.7507136,
+    "ast_hash": "ac1e34454d0fc32640988e45f64d8cdf",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Workout/WorkoutWeek.swift": {
@@ -5820,8 +5820,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Health/SessionMetrics.swift": {
-    "mtime": 1788625639.6041152,
-    "ast_hash": "976dd0115a27e2ce4358bb8a18a96947",
+    "mtime": 1789208275.2629833,
+    "ast_hash": "c63b687f5f01c83c223df6057973ea58",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Health/SleepNight.swift": {
@@ -7980,13 +7980,23 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Workout/WeeklyShareCard.swift": {
-    "mtime": 1789208219.56161,
-    "ast_hash": "37f20488a54f55f44f0526f7741ca0ed",
+    "mtime": 1789208544.487424,
+    "ast_hash": "8b5ba9c836329cc428d1b5235aac0343",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Workout/WeeklyWrapView.swift": {
-    "mtime": 1789208182.7119265,
-    "ast_hash": "313943dbd177ae3820b4c5547b9e52fb",
+    "mtime": 1789208504.1674325,
+    "ast_hash": "bdea625a52b794be9ed889c2352210f0",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Sources/OnyxCore/Training/MuscleRecovery.swift": {
+    "mtime": 1789208676.784719,
+    "ast_hash": "ad5f265dd825ecb549c84d4df4b9e6a2",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Tests/OnyxCoreTests/MuscleRecoveryTests.swift": {
+    "mtime": 1789208719.6707838,
+    "ast_hash": "98fccfaea145bfa994406952491cfc4d",
     "semantic_hash": ""
   }
 }

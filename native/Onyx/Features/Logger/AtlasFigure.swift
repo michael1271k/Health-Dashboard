@@ -33,6 +33,27 @@ struct AtlasFigure: View {
     /// What VoiceOver reads for a muscle — "Moderate" on the DOMS body. A
     /// muscle with no entry reads its worked share instead.
     var values: [LandmarkMuscle: String] = [:]
+    /// Muscles to RING, over whatever the fill says.
+    ///
+    /// ── THE SECOND CHANNEL, AND WHY IT IS A STROKE ──────────────────────────
+    /// Pulse draws two facts about the same body at once: modelled fatigue,
+    /// which is what the ledger implies, and reported soreness, which is what
+    /// the user typed. They disagree constantly and both are right — you can be
+    /// sore in a muscle the plan barely touched, and fresh in one that took
+    /// twelve sets — and the disagreement is the most interesting thing either
+    /// of them has to say.
+    ///
+    /// Two figures side by side would make the reader do the comparison; two
+    /// FILLS on one figure cannot both be seen. A ring can: it sits on the
+    /// muscle's own edge, reads at a glance, and leaves the fill underneath
+    /// entirely legible. A muscle filled dark with no ring is loaded and not
+    /// complaining; a ring with no fill is complaining about work the ledger has
+    /// no record of.
+    ///
+    /// Pulse-only in practice, because nothing else passes it. The logger's
+    /// figure answers one question — where did this session land — and a second
+    /// channel there would be decoration.
+    var outlined: [LandmarkMuscle: Color] = [:]
     /// Called with the muscle under a tap, when there is one. Nil leaves the
     /// figure inert, which is what every figure outside the DOMS tile is.
     var onPick: ((LandmarkMuscle) -> Void)?
@@ -109,6 +130,27 @@ struct AtlasFigure: View {
                     context.fill(path, with: shade(.white.opacity(0.07), .white.opacity(0.035)))
                     context.stroke(path, with: .color(.white.opacity(0.10)), lineWidth: Self.hairline)
                 }
+            }
+
+            // ── THE REPORTED RING, over the fill and under the definition ──
+            // Drawn in its own pass rather than inside the loop above, so a
+            // ring is never painted over by the NEXT muscle's fill: several
+            // landmarks share an edge (the three delts, the two heads either
+            // side of the linea alba) and in one pass the later path's fill
+            // clips the earlier path's ring along exactly the boundary the ring
+            // exists to mark.
+            //
+            // Two strokes, not one: a soft wide halo under a crisp hairline.
+            // A single 2 pt stroke at this scale reads as a thicker muscle
+            // rather than as a mark ON one, which is the difference between a
+            // second channel and a rendering artefact.
+            for entry in OnyxAtlas.muscles where entry.view == view {
+                guard let muscle = LandmarkMuscle(rawValue: entry.muscle),
+                      let ring = outlined[muscle] else { continue }
+                var path = Path()
+                entry.build(rect, &path)
+                context.stroke(path, with: .color(ring.opacity(0.35)), lineWidth: Self.hairline * 5)
+                context.stroke(path, with: .color(ring), lineWidth: Self.hairline * 1.6)
             }
 
             // Definition last, over everything, and STROKED ONLY — several of

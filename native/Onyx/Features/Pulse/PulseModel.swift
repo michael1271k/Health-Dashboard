@@ -206,6 +206,13 @@ final class DayModel {
         var stress: [StressDay] = []
         /// The selected day's index term by term, for the breakdown sheet.
         var stressBreakdown: Stress.Breakdown?
+        /// What the LEDGER implies every muscle is still carrying, 0…1
+        /// (§W6). Sparse: a recovered muscle is absent, not zero.
+        ///
+        /// Distinct from `doms`, which is what the user reported, and drawn as
+        /// the figure's FILL where the report is drawn as a ring over it. The
+        /// two disagree constantly and both are right — see `MuscleRecovery`.
+        var fatigue: [LandmarkMuscle: Double] = [:]
         /// False until the first read lands, so the rows can say "—" honestly
         /// rather than draw a zero they have not read yet.
         var loaded = false
@@ -265,6 +272,42 @@ final class DayModel {
     /// same number or one of them is lying.
     private nonisolated static let baselineDays = 14
     private nonisolated static let trendDays = 7
+
+    /// Every finished session inside the recovery horizon, reduced to a bout.
+    ///
+    /// ── WHY IT IS ANCHORED ON THE SELECTED DATE AND NOT ON `now` ────────────
+    /// This screen is a day page and History pushes it for past dates. A
+    /// recovery map computed against the wall clock would draw last March's
+    /// page as fully recovered, which is true today and was not true then —
+    /// and a figure that answers a different question depending on which door
+    /// you came through is a figure nobody can read.
+    ///
+    /// The anchor is the END of the selected day, so a session logged that
+    /// morning reads as hours old rather than as a day old.
+    private nonisolated static func recoveryBouts(
+        database: AppDatabase, on dateISO: String
+    ) -> [MuscleRecovery.Bout] {
+        guard let day = LogicalDay.date(fromISO: dateISO) else { return [] }
+        let anchor = Calendar.current.startOfDay(for: day).addingTimeInterval(86_400)
+        let from = ISODate.addDays(dateISO, -Int(MuscleRecovery.horizonHours / 24)) ?? dateISO
+        return ((try? database.sessionHistory()) ?? [])
+            .filter { $0.date >= from && $0.date <= dateISO && $0.endedAt != nil }
+            .compactMap { session -> MuscleRecovery.Bout? in
+                guard let ended = session.endedAt else { return nil }
+                let rows = ((try? database.historySets(sessionId: session.id)) ?? [])
+                    // Working sets only. A warm-up is real weight and counts
+                    // for tonnage, and it is not what leaves a muscle sore
+                    // three days later.
+                    .filter { SetTags.isWorkingSet($0.setType) }
+                guard !rows.isEmpty else { return nil }
+                let names = rows.map { SessionAnalysis.displayName(id: $0.exerciseId, stored: $0.exerciseName) }
+                let worked = MuscleCredit.worked(from: MuscleCredit.weightedSets(exerciseNames: names))
+                guard !worked.isEmpty else { return nil }
+                return MuscleRecovery.Bout(
+                    hoursAgo: anchor.timeIntervalSince(ended) / 3600, worked: worked
+                )
+            }
+    }
 
     private nonisolated static func readWindow(database: AppDatabase, userId: String, from: String, to: String) -> Window {
         // The deck that names a session's day key — the active plan's rows.
@@ -348,6 +391,7 @@ final class DayModel {
             sessions: sessions,
             stress: stress,
             stressBreakdown: stressBreakdown,
+            fatigue: MuscleRecovery.fatigue(recoveryBouts(database: database, on: to)),
             loaded: true
         )
     }
