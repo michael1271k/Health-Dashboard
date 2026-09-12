@@ -586,6 +586,112 @@ final class WorkoutWeek {
 
     // MARK: - The week, wrapped (W6)
 
+    /// The wrap-up for a week that is not the one being lived — History's door.
+    ///
+    /// ── ASSEMBLING ARGUMENTS, NOT REBUILDING A SUMMARY (W1b) ────────────────
+    /// W1b's brief asked whether `wrap(...)` below can be called for an
+    /// arbitrary `weekStart`, and said to build a second `Summary` on the
+    /// History side if it cannot. It can — and the second builder would have
+    /// been the larger move, not the smaller one.
+    ///
+    /// `wrap`'s BODY is already week-agnostic: every week-specific input
+    /// arrives as a parameter and nothing inside it reads `today`. What was not
+    /// reusable was its argument ASSEMBLY, which sits inline in `build` and is
+    /// gathered for the live week, plus its `private` visibility. That is all
+    /// this hoists. A History-side builder would instead have duplicated the
+    /// movement tally, the PR replay and the muscle-focus read — three
+    /// accumulators the wave before this one spent its length collapsing
+    /// into one, and the ring's numbers would have started disagreeing with
+    /// the Train tab's the first time either changed.
+    ///
+    /// `build` keeps its own inline call. It already holds all twelve arguments
+    /// from the pass it has just made, and routing it through here would make
+    /// the Workout tab read the same week twice on every refresh.
+    ///
+    /// ── WHAT A PAST WEEK IS JUDGED BY ───────────────────────────────────────
+    /// The PHASE and the owning PLAN are the week's own, not today's. That is
+    /// not what `scheduleContext(userId:today:)` does — its `today` has been
+    /// unused since W2 and it answers with the selected plan and the active
+    /// phase whatever date it is handed — so the two are overwritten here, the
+    /// way `WeeklyExportBuilder.schedule(_:goals:weekStart:)` already does for
+    /// the exported week. Both are load-bearing: the private `wrap` filters
+    /// `plan_phase_volume` by them and hands the phase to
+    /// `TodayFeedBuilder.muscleFocus`, so a bulk week opened during a cut would
+    /// otherwise have its ring graded against cut targets.
+    ///
+    /// The weekday LAYOUT still has no memory. `Schedule.scheduleDayIn` does not
+    /// consult `Schedule.isPlannable`, so this asks it directly — the same gate
+    /// `HistoryWeeks.detail` applies before it will draw a split label. Without
+    /// it a pre-Week-0 week could wrap off a layout the Days section beneath the
+    /// chip is refusing to use, which is the two halves of one screen
+    /// disagreeing about whether the plan can speak for those dates.
+    ///
+    /// ── AND ONE SEAM INHERITED RATHER THAN FIXED ────────────────────────────
+    /// `Swap.weekAssignment(of:)` cuts its own seven dates SUNDAY-anchored,
+    /// while `dates` above is cut from `weekStart` under the athlete's own week
+    /// start. On a non-Sunday start the two sets differ by a day at each end and
+    /// `WeekAssignment.key(on:)` answers `restOverride` for a date it does not
+    /// hold. `build` has done exactly this since W6 and this mirrors it
+    /// deliberately, because the Train tab and this door must agree about what
+    /// a week is before either is made right. Fixing it means giving
+    /// `weekAssignment` the dates rather than re-deriving them, at both call
+    /// sites, and it is not this wave's to change.
+    nonisolated static func wrap(
+        _ database: AppDatabase, userId: String, weekStart: String
+    ) -> WeeklyWrap.Summary? {
+        var context = (try? database.scheduleContext(userId: userId))
+            ?? ScheduleContext(programId: "", phase: .cut)
+        guard Schedule.isPlannable(weekStart, in: context) else { return nil }
+        context.phase = Phases.weekPhase(weekStart: weekStart, in: context.phases)?.kind == .bulk ? .bulk : .cut
+        context.programId = Schedule.planId(owning: weekStart, in: context)
+        let dates = (0..<7).compactMap { ISODate.addDays(weekStart, $0) }
+        // The layout's own weekday answer, overrides stripped — `build`'s
+        // `weekBase`, which is what `wrap` means by `base`.
+        var stripped = context
+        stripped.overrides = [:]
+        let bare = stripped
+
+        // One finished session per date, first wins. The same rule `build`
+        // applies, and it has to be the same: a date holding two finished
+        // sessions counts twice on one side of the delta and once on the other.
+        func finishedWeek(_ dates: [String]) -> [String: WorkoutSession] {
+            let rows = (try? database.read { db in
+                try WorkoutSession
+                    .filter(dates.contains(Column("date")) && Column("ended_at") != nil)
+                    .order(Column("date"), Column("started_at"))
+                    .fetchAll(db)
+            }) ?? []
+            var out: [String: WorkoutSession] = [:]
+            for session in rows where out[session.date] == nil { out[session.date] = session }
+            return out
+        }
+        // Every non-ghost row, warm-ups included — `SessionVolume`'s rule, and
+        // the same one `build` takes its own tonnage by.
+        func tonnage(_ sessions: [String: WorkoutSession]) -> Double {
+            sessions.values.reduce(0) { total, session in
+                let rows = (try? database.historySets(sessionId: session.id)) ?? []
+                return total + SessionVolume.sessionVolumeKg(rows.map(SessionAnalysis.volumeSet))
+            }
+        }
+
+        let finished = finishedWeek(dates)
+        guard !finished.isEmpty else { return nil }
+        let weekTonnage = jsRound(tonnage(finished))
+        let lastWeek = ISODate.addDays(weekStart, -7)
+            .map { start in finishedWeek((0..<7).compactMap { ISODate.addDays(start, $0) }) } ?? [:]
+        // Nil rather than the week's own tonnage when there is nothing before
+        // it: a delta against an absent week is not a gain of everything.
+        let delta = lastWeek.isEmpty ? nil : jsRound(weekTonnage - tonnage(lastWeek))
+
+        return wrap(
+            database, weekStart: weekStart, dates: dates, finished: finished,
+            base: Swap.weekAssignment(of: weekStart, resolve: { Schedule.scheduleDayIn(bare, $0) }),
+            tonnageKg: weekTonnage, deltaKg: delta, phases: context.phases,
+            analysis: SessionAnalysis.context(database: database), userId: userId,
+            programId: context.programId, phase: context.phase
+        )
+    }
+
     /// The summary, or nil while the week still has work in it.
     ///
     /// ── WHY IT COSTS A PR REPLAY PER SESSION ────────────────────────────────

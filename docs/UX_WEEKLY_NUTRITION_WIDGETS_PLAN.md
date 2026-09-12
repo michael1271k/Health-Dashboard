@@ -279,7 +279,7 @@ Files: `WeeklyWrap.swift` · `WorkoutWeek.swift` · `WeeklyWrapView.swift` ·
 Gate: screenshot loop at 375 pt and AX5 of the 560 detent, the `.large` detent,
 the ring and the legend. Eight family hues distinguishable in one ring.
 
-### W1b — Opus (extra high) · Week-detail glow-up · v2.6.0
+### W1b — Opus (extra high) · Week-detail glow-up · v2.6.0 — SHIPPED
 
 Branch `onyx/w1b-week-detail`. **Depends on W1a** — the wrap chip opens W1a's view.
 
@@ -309,6 +309,25 @@ Tasks:
      for any complete week (decision 8)
    The `weekIsComplete` lock (`:114-120`) and its dated sentence survive as a
    **disabled chip carrying the same sentence**, not a vanished control.
+**Shipped 2026-09-12. Two deviations, both forced and both documented in code:**
+
+- **Task 1's load read is clamped to today.** `Readiness.loadSignal` reports on
+  the last seven entries of the series it is handed, so ending the series on
+  `window.end` is what makes `strain` this week's. On the LIVE week that end is
+  in the future, and `dailyLoads` files a date with nothing on it as a REAL
+  zero — which does not merely thin the figures out: it decays the acute side of
+  the EWMA through days that have not happened and reports a falling ratio, i.e.
+  detraining. The series ends at `min(window.end, today)` instead, and the hero
+  says in one line that the live week's window is the seven days ending today.
+- **Task 5 was verified and the fallback was NOT taken.** `wrap(...)`'s body is
+  already week-agnostic — every week-specific input is a parameter and nothing in
+  it reads `today`. What was not reusable was its argument assembly, which lives
+  inline in `build` for the live week, plus its `private` visibility. Hoisting
+  that is about thirty lines; a `HistoryWeeks`-side `Summary` builder would have
+  duplicated the movement tally, the PR replay AND the muscle-focus read, which
+  is three accumulators the wave before it spent its length collapsing into one.
+  So the smaller move was the entry point, not the second builder.
+
 5. `WorkoutWeek.wrap(...)` is made callable for an arbitrary `weekStart` so a
    past week can be rebuilt. It is already close to pure — it takes its dates,
    sessions and analysis as arguments. Verify before assuming; if it is not, the

@@ -95,3 +95,37 @@ extension AppDatabase {
         )
     }
 }
+
+public extension AppDatabase {
+
+    /// The training-load signal as of `date`: Foster's week ENDING on it, and
+    /// the EWMA acute:chronic ratio at it.
+    ///
+    /// ── WHY A DOOR AND NOT A SECOND SERIES (W1b) ────────────────────────────
+    /// `readinessHistory` is the one place on the phone that decides how rows
+    /// become the 49-day series, and the battery has been scored through it
+    /// since v9. The week detail needs the same series to a different endpoint
+    /// — the week's last day rather than today — and building one for itself is
+    /// how two screens start disagreeing about the same fortnight. So this
+    /// exposes the existing accumulator at an arbitrary date and adds no
+    /// arithmetic of its own.
+    ///
+    /// `Readiness.loadSignal` is the PUBLIC path and the only one used here.
+    /// `fosterWeek` is internal to OnyxCore and stays that way: the caller
+    /// wants a week's strain, and `loadSignal` already computes exactly that
+    /// from the last `monotonyDays` of the series it is handed.
+    ///
+    /// ── WHAT `date` HAS TO BE ───────────────────────────────────────────────
+    /// `LoadSignal.strain` is Foster's over the series' LAST SEVEN ENTRIES. It
+    /// is a given calendar week's strain only when `date` is that week's last
+    /// day; hand it any other date and the seven days it reports on straddle
+    /// two weeks. A date in the FUTURE is legal and honest — every day after
+    /// today carries a real zero load, so a live week reports the strain of
+    /// what has been logged so far — but see the caller's own note before
+    /// putting the ratio beside it.
+    func loadSignal(userId: String, date: String) throws -> LoadSignal {
+        try read { db in
+            Readiness.loadSignal(try Self.readinessHistory(db, userId: userId, date: date).loads)
+        }
+    }
+}

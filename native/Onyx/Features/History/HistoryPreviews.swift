@@ -172,6 +172,33 @@ enum HistoryPreviews {
                 WeekDaysView(window: WeekWindow(containing: "2026-09-02", startDay: 0))
             }
             .environment(environment())
+        case "history-week-wrapped":
+            // A week that CLOSED as a wrap — 16–22 August, every planned day
+            // logged (`wrappedWeek`). The only week in this seed that satisfies
+            // `WeeklyWrap.isWrapped`, and therefore the only one whose chip row
+            // carries the wrap door. Three weeks behind the photographed week,
+            // which is the point of decision 8: the wrap stops being news that
+            // expires.
+            NavigationStack {
+                WeekDaysView(window: WeekWindow(containing: "2026-08-18", startDay: 0))
+            }
+            .environment(environment())
+        case "history-week-wrap-open":
+            // Decision 8, photographed: a week that closed three weeks ago,
+            // opening the same reel the Train tab opens on a Sunday night.
+            PresentingWrap(weekStart: "2026-08-16").environment(environment())
+        case "history-week-live":
+            // ── THE LOCKED EXPORT NEEDS A WEEK THAT HAS NOT CLOSED ──────────
+            // `weekIsComplete` reads `environment.today`, which is the app's
+            // one answer to what day it is and has no harness override — so the
+            // only way to photograph the disabled chip is to ask for the week
+            // the machine is actually standing in. The date inside the chip
+            // therefore moves from week to week in this shot, which is what a
+            // live week is; nothing else in the frame does.
+            NavigationStack {
+                WeekDaysView(window: WeekWindow(containing: LogicalDay.today(), startDay: 0))
+            }
+            .environment(environment())
         default:
             NavigationStack { HistoryView() }.environment(environment())
         }
@@ -204,9 +231,80 @@ enum HistoryPreviews {
         ("2026-09-02", [(42, 11), (42, 10), (42, 10)],  [(65, 11), (65, 10), (65, 10)], [(50, 12), (50, 13), (50, 12)], [(5, 21), (5, 22)]),
     ]
 
+    /// The scale, most mornings of the photographed week and the one before it.
+    ///
+    /// ── WHY THE SEED GREW A SCALE (W1b) ─────────────────────────────────────
+    /// `WeekVitalsRow` has drawn eight cells since §5.9 and six of them have
+    /// always photographed as `—`, because nothing here ever wrote a
+    /// `body_composition` row. That was survivable while the cells were small.
+    /// The week hero prints the weekly MEAN weight and the fat delta at 20 pt,
+    /// and a hero of two dashes is a hero that cannot be reviewed.
+    ///
+    /// Four readings in the week and two before it: enough for a mean that is
+    /// not just the last reading, and enough for the delta's own `>= 2` gate on
+    /// both sides. A gap on the Thursday is deliberate — the mean must be over
+    /// the readings that exist, not over seven days.
+    private static let weighIns: [(date: String, kg: Double, fat: Double)] = [
+        ("2026-08-16", 84.6, 19.8),
+        ("2026-08-19", 84.3, 19.7),
+        ("2026-08-21", 84.1, 19.6),
+        ("2026-08-24", 83.9, 19.4),
+        ("2026-08-27", 83.6, 19.3),
+        ("2026-08-30", 83.4, 19.2),
+        ("2026-08-31", 83.1, 19.0),
+        ("2026-09-02", 82.9, 18.9),
+        ("2026-09-04", 82.6, 18.7),
+    ]
+
+    /// A week that WRAPPED, so the wrap chip has a door to open (W1b).
+    ///
+    /// `WeeklyWrap.isWrapped` asks that every planned DAY of the week hold a
+    /// finished session, and no other week in this seed satisfies it — least of
+    /// all the photographed week of 30 August, which deliberately misses two,
+    /// because a week with a hole in it is the state a history screen exists to
+    /// show. Onyx-5 plans Sunday, Monday, Tuesday, Thursday and Friday; the
+    /// Tuesday of 16–22 August is already here in `chestBack`, and these are
+    /// the other four.
+    ///
+    /// No incline press and no load above what the later sessions reach, so the
+    /// record book and the e1RM trend the other previews photograph are
+    /// untouched. The two hack squats are first-of-their-kind and file a PR
+    /// each, which is what gives the wrap a trophy to count.
+    private static let wrappedWeek: [(date: String, key: String, sets: [(String, Double, Int)])] = [
+        ("2026-08-16", "cb_a",   [("ex-pulldown", 55, 10), ("ex-row", 45, 10)]),
+        ("2026-08-17", "legs_a", [("ex-hack", 50, 10)]),
+        ("2026-08-20", "cb_b",   [("ex-raise", 5, 12), ("ex-row", 42.5, 10)]),
+        ("2026-08-21", "legs_b", [("ex-hack", 52, 10)]),
+    ]
+
     @Sendable
     private static func seed(_ db: Database) throws {
         for e in exercises { try Exercise(id: e.id, name: e.name).insert(db) }
+
+        for w in weighIns {
+            let at = LogicalDay.date(fromISO: w.date)!.addingTimeInterval(7 * 3600)
+            try BodyCompositionRow(
+                id: "bc-\(w.date)", userId: userId, measuredAt: at, date: w.date,
+                weightKg: w.kg, bodyFatPct: w.fat, createdAt: at
+            ).insert(db)
+        }
+
+        for day in wrappedWeek {
+            let id = "s-\(day.date)"
+            let start = LogicalDay.date(fromISO: day.date)!.addingTimeInterval(17 * 3600)
+            try WorkoutSession(
+                id: id, userId: userId, dayKey: day.key, date: day.date, startedAt: start,
+                endedAt: start.addingTimeInterval(55 * 60), durationMin: 55, sessionRpe: 7
+            ).insert(db)
+            for (i, set) in day.sets.enumerated() {
+                try WorkoutSet(
+                    id: "\(id)-\(set.0)-\(i)", sessionId: id, exerciseId: set.0, setIndex: i + 1,
+                    weightKg: set.1, reps: set.2,
+                    est1rmKg: Epley.oneRepMax(weight: set.1, reps: Double(set.2)), rpe: 7, foldOrder: i
+                ).insert(db)
+            }
+        }
+
 
         for (n, s) in chestBack.enumerated() {
             let id = "s-\(s.date)"
@@ -399,6 +497,38 @@ private var deloadSummary: WeeklyWrap.Summary {
     out.tonnageDeltaKg = -6_400
     out.prCount = 0
     return out
+}
+
+/// The week detail with its wrap door already open (W1b).
+///
+/// The `Summary` comes from `WorkoutWeek.wrap(_:userId:weekStart:)` — the exact
+/// call the chip makes — rather than from the hand-written `wrapSummary` the
+/// Train tab's shots use. That is the point of this one: it photographs the
+/// door end to end, from a month-old week's rows to the reel, and a shot script
+/// cannot tap a chip.
+private struct PresentingWrap: View {
+    @Environment(AppEnvironment.self) private var environment
+    let weekStart: String
+
+    @State private var summary: WeeklyWrap.Summary?
+    @State private var program = Program(id: "", label: "", days: [])
+    @State private var shown = true
+
+    var body: some View {
+        NavigationStack {
+            WeekDaysView(window: WeekWindow(containing: weekStart, startDay: 0))
+        }
+        .sheet(isPresented: $shown) {
+            if let summary { WeeklyWrapView(summary: summary, program: program) }
+        }
+        .task {
+            let database = environment.database
+            let userId = database.localUserId()
+            summary = WorkoutWeek.wrap(database, userId: userId, weekStart: weekStart)
+            program = (try? database.scheduleContext(userId: userId, today: weekStart))?
+                .activeProgram ?? program
+        }
+    }
 }
 
 /// The Workout tab with a sheet already up.
