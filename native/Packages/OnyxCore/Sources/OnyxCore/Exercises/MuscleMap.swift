@@ -316,7 +316,12 @@ public enum MuscleMap {
     /// arithmetic already handles the primary/secondary overlap separately —
     /// see `MuscleCredit.weightedSets`, which takes the max rather than the
     /// sum.)
-    private static func landmarks(_ tokens: [String]) -> [LandmarkMuscle] {
+    /// Public since v4.1: the weekly export folds the movers it ALREADY has —
+    /// `resolveMovers(name, stored:)`, which honours `exercises.muscle_groups`
+    /// — rather than re-resolving from the name, so it needs the token fold on
+    /// its own. `primaryLandmarks(_:)` below cannot serve: it discards the
+    /// stored override by starting from the name again.
+    public static func landmarks(_ tokens: [String]) -> [LandmarkMuscle] {
         var out: [LandmarkMuscle] = []
         for token in tokens {
             guard let muscle = LandmarkMuscle.from(token: token), !out.contains(muscle) else { continue }

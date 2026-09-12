@@ -52,6 +52,9 @@ public struct HistorySetRow: Codable, FetchableRecord, Sendable, Equatable, Iden
     /// the reorder was written correctly, pushed correctly, and invisible on
     /// both clients. `SessionAnalysis.grouped` is the one place it is read.
     public var exerciseOrder: Int?
+    /// MEASURED rest before this set, in seconds — `WorkoutSet.actualRestSec`.
+    /// Nil is the normal case and means not measured.
+    public var actualRestSec: Int?
     /// The session's logical day, ISO.
     public var date: String
     public var dayKey: String?
@@ -75,6 +78,7 @@ public struct HistorySetRow: Codable, FetchableRecord, Sendable, Equatable, Iden
         case distanceKm = "distance_km"
         case elevationM = "elevation_m"
         case exerciseOrder = "exercise_order"
+        case actualRestSec = "actual_rest_sec"
         case date
         case dayKey = "day_key"
     }
@@ -102,6 +106,7 @@ public extension AppDatabase {
                s.set_index, s.fold_order, s.weight_kg, s.reps, s.set_type,
                s.side, s.pair_id, s.est_1rm_kg, s.rpe,
                s.duration_sec, s.incline, s.distance_km, s.elevation_m, s.exercise_order,
+               s.actual_rest_sec,
                sess.date, sess.day_key
         FROM workout_sets s
         JOIN workout_sessions sess ON sess.id = s.session_id

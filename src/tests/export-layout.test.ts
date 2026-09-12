@@ -7,7 +7,7 @@ import {
 import {
   headings, metaCells, title, sectionLines, subsectionLines, hasSubsection,
   weekField, dayField, dayFieldOrNull, dayHeadings, dayLines,
-  tableRow, table, notes, legendText, assertAligned, notRecorded, NO_DATA,
+  tableRow, table, notes, legendText, assertAligned, notRecorded, setsOf, stack, NO_DATA,
 } from './exportGrammar'
 
 /**
@@ -99,12 +99,12 @@ describe('the document order', () => {
       'Body composition',
       'Micronutrients — weekly average vs target',
       'The stack',
-      'Week over week',
       'DAY 1 · Sun · 2026-08-30 · REST',            // ── the week, day by day ──
       'DAY 2 · Mon · 2026-08-31 · TRAIN — Legs & Core A',
-      'Session #41 · Legs & Core A',
+      'Session #41 · Legs & Core A · [Quads, Calves, Abs/core, *Hamstrings*, *Glutes*]',
       'DAY 3 · Tue · 2026-09-01 · TRAIN — Delts & Arms',
-      'Session #42 · Delts & Arms',
+      // No deck index on this one, so the order is the logged sequence and says so.
+      'Session #42 · Delts & Arms · [Side delts, Biceps, Abs/core, *Forearms*] *(order: logged sequence)*',
       'DAY 4 · Wed · 2026-09-02 · REST',
       'DAY 5 · Thu · 2026-09-03 · TRAIN — Upper B',
       'Session · Upper B',
@@ -256,17 +256,24 @@ describe('the ship gate', () => {
     expect(out.length).toBeLessThanOrEqual(25_000)
   })
 
-  it('keeps its tables to the four that are genuinely grids', () => {
+  it('keeps its tables to the three that are genuinely grids', () => {
     // A markdown table collapses into one unreadable paragraph in Apple Notes,
-    // and this document is written to be pasted anywhere. Four earn it: each is
+    // and this document is written to be pasted anywhere. Three earn it: each is
     // read DOWN a column. Nothing else may grow one.
+    //
+    // It was FOUR until v4.1. `### Week over week` was the fourth and it was a
+    // real grid — it is gone because the document is now strictly about the week
+    // on its cover, not because it read badly. See the removal note in
+    // `buildWeeklyExport`.
     const out = buildWeeklyExport(rich())
     const rules = out.split('\n').filter((l) => /^\|[:-]/.test(l))
-    expect(rules).toHaveLength(4)
-    for (const t of ['Sets by muscle', 'Body composition', 'Week over week']) {
+    expect(rules).toHaveLength(3)
+    for (const t of ['Sets by muscle', 'Body composition']) {
       expect(hasSubsection(out, t), `missing table: ${t}`).toBe(true)
     }
     expect(hasSubsection(out, 'Micronutrients — weekly average vs target')).toBe(true)
+    // And the fourth stays gone.
+    expect(hasSubsection(out, 'Week over week')).toBe(false)
   })
 
   it('spends no line on a nested bullet or a blockquote', () => {
@@ -398,9 +405,14 @@ describe('the tables', () => {
     // class of error as reading a gap as a zero.
     const out = buildWeeklyExport(rich())
     const c = tableRow(out, 'Micronutrients — weekly average vs target', 'Calcium')
-    expect(c.Days).toBe('2')
-    expect(c.Total).toContain('⚠')       // one of the two readings is implausible
+    // One of the two readings is implausible, so it is DISCARDED rather than
+    // averaged in, and the Days column states both numbers: the mean is over
+    // one day, out of two that carried a figure.
+    expect(c.Days).toBe('1 of 2 ⚠')
     expect(c.Target).toBe('1,000 mg')
+    // A nutrient with nothing to doubt states its denominator plainly.
+    expect(tableRow(out, 'Micronutrients — weekly average vs target', 'Iron').Days)
+      .toBe('2')
   })
 
   it('keeps food and stack apart on every nutrient', () => {
@@ -429,5 +441,94 @@ describe('the tables', () => {
     // A skipped weigh-in with no stored reason resolves to the protocol
     // default, which is a fact, not to "unknown", which is not.
     expect(note).toContain('31 Aug — As Planned')
+  })
+})
+
+/**
+ * ── THE EXPORT IS A PURE FUNCTION OF THE ROWS ────────────────────────────────
+ *
+ * The reported defect was that a retroactive edit — water logged for Tuesday on
+ * Friday, a weigh-in corrected three days later, a set fixed after the fact —
+ * did not reach the document. It was never the renderer: `buildWeeklyExport` has
+ * no cache and no clock, so the same payload always renders the same bytes and a
+ * changed payload always renders the changed bytes.
+ *
+ * It was the two layers ABOVE it, and both are fixed elsewhere in this wave:
+ *   · web — `['weekly_export']` hung off four tables out of a dozen, so a
+ *     `water_intake` / `daily_logs` / `nutrition_entries` write invalidated
+ *     nothing and `staleTime: 60_000` served the stale markdown;
+ *   · native — `WeekDaysView.load()` rebuilt the file only when a rescore
+ *     cascade bumped `rescoreGeneration`, so anything that does not rescore
+ *     (a supplement tick, a cardio bout, a sync pull) left the previous
+ *     `onyx-week-<date>.md` in the temporary directory to be shared again.
+ *
+ * These tests pin the property the fixes depend on: edit the payload, and the
+ * document moves with it. If this ever fails, no amount of invalidation helps.
+ */
+describe('a retroactive edit reaches the document', () => {
+  const withDay = (base: WeeklyExportInput, date: string, patch: Partial<ExportDay>) => ({
+    ...base,
+    days: base.days.map((d) => (d.date === date ? { ...d, ...patch } : d)),
+  })
+
+  it('is deterministic: the same payload renders the same bytes twice', () => {
+    const input = rich()
+    expect(buildWeeklyExport(input)).toBe(buildWeeklyExport(input))
+  })
+
+  it('moves water logged for an earlier day', () => {
+    const before = buildWeeklyExport(rich())
+    const after = buildWeeklyExport(withDay(rich(), '2026-09-02', { waterMl: 3500 }))
+    expect(after).not.toBe(before)
+    expect(dayField(after, '2026-09-02', 'Intake')).toContain('water 3.50')
+  })
+
+  it('moves a weigh-in corrected days later', () => {
+    const after = buildWeeklyExport(withDay(rich(), '2026-09-02', { weightKg: 63.9 }))
+    expect(dayField(after, '2026-09-02', 'Body')).toContain('63.9 kg')
+  })
+
+  it('moves a set added to a session after the fact', () => {
+    const base = rich()
+    const session = base.sessions[0]
+    const exercise = session.exercises[0]
+    const after = buildWeeklyExport({
+      ...base,
+      sessions: base.sessions.map((s) => (s === session
+        ? {
+          ...s,
+          exercises: s.exercises.map((e) => (e === exercise
+            ? { ...e, sets: [...e.sets, { weightKg: 80, reps: 6, rpe: 9, failure: false, side: null, pairId: null }] }
+            : e)),
+        }
+        : s)),
+    })
+    expect(setsOf(after, session.date, exercise.name).join('\n')).toContain('80 kg × 6')
+  })
+
+  it('moves a supplement skipped after the week closed', () => {
+    const after = buildWeeklyExport(withDay(rich(), '2026-09-02', {
+      supplementsSkipped: ['Creatine'],
+    }))
+    expect(stack(after, '2026-09-02').skipped).toEqual(['Creatine (planned)'])
+  })
+
+  it('moves a stress reading logged retroactively', () => {
+    const base = rich()
+    const after = buildWeeklyExport({
+      ...base,
+      stress: [...(base.stress ?? []), {
+        date: '2026-09-02', slot: 'evening', level: 4, label: 'Strained',
+        tags: ['work'], note: null,
+      }],
+    })
+    expect(dayField(after, '2026-09-02', 'Stress')).toContain('evening 4 Strained')
+  })
+
+  it('carries a correction into the weekly totals, not just the day', () => {
+    const before = buildWeeklyExport(rich())
+    const after = buildWeeklyExport(withDay(rich(), '2026-09-02', { steps: 20000 }))
+    const stepsOf = (out: string) => weekField(out, 'Activity')
+    expect(stepsOf(after)).not.toBe(stepsOf(before))
   })
 })

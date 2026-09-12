@@ -269,6 +269,24 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
     /// `nil` is the normal state — the Postgres column is applied by hand and
     /// nothing writes it yet.
     public var elevationM: Double?
+    /// MEASURED rest before this set, in seconds — `docs/sql/actual-rest.sql`,
+    /// `v22.actualRest`.
+    ///
+    /// The elapsed gap between committing the previous set of the same exercise
+    /// and committing this one, taken on the device that logged it. NOT the
+    /// rest TIMER: the timer is a countdown you can skip, ignore, or leave
+    /// running through a phone call, so it measures the prescription rather
+    /// than the behaviour.
+    ///
+    /// **Distinct from the dead `rest_sec`**, which held the web deck's client
+    /// stopwatch until 2026-08-19 and never carried a value anywhere in the
+    /// database. Reusing that name would make nil ambiguous between "never
+    /// measured" and "measured by a tool that was deleted".
+    ///
+    /// `nil` is the normal state and means not measured: every row logged
+    /// before the column, every first set of an exercise, every web-committed
+    /// set, and any gap past the logger's outlier ceiling.
+    public var actualRestSec: Int?
     public var isPendingSync: Bool
     /// The fold's arrival position, so a read can reproduce the fold's order
     /// even when two devices claim the same `setIndex`. Local only — derived
@@ -293,6 +311,7 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
         case incline
         case distanceKm = "distance_km"
         case elevationM = "elevation_m"
+        case actualRestSec = "actual_rest_sec"
         case isPendingSync = "is_pending_sync"
         case foldOrder = "fold_order"
     }
@@ -303,7 +322,7 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
         side: String? = nil, pairId: String? = nil, est1rmKg: Double? = nil,
         rpe: Double? = nil, quality: String? = nil, exerciseOrder: Int? = nil,
         durationSec: Int? = nil, incline: Double? = nil, distanceKm: Double? = nil,
-        elevationM: Double? = nil,
+        elevationM: Double? = nil, actualRestSec: Int? = nil,
         isPendingSync: Bool = false, foldOrder: Int = 0
     ) {
         self.id = id
@@ -323,6 +342,7 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
         self.incline = incline
         self.distanceKm = distanceKm
         self.elevationM = elevationM
+        self.actualRestSec = actualRestSec
         self.isPendingSync = isPendingSync
         self.foldOrder = foldOrder
     }

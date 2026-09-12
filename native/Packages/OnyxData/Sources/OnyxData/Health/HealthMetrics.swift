@@ -130,6 +130,16 @@ public enum HealthCatalogue {
         .init("HKQuantityTypeIdentifierDietaryFatSaturated", .satFat, .sum),
     ]
 
+    /// The dietary micros — the only metrics whose SOURCE is worth recording.
+    ///
+    /// They are the ones that land as an un-decomposable daily aggregate in
+    /// `nutrition_entries.micros`, so when one is implausible there is nothing
+    /// left to interrogate. Everything else in the catalogue is a measurement
+    /// of the body, where "which app wrote it" is not a useful question.
+    public static let microKeys: Set<HealthKey> = [
+        .sugar, .sodium, .potassium, .calcium, .iron, .magnesium, .vitaminC, .vitaminD, .satFat,
+    ]
+
     public static let sleepIdentifier = "HKCategoryTypeIdentifierSleepAnalysis"
     /// Read a second time, over the night's bed window, for readiness v9.
     public static let hrvIdentifier = "HKQuantityTypeIdentifierHeartRateVariabilitySDNN"

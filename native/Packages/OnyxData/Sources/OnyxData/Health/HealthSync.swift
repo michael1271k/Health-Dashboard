@@ -79,6 +79,24 @@ public actor HealthSync {
             )
             if let value = HealthCatalogue.round(raw, reduce: metric.reduce, scale: metric.scale) {
                 payload[metric.key] = value
+                /* ── AND, FOR A DIETARY MICRO, WHO WROTE IT ──────────────────
+                   Only the micros, because only they have the problem: the
+                   calcium that arrived at ~3,100 mg on seventeen days came from
+                   the daily ingest with no way to name the contributor, and
+                   `nutrition_entries` stores an aggregate that cannot be taken
+                   apart afterwards. Steps and heart rate have no such question.
+
+                   Same statistics query shape, one extra round trip per micro
+                   per day — nine of them — and it is skipped entirely on a
+                   reader that does not implement it (the default returns
+                   empty). A failure here costs the attribution and never the
+                   reading. */
+                if HealthCatalogue.microKeys.contains(metric.key), metric.reduce == .sum {
+                    let bySource = (try? await reader.quantityBySource(
+                        metric.identifier, start: start, end: end
+                    )) ?? [:]
+                    if bySource.count > 0 { payload.microSources[metric.key] = bySource }
+                }
             }
         }
 

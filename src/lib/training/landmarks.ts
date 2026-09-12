@@ -127,6 +127,28 @@ export function toLandmarkMuscle(token: string): LandmarkMuscle | null {
   }
 }
 
+/**
+ * Fold a token list to landmark muscle NAMES, keeping the first spelling of
+ * each — the TS twin of `MuscleMap.landmarks(_:)`.
+ *
+ * Deduped, because a movement can name the same landmark twice: a cable row is
+ * `upper back` primary and `traps` secondary, and both fold to Upper back. The
+ * answer is a set of MUSCLES, not a set of tokens. (The credit arithmetic
+ * handles the primary/secondary overlap separately — `weightedSets` takes the
+ * max rather than the sum.)
+ *
+ * The names ARE the labels: `LANDMARK_MUSCLES` holds the display spellings,
+ * because they are also the join key into the generated atlas.
+ */
+export function landmarkNames(tokens: readonly string[]): LandmarkMuscle[] {
+  const out: LandmarkMuscle[] = []
+  for (const token of tokens) {
+    const muscle = toLandmarkMuscle(token)
+    if (muscle && !out.includes(muscle)) out.push(muscle)
+  }
+  return out
+}
+
 export type VolumeZone = 'under' | 'building' | 'optimal' | 'over' | 'na'
 
 /**

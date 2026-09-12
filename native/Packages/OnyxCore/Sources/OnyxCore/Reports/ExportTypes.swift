@@ -102,7 +102,17 @@ public struct ExportDay: Codable, Equatable, Sendable {
     public var supplementsTaken: Double?
     public var supplementsPlanned: Double?
     public var supplementsLog: [SupplementLogEntry]?
+    /// Doses the protocol asked for and the wearer refused — a real miss.
     public var supplementsSkipped: [String]?
+    /// Doses refused that the day's resolved schedule did not ask for. The log
+    /// is the evidence and the schedule is only a projection of it; filtering
+    /// one through the other used to DELETE a skip whenever the two drifted
+    /// (a day swapped Train↔Rest, an item archived mid-week).
+    public var supplementsSkippedUnplanned: [String]?
+    /// Scheduled doses whose slot had not come round yet. Always empty for a
+    /// closed week; the clause exists so a partial week cannot round a pending
+    /// dose up into an adherence figure.
+    public var supplementsLater: [String]?
     public var nutrientsFood: [String: Double]?
     public var nutrientsStack: [String: Double]?
     public var activeKcal: Double?
@@ -155,6 +165,16 @@ public struct ExportExercise: Codable, Equatable, Sendable {
     public var sets: [ExportSet]
     public var restTargetSec: Double?
     public var restPlanSec: Double?
+    /// The MEAN measured rest between this exercise's sets, in seconds —
+    /// `workout_sets.actual_rest_sec`, written by the logger as the gap between
+    /// committing one set and the next. Nil for every session logged before the
+    /// column shipped and for every session committed from the web, where it
+    /// means "not measured" and the renderer prints the plan alone.
+    public var restActualSec: Double?
+    /// The landmark muscles the movement trains, spelled for a reader.
+    /// Resolved in the builder so `exercises.muscle_groups` is honoured.
+    public var primaryMuscles: [String]?
+    public var secondaryMuscles: [String]?
     public var topKg: Double?
     public var repWindow: String?
 }
@@ -183,6 +203,11 @@ public struct ExportSession: Codable, Equatable, Sendable {
     public var caloriesEstimated: Bool?
     public var avgBpmEstimated: Bool?
     public var sessionRpe: Double?
+    /// Where the order of `exercises` came from — `"index"` when every movement
+    /// carried `workout_sets.exercise_order`, `"logged"` when at least one did
+    /// not and the list falls back to first-appearance in logged order. The
+    /// renderer marks the fallback rather than presenting a guess as a record.
+    public var orderSource: String?
     public var exercises: [ExportExercise]
     public var prs: [ExportPr]
 }

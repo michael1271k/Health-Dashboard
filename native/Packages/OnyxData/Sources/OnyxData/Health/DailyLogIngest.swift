@@ -334,6 +334,25 @@ private extension AppDatabase {
         for key in keys {
             guard let v = payload[key] else { continue }
             micros[key.rawValue] = key == .vitaminD ? HealthUnits.vitaminDToIU(v) : v
+            /* ── WHO WROTE IT, ALONGSIDE WHAT IT SAID ────────────────────────
+               `calcium@MyFitnessPal` beside `calcium`, in the SAME bundle.
+
+               A separate column would need DDL nobody can run from this
+               machine, and a separate table would need a migration; this
+               column is a free-form `jsonb` and every reader of it looks up
+               nutrients by EXACT key (`NUTRIENT_TARGETS`), so a key carrying an
+               `@` is invisible to all of them. The weekly export is the one
+               reader that goes looking, and only for a figure it already
+               doubts.
+
+               Written for every micro rather than only the implausible ones:
+               the ingest does not hold the targets, and the breakdown rides
+               along in the statistics query either way. */
+            for (source, amount) in payload.microSources[key] ?? [:] {
+                guard amount > 0 else { continue }
+                micros["\(key.rawValue)@\(source)"] =
+                    key == .vitaminD ? HealthUnits.vitaminDToIU(amount) : amount
+            }
         }
         guard !micros.isEmpty else { return nil }
         // Sorted keys so the same reading produces the same bytes and an

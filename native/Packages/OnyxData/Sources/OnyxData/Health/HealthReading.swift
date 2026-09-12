@@ -29,6 +29,28 @@ public protocol HealthReading: Sendable {
         _ identifier: String, reduce: HealthReduce, start: Date, end: Date
     ) async throws -> Double?
 
+    /// The same sum, BROKEN DOWN BY THE APP THAT WROTE IT.
+    ///
+    /// ── WHY THIS EXISTS ─────────────────────────────────────────────────────
+    /// `nutrition_entries.micros` stores a daily AGGREGATE with no item
+    /// breakdown, so when calcium arrived at 3,074 mg on seventeen days — about
+    /// ten times the other days, with calories and sodium normal throughout —
+    /// nothing downstream could say which app had written it. The export could
+    /// only doubt the number; it could not help anyone fix it.
+    ///
+    /// `HKStatisticsOptions.separateBySource` answers it in the SAME query the
+    /// total already runs, at no extra cost: one pass, and `sumQuantity(for:)`
+    /// per source.
+    ///
+    /// DECLARED HERE, not only in an extension. A method that exists solely in
+    /// a protocol extension is dispatched STATICALLY, so a call through
+    /// `any HealthReading` would run the default and never reach the conformer
+    /// that overrode it — silently, with a green build. That trap has cost this
+    /// codebase a wave already (`SyncRemote.upsertSetEvents`).
+    func quantityBySource(
+        _ identifier: String, start: Date, end: Date
+    ) async throws -> [String: Double]
+
     /// Raw sleep-category samples in a window. Not reduced: the stage union in
     /// `Sleep.aggregate` needs the individual intervals.
     func sleepSamples(start: Date, end: Date) async throws -> [SleepSample]
@@ -41,6 +63,13 @@ public protocol HealthReading: Sendable {
 }
 
 public extension HealthReading {
+    /// No breakdown. The honest default for a test double and for any reader
+    /// that predates the question — an empty map means "not attributed", which
+    /// is what the callers already handle.
+    func quantityBySource(
+        _ identifier: String, start: Date, end: Date
+    ) async throws -> [String: Double] { [:] }
+
     /// A store that records no workouts — every test double, and any device
     /// without a watch.
     func workouts(start: Date, end: Date) async throws -> [WorkoutSample] { [] }

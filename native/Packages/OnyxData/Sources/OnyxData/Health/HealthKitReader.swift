@@ -78,6 +78,52 @@ public struct HealthKitReader: HealthReading {
         }
     }
 
+    /// The day's sum for one type, split by the app that wrote each sample.
+    ///
+    /// `.separateBySource` rides along with `.cumulativeSum` in one query, so
+    /// this costs a pass over the same samples and no extra round trip. The
+    /// keys are `HKSource.name` — "MyFitnessPal", "Onyx", "iPhone" — which is
+    /// what a person reads in Health → Nutrition → Show All Data, and therefore
+    /// what they can act on.
+    public func quantityBySource(
+        _ identifier: String, start: Date, end: Date
+    ) async throws -> [String: Double] {
+        guard isAvailable,
+              let type = HKObjectType.quantityType(forIdentifier: .init(rawValue: identifier))
+        else { return [:] }
+        let predicate = HKQuery.predicateForSamples(
+            withStart: start, end: end, options: [.strictStartDate]
+        )
+        let unit = Self.unit(for: identifier)
+        return try await withCheckedThrowingContinuation { continuation in
+            let query = HKStatisticsQuery(
+                quantityType: type, quantitySamplePredicate: predicate,
+                options: [.cumulativeSum, .separateBySource]
+            ) { _, statistics, error in
+                // Absence is not failure — the `noData` rule the total above
+                // states, for the same reason.
+                if let error, (error as? HKError)?.code != .errorNoData {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                guard let statistics, let sources = statistics.sources else {
+                    continuation.resume(returning: [:])
+                    return
+                }
+                var out: [String: Double] = [:]
+                for source in sources {
+                    guard let q = statistics.sumQuantity(for: source) else { continue }
+                    let v = q.doubleValue(for: unit)
+                    // A zero contribution is not a contributor.
+                    guard v > 0 else { continue }
+                    out[source.name, default: 0] += v
+                }
+                continuation.resume(returning: out)
+            }
+            store.execute(query)
+        }
+    }
+
     public func sleepSamples(start: Date, end: Date) async throws -> [SleepSample] {
         guard isAvailable,
               let type = HKObjectType.categoryType(forIdentifier: .sleepAnalysis)

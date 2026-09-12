@@ -16,9 +16,15 @@ import OnyxCore
 /// total_volume_kg / set_count / avg_bpm / calories_burned`, `exercises.
 /// muscle_groups` and the localStorage rest-target overrides are not mirrored.
 /// (`exercise_order` WAS on that list. `v16.exerciseOrder` tracks it and
-/// `applyPulledSets` brings the web's down, so the mirror holds it now — this
-/// builder still does not read it, because the export orders its sets the way
-/// it always has and the vectors say so.)
+/// `applyPulledSets` brings the web's down, so the mirror holds it now — and
+/// this builder READS it, as of v4.1. It did not, on the reasoning that "the
+/// export orders its sets the way it always has and the vectors say so". The
+/// vectors said so because they were generated from the same wrong order:
+/// grouping by first appearance in `fold_order` puts a pulled session's
+/// movements in the PULLER's arrival order, so the 2026-08-31 Upper A exported
+/// with Face Pull first and Chest Press last. `SessionHistoryStore` had already
+/// been fixed for exactly this in §U4.5; this was the last reader still
+/// grouping the wrong way.)
 /// Each is handled where it is read, and none is invented: volumes and set
 /// counts are recomputed from the sets the way the web wrote them, PR lines are
 /// reconstructed from the standing `personal_records` rows for the session, and
@@ -264,6 +270,7 @@ public struct WeeklyExportBuilder: Sendable {
                        COALESCE(e.name, es.name, s.exercise_id) AS exercise_name,
                        s.set_index, s.fold_order, s.weight_kg, s.reps, s.set_type,
                        s.side, s.pair_id, s.est_1rm_kg, s.rpe,
+                       s.exercise_order, s.actual_rest_sec,
                        sess.date, sess.day_key
                 FROM workout_sets s
                 JOIN workout_sessions sess ON sess.id = s.session_id
@@ -381,7 +388,15 @@ public struct WeeklyExportBuilder: Sendable {
                 "bedTime": j(sl.map { stamp($0.startTime) }), "wakeTime": j(sl.map { stamp($0.endTime) }),
                 // A day with no row has never been reported on: `false`, as the
                 // column's NOT NULL DEFAULT false says.
-                "sleepOnsetTrouble": l?.sleepOnsetTrouble ?? false,
+                // ── PRESENT ONLY WHEN TRUE ──────────────────────────────────
+                // This was `?? false`, and the renderer prints a false as
+                // "fell asleep easily" — so every night with no `daily_logs`
+                // row at all claimed the athlete dropped straight off. That is
+                // an assertion about a night nobody recorded, in a document
+                // whose entire contract is that a gap is named and never
+                // invented. Absent now means unrecorded and prints nothing;
+                // the flag appears only when it was actually ticked.
+                "sleepOnsetTrouble": l?.sleepOnsetTrouble == true ? true : NSNull(),
                 "restingHrBaseline": j(baselineOf(date) { $0.avgRestHeartRate.map(Double.init) }),
                 "hrvBaseline": j(baselineOf(date) { $0.hrvMs }),
                 "batteryPct": j(scoreByDate[date]?.batteryPct.map(Double.init)),
@@ -422,13 +437,45 @@ public struct WeeklyExportBuilder: Sendable {
 
             let training = day.isTrainingDay
             let weekday = ISODate.weekday(day.date) ?? 0
-            let custom = Supplements.customSlotsForDate(d.customs, weekday: weekday, isTraining: training)
+            // ── THE PROTOCOL AS IT STOOD ON THAT DAY ────────────────────────
+            // `Supplements.active(_:on:)` was written for exactly this and was
+            // called by neither builder. Without it an item archived on the
+            // Wednesday is still "scheduled" on Thursday, Friday and Saturday —
+            // inflating the denominator AND appearing in the taken list of
+            // three days it had already left.
+            let liveCustoms = Supplements.active(d.customs, on: day.date)
+            let custom = Supplements.customSlotsForDate(liveCustoms, weekday: weekday, isTraining: training)
             let slots = Supplements.stackForDate(custom, isTraining: training, weekday: weekday)
             var doses: [String: String] = [:]
             for sl in slots { for i in sl.items { doses[i.key] = i.dose } }
             let skipped = skippedByDate[day.date] ?? []
             let scheduled = slots.flatMap { sl in sl.items.map { (key: $0.key, name: $0.name, time: sl.time) } }
-            let taken = scheduled.filter { !skipped.contains($0.key) }
+            // ── FOUR STATES, RESOLVED AGAINST THE CLOCK ─────────────────────
+            // `Supplements.doses` is the one function that knows the difference
+            // between a dose that was taken, one that counts because its slot
+            // has passed, one still ahead, and one refused. The export used to
+            // collapse all four into "scheduled minus skipped", which asserts
+            // that a 22:00 magnesium was taken at any hour you cared to export.
+            //
+            // A CLOSED day is over by definition, so `later` is empty in every
+            // report the native app can produce. It is computed anyway: the web
+            // can render a week in progress, and a pending dose rounded up into
+            // an adherence figure is the same class of invented fact.
+            let resolved = Supplements.doses(
+                slots: slots,
+                log: (d.supps.filter { $0.date == day.date })
+                    .map { DoseLogEntry(itemKey: $0.itemKey, taken: $0.taken) },
+                // `.past`, unconditionally. This builder only ever runs over a
+                // CLOSED week — `WeekDaysView` gates the export on
+                // `WeekReady.isComplete`, strictly after the week's last day —
+                // so every day it renders is over, and reading a wall clock
+                // here would make the same week export differently depending on
+                // the hour it was shared. The web is the surface that can ask
+                // about a live week, and it passes its own clock.
+                clock: .past
+            )
+            let laterKeys = Set(resolved.filter { $0.state == .later }.map(\.key))
+            let taken = scheduled.filter { !skipped.contains($0.key) && !laterKeys.contains($0.key) }
 
             var stack: [String: Double] = [:]
             for item in taken {
@@ -442,7 +489,30 @@ public struct WeeklyExportBuilder: Sendable {
             out["nutrientsStack"] = stack
             out["supplementsTaken"] = scheduled.isEmpty ? NSNull() : Double(taken.count)
             out["supplementsLog"] = taken.map { ["key": $0.key, "time": $0.time] }
+            // ── THE SKIP IS NEVER FILTERED THROUGH THE SCHEDULE ─────────────
+            // `scheduled.filter { skipped.contains($0.key) }` was the bug: a
+            // refusal logged against an item the day's projection no longer
+            // names was DELETED rather than reported. That is how Friday
+            // 2026-09-04 came out as "9 of 9 — skipped: none logged" after
+            // L-Citrulline was explicitly declined.
+            //
+            // The log is the evidence and the schedule is a projection of it,
+            // so the evidence leads. A skip the protocol asked for is a miss; a
+            // skip it did not ask for is still a fact, and it goes in its own
+            // list so the renderer can say which is which.
+            let plannedKeys = Set(scheduled.map(\.key))
             out["supplementsSkipped"] = scheduled.filter { skipped.contains($0.key) }.map(\.name)
+            out["supplementsSkippedUnplanned"] = skipped
+                .subtracting(plannedKeys)
+                .sorted()
+                .map { key in
+                    // Named from the protocol wherever it still exists —
+                    // including an ARCHIVED row, which is precisely the case
+                    // that lands here. Only a key nothing names at all falls
+                    // back to the key itself.
+                    d.customs.first { Supplements.key(of: $0) == key }?.name ?? key
+                }
+            out["supplementsLater"] = scheduled.filter { laterKeys.contains($0.key) }.map(\.name)
             out["supplementsPlanned"] = Double(Supplements.count(isTraining: training, dbSlots: custom))
             return try make(out)
         }
@@ -463,20 +533,59 @@ public struct WeeklyExportBuilder: Sendable {
 
         return try d.sessions.enumerated().map { sessionIndex, s in
             let program = Schedule.programForContext(ctx, s.date).program
-            let mine = d.sets.filter { $0.sessionId == s.id }   // already in performed order
+            let mine = d.sets.filter { $0.sessionId == s.id }
+            // ── THE ORDER THE SESSION WAS PERFORMED IN ──────────────────────
+            // `exercise_order` is the column a reorder writes and the number
+            // both clients sort by; the query's `fold_order` is only the fold's
+            // ARRIVAL tiebreak, which for a pulled session is the puller's
+            // order and not the deck's. A movement with no index falls back to
+            // its first-appearance position, exactly as `RoutineOrder.save`
+            // does — the one existing reader that already had this right.
+            //
+            // `orderSource` records which of the two answered, so the renderer
+            // can mark a fallback instead of presenting a guess as a record.
+            var indexByName: [String: Int] = [:]
             var order: [String] = []
+            var everyMovementIndexed = true
+            for r in mine where indexByName[r.exerciseName] == nil {
+                if r.exerciseOrder == nil { everyMovementIndexed = false }
+                indexByName[r.exerciseName] = r.exerciseOrder ?? indexByName.count
+                order.append(r.exerciseName)
+            }
+            order.sort { (indexByName[$0] ?? 0, $0) < (indexByName[$1] ?? 0, $1) }
+
             var byName: [String: [String: Any]] = [:]
+            /// Every MEASURED gap, per movement. Unmeasured sets contribute
+            /// nothing rather than a zero — a mean over "the sets we timed" is
+            /// a fact, a mean that counts untimed sets as instant is not.
+            var restsByName: [String: [Int]] = [:]
             for r in mine {
+                if let rest = r.actualRestSec, rest > 0 {
+                    restsByName[r.exerciseName, default: []].append(rest)
+                }
                 if byName[r.exerciseName] == nil {
-                    order.append(r.exerciseName)
                     let window = Ceilings.repWindow(for: r.exerciseName, dayKey: s.dayKey, program: program, phase: phase)
                     let rest = RestTargets.programRestSec(for: r.exerciseName, dayKey: s.dayKey, program: program, phase: phase)
+                    // The landmarks the movement trains, resolved HERE and not
+                    // in the renderer: `resolveMovers` reads the name
+                    // dictionary first and falls back to the stored
+                    // `exercises.muscle_groups`, and only this side holds the
+                    // stored list. A renderer working from the name alone would
+                    // silently ignore a movement the athlete reclassified.
+                    let m = movers(r, d)
+                    let primary = MuscleMap.landmarks(m.primary).map(\.displayName)
+                    // A landmark already named as primary is not repeated as
+                    // indirect: a cable row is `upper back` primary and `traps`
+                    // secondary, and both fold to Upper back.
+                    let secondary = MuscleMap.landmarks(m.secondary)
+                        .map(\.displayName).filter { !primary.contains($0) }
                     byName[r.exerciseName] = [
                         "name": r.exerciseName, "sets": [] as [[String: Any]], "topKg": NSNull(),
                         "repWindow": j(window.map { "\(jsIntegerString($0.floor))–\(jsIntegerString($0.ceiling))" }),
                         // The override store is localStorage on the web and
                         // is not mirrored: the plan's target is the target.
                         "restTargetSec": j(rest), "restPlanSec": j(rest),
+                        "primaryMuscles": primary, "secondaryMuscles": secondary,
                     ]
                 }
                 var e = byName[r.exerciseName]!
@@ -497,6 +606,14 @@ public struct WeeklyExportBuilder: Sendable {
                     e["topKg"] = top == 0 ? NSNull() : top
                 }
                 byName[r.exerciseName] = e
+            }
+
+            // The mean measured rest, folded in once the sets are all counted.
+            // `jsRound` and not `rounded()`: every other figure in this builder
+            // rounds the way JavaScript does, and byte parity is the gate.
+            for (name, rests) in restsByName where !rests.isEmpty {
+                byName[name]?["restActualSec"] =
+                    jsRound(Double(rests.reduce(0, +)) / Double(rests.count))
             }
 
             let credits = PrEngine.volumeCredits(mine.map {
@@ -547,9 +664,27 @@ public struct WeeklyExportBuilder: Sendable {
                 "setCount": Double(Self.committedSets(mine)),
                 "failureSets": Double(failurePairs.count),
                 "durationMin": j(s.durationMin),
-                "avgBpm": NSNull(), "caloriesBurned": NSNull(),
-                "caloriesEstimated": false, "avgBpmEstimated": false,
+                // ── READ, NOT NULLED ────────────────────────────────────────
+                // These were hardcoded `NSNull()` on the reasoning that
+                // `workout_sessions.avg_bpm / calories_burned` are "not
+                // mirrored". That is true of the PULL — the server's copy is
+                // not brought down — and irrelevant here, because
+                // `HealthSync.syncSessionMetrics` WRITES both columns on this
+                // device: it finds the `HKWorkout` overlapping the session,
+                // averages heart rate and sums active energy over the workout's
+                // own interval, and stamps `*_estimated = false`. Without a
+                // watch record it falls back to the athlete's own median
+                // kcal/min and stamps `true`.
+                //
+                // So the figures were sitting in the row all along while every
+                // export printed "avg HR no data · no data kcal" beside a day
+                // whose activity ring was full.
+                "avgBpm": j(s.avgBpm.map(Double.init)),
+                "caloriesBurned": j(s.caloriesBurned.map(Double.init)),
+                "caloriesEstimated": s.caloriesEstimated,
+                "avgBpmEstimated": s.avgBpmEstimated,
                 "sessionRpe": j(s.sessionRpe),
+                "orderSource": everyMovementIndexed ? "index" : "logged",
                 "exercises": order.map { byName[$0]! },
                 "prs": prs,
             ])

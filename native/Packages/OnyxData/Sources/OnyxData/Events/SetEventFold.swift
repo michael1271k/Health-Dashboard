@@ -128,6 +128,12 @@ public enum SetEventFold {
                     incline: snapshot.incline,
                     distanceKm: snapshot.distanceKm,
                     elevationM: snapshot.elevationM,
+                    // Measured rest rides the fold like every other axis. It is
+                    // never re-derived here: the gap was observed once, at the
+                    // moment the set was committed, and there is nothing in an
+                    // event log replayed months later that could measure it
+                    // again.
+                    actualRestSec: snapshot.actualRestSec,
                     isPendingSync: isPendingSync
                 )
             }
