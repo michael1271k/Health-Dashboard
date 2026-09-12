@@ -9,11 +9,13 @@ import { logicalTodayISO } from '@/lib/utils/day'
 import {
   buildWeeklyExport, trendTotals,
   type ExportDay, type ExportSession, type ExportExercise, type ExportDoms, type ExportFatigue, type ExportBodyComp,
+  type ExportStress,
   type ExportCardio, type WeeklyExportInput, type LedgerWeek, type ExportSupplement, type ExportJoint } from '@/lib/reports/weeklyExport'
 import { weekLabelOf, WEEK0_START } from '@/lib/reports/weekNumber'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
 import { restTargetFor, programRestSec } from '@/lib/training/restTargets'
 import { FATIGUE_SLOTS, SLOT_LABEL, fatigueLevel, normalizeSlot, type FatigueSlot } from '@/lib/hooks/useFatigue'
+import { STRESS_LEVELS, STRESS_SLOTS } from '@/lib/recovery/psychStress'
 import { BUILTIN_PROFILES } from '@/lib/nutrition/profiles'
 import { epley1RM } from '@/lib/utils/epley'
 import { activeProgram, eraForDate, isTrainingDay } from '@/lib/programs'
@@ -54,6 +56,10 @@ function supplementStack(customs: CustomSupplement[]): ExportSupplement[] {
   }
   return customs.map((c) => ({
     time: c.time,
+    // The key `supplement_log` is written against. Without it the day's
+    // "taken" list can only print `d3k2@07:00`, which is a storage key in a
+    // document read by a person.
+    key: c.schedule?.key ?? c.id,
     name: c.name,
     dose: c.dose,
     trainingDose: c.schedule?.trainingDose,
@@ -98,7 +104,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
   // history window starts 48 days before the week does.
   const historyFrom = isoAddDays(weekStart, -(READINESS.historyDays - 1))
   const historyStartInstant = `${historyFrom}T00:00:00Z`
-  const [logs, nutrition, sessions, sets, water, supps, doms, jointFlags, fatigue, bodyComp, cardio, rpe, bodyLedger, skips, prAxes, whr, exceptions, priorCount, sleepStages, onset, shapes, scores, historyLogs, historyMetrics, historySessions, historyCardio] = await Promise.all([
+  const [logs, nutrition, sessions, sets, water, supps, doms, jointFlags, fatigue, stress, bodyComp, cardio, rpe, bodyLedger, skips, prAxes, whr, exceptions, priorCount, sleepStages, onset, shapes, scores, historyLogs, historyMetrics, historySessions, historyCardio] = await Promise.all([
     // `active_energy` and `bmr` join the main select rather than getting their
     // own isolated slot: both are long-standing columns (verified live), and the
     // isolation convention exists for columns whose paste-SQL may not have run.
@@ -155,6 +161,13 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     })(),
     supabase.from('joint_flags').select('date, joint, side, note').gte('date', weekStart).lte('date', weekEnd),
     supabase.from('fatigue_logs').select('date, slot, level').gte('date', weekStart).lte('date', weekEnd),
+    // THE HEAD ROW. `stress_logs` is a W2 table written by the native app and
+    // read, until now, by nothing on this side — so the web export printed
+    // "no data" for a feature that had shipped. Isolated like `doms_logs`
+    // above: a table that is not migrated here means no readings, not a
+    // failed export.
+    supabase.from('stress_logs').select('date, slot, level, tags, note')
+      .gte('date', weekStart).lte('date', weekEnd),
     // Body composition — its own query so an un-migrated column can't take down
     // the daily-logs fetch above; on error it's simply omitted.
     supabase.from('daily_logs')
@@ -283,6 +296,11 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // Same courtesy as doms_logs: an un-migrated table means no readings, not a
     // failed export.
     fatigue: (fatigue.error ? [] : (fatigue.data ?? [])) as Array<{ date: string; slot: string; level: number }>,
+    // Same courtesy again. `tags` is a jsonb array and `note` free text.
+    stress: (stress.error ? [] : (stress.data ?? [])) as Array<{
+      date: string; slot: string; level: number
+      tags?: string[] | null; note?: string | null
+    }>,
     bodyComp: (bodyComp.error ? [] : (bodyComp.data ?? [])) as Array<Record<string, number | string | null>>,
     bodyLedger: (bodyLedger.error ? [] : (bodyLedger.data ?? [])) as Array<Record<string, number | string | null>>,
     // cardio_logs may not be migrated yet — an error just means no walks.
@@ -1107,6 +1125,35 @@ export function weekPayload(
       label: fatigueLevel(r.level)?.label ?? String(r.level),
     }))
 
+  /**
+   * THE HEAD ROW — self-reported psychological stress, from `stress_logs`.
+   *
+   * The slot is derived from the CLOCK when the reading is taken, never chosen,
+   * so it is passed through as stored. The word is `STRESS_LEVELS`' own, for
+   * the same reason fatigue carries one: a bare 4 is not readable and a bare
+   * "Strained" cannot be compared.
+   *
+   * Ordered by date then by the order a day happens in — a `Set` of slots or a
+   * string sort would put "evening" before "morning".
+   */
+  const slotOrder = (slot: string): number => {
+    const i = (STRESS_SLOTS as readonly string[]).indexOf(slot)
+    return i < 0 ? STRESS_SLOTS.length : i
+  }
+  const stress: ExportStress[] = (range.stress ?? [])
+    .slice()
+    // A slot the vocabulary does not name sorts LAST rather than first: an
+    // `indexOf` of −1 would put an unrecognised reading at the head of the day.
+    .sort((a, b) => a.date.localeCompare(b.date) || slotOrder(a.slot) - slotOrder(b.slot))
+    .map((r) => ({
+      date: r.date,
+      slot: r.slot,
+      level: r.level,
+      label: STRESS_LEVELS.find((l) => l.value === r.level)?.label ?? String(r.level),
+      tags: Array.isArray(r.tags) ? r.tags : [],
+      note: r.note ?? null,
+    }))
+
   return {
     weekStart, weekEnd: isoAddDays(weekStart, 6),
     // The SAME counter the dashboard badge and the Momentum timeline use —
@@ -1158,7 +1205,7 @@ export function weekPayload(
       },
       { releaseEndsOn: goals?.maintenance_until ?? null, dailyTargets },
     ),
-    days, sessions, volumeByMuscle, doms, joints, fatigue,
+    days, sessions, volumeByMuscle, doms, joints, fatigue, stress,
     tonnageByMuscle: weeklyTonnageByMuscle(tonnageRows(range.sets))
       .map((t) => ({ muscle: t.muscle, volumeKg: t.volumeKg })),
     bodyComp: toBodyComp(range),

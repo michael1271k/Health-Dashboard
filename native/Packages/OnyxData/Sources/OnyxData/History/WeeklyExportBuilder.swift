@@ -95,6 +95,38 @@ public struct WeeklyExportBuilder: Sendable {
             ])
         }
 
+        /* THE HEAD ROW — self-reported psychological stress.
+           The slot is derived from the CLOCK when the reading is taken, never
+           chosen, so it passes through as stored. The word comes from
+           `PsychStress.levels` for the same reason fatigue carries one: a bare
+           4 is not readable and a bare "Strained" cannot be compared.
+           Ordered by date then by the order a day HAPPENS in — a string sort
+           would put "evening" before "morning". A slot the vocabulary does not
+           name sorts last rather than first. */
+        func slotOrder(_ slot: String) -> Int {
+            StressSlot.allCases.firstIndex { $0.rawValue == slot } ?? StressSlot.allCases.count
+        }
+        let stressOrdered = Self.stableSorted(rows.stress) { a, b in
+            a.date != b.date ? a.date < b.date : slotOrder(a.slot) < slotOrder(b.slot)
+        }
+        var stress: [ExportStress] = []
+        for r in stressOrdered {
+            let word: String = PsychStress.levels.first { $0.value == r.level }?.label ?? String(r.level)
+            // `PsychStress.tags` drops anything the vocabulary does not know,
+            // so a tag written by a newer build never reaches the document as
+            // a word this one cannot explain.
+            let raw = (try? JSONDecoder().decode([String].self, from: Data(r.tags.raw.utf8))) ?? []
+            let tags: [String] = PsychStress.tags(raw).map { $0.rawValue }
+            var row: [String: Any] = [:]
+            row["date"] = r.date
+            row["slot"] = r.slot
+            row["level"] = Double(r.level)
+            row["label"] = word
+            row["tags"] = tags
+            row["note"] = j(r.note)
+            stress.append(try make(row))
+        }
+
         return try make([
             "weekStart": weekStart, "weekEnd": weekEnd,
             "weekLabel": Week.label(ofWeekStart: weekStart, anchor: ctx.weekZeroStart, phases: ctx.phases),
@@ -111,6 +143,7 @@ public struct WeeklyExportBuilder: Sendable {
             "volumeByMuscle": volumeByMuscle(rows, phase: phase),
             "doms": doms.map(Self.encodeToJSON),
             "fatigue": fatigue.map(Self.encodeToJSON),
+            "stress": stress.map(Self.encodeToJSON),
             "tonnageByMuscle": tonnageByMuscle(rows),
             "bodyComp": toBodyComp(rows),
             "cardio": rows.cardio.map { c in
@@ -177,6 +210,7 @@ public struct WeeklyExportBuilder: Sendable {
         var supps: [SupplementLogRow]
         var doms: [DomsLogRow]
         var fatigue: [FatigueLogRow]
+        var stress: [StressLogRow]
         var bodyLedger: [BodyCompositionRow]
         var cardio: [CardioLogRow]
         var prAxes: [PersonalRecordRow]
@@ -265,6 +299,7 @@ public struct WeeklyExportBuilder: Sendable {
                 supps: try SupplementLogRow.filter(inWeek).order(Column("date"), Column("item_key")).fetchAll(db),
                 doms: try DomsLogRow.filter(inWeek).order(Column("date"), Column("created_at")).fetchAll(db),
                 fatigue: try FatigueLogRow.filter(inWeek).order(Column("date"), Column("created_at")).fetchAll(db),
+                stress: try StressLogRow.filter(inWeek).order(Column("date"), Column("created_at")).fetchAll(db),
                 bodyLedger: try BodyCompositionRow.filter(inWeek).order(Column("date"), Column("measured_at")).fetchAll(db),
                 cardio: ledgerCardio.filter { $0.date >= weekStart },
                 prAxes: try PersonalRecordRow.filter(user && Column("achieved_on") >= weekStart && Column("achieved_on") <= weekEnd).fetchAll(db),
@@ -640,7 +675,9 @@ public struct WeeklyExportBuilder: Sendable {
     func supplementStack(_ customs: [CustomSupplement]) -> [[String: Any]] {
         return customs.map { c in
             [
-                "time": j(c.time), "name": c.name, "dose": c.dose,
+                // The key `supplement_log` is written against: without it a
+                // day's "taken" list can only print `d3k2@07:00`.
+                "time": j(c.time), "key": c.schedule?.key ?? c.id, "name": c.name, "dose": c.dose,
                 "trainingDose": j(c.schedule?.trainingDose), "restDose": j(c.schedule?.restDose),
                 "trainingOnly": j(c.schedule?.trainingOnly), "notes": j(c.schedule?.notes),
             ]

@@ -73,16 +73,10 @@ struct WeeklyExportGoldenTests {
         }
     }
 
-    @Test("the machine-readable payload matches structurally")
-    func jsonMatches() throws {
-        for c in try loadRaw("weekly-export") {
-            let name = c["name"] as! String
-            let input = try JSONDecoder().decode(WeeklyExportInput.self, from: JSONSerialization.data(withJSONObject: c["input"]!))
-            let expected = stripNulls((c["expected"] as! [String: Any])["json"]!)
-            let actual = stripNulls(try WeekJson.payload(input))
-            #expect(NSDictionary(dictionary: actual as! [String: Any]).isEqual(to: expected as! [String: Any]), "weekJsonBlock — \(name)")
-        }
-    }
+    // The machine-readable payload test went with `WeekJson`. The document was
+    // never a second serialisation of itself: nothing read the JSON fence, and
+    // the cross-language check it provided is already covered by `derivedWeek`,
+    // which this suite compares field for field above.
 }
 
 @Suite("Weekly export — the small renderers")

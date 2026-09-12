@@ -4,7 +4,13 @@ import { manualHkUuid, isManualHkUuid } from '@/lib/nutrition/manualEntry'
 import {
   buildWeeklyExport, type WeeklyExportInput, type ExportDay,
 } from '@/lib/reports/weeklyExport'
-import { dayRow, derivedWeekRow, DASH } from './exportGrammar'
+import {
+  dayField, dayFieldOrNull, notRecorded, sectionLines, weekField, NO_DATA,
+} from './exportGrammar'
+
+/** The `TDEE …` line under `## THE WEEK`, which states the estimate's terms. */
+const tdeeLine = (out: string): string =>
+  sectionLines(out, 'THE WEEK').find((l) => l.startsWith('TDEE '))!
 
 /**
  * MANUAL INTAKE MUST WIN — end to end.
@@ -89,16 +95,18 @@ describe('manual intake override reaches the export', () => {
   })
 
   // ── Link 4 · the renderer ──
-  // In v3 the corrected day is a `## DAYS` row and its intake is the `kcal`
-  // column, zipped against the legend on the heading rather than found by
-  // substring — `1891` also appears in `## WEEK` and could match there.
+  // The corrected day is the `**Intake**` row of its own day block, found by
+  // label rather than by substring — 1,891 also appears in the week's averages
+  // and in the energy estimate, and a grep would match there.
   it('prints the corrected intake and macros verbatim', () => {
     const out = buildWeeklyExport(base({
       days: [day({ calories: 1891, proteinG: 173, carbsG: 188, fatG: 52 })],
     }))
-    const row = dayRow(out, '2026-08-05')
-    expect(row.kcal).toBe('1891')
-    expect([row.P, row.C, row.F]).toEqual(['173', '188', '52'])
+    const intake = dayField(out, '2026-08-05', 'Intake')
+    expect(intake).toContain('1,891 / 1,955 kcal')
+    expect(intake).toContain('173 / 170 P')
+    expect(intake).toContain('188 C')
+    expect(intake).toContain('52 F')
   })
 
   it('carries a corrected value that differs from the synced one', () => {
@@ -106,9 +114,9 @@ describe('manual intake override reaches the export', () => {
     // prints. There is no second source of calories to fall back to.
     const synced = buildWeeklyExport(base({ days: [day({ calories: 2400 })] }))
     const corrected = buildWeeklyExport(base({ days: [day({ calories: 1891 })] }))
-    expect(dayRow(synced, '2026-08-05').kcal).toBe('2400')
-    expect(dayRow(corrected, '2026-08-05').kcal).toBe('1891')
-    expect(corrected).not.toMatch(/2400/)
+    expect(dayField(synced, '2026-08-05', 'Intake')).toContain('2,400 / 1,955 kcal')
+    expect(dayField(corrected, '2026-08-05', 'Intake')).toContain('1,891 / 1,955 kcal')
+    expect(corrected).not.toMatch(/2,400/)
   })
 
   it('feeds the corrected intake into the energy-balance estimate too', () => {
@@ -119,24 +127,32 @@ describe('manual intake override reaches the export', () => {
     // 1517 BMR + 911 active + 198.6 TEF = 2626.6 expenditure, against 1891 in.
     // It is stated under the fence, because three of those four terms are
     // arithmetic rather than measurement.
-    const energy = derivedWeekRow(out)
-    expect(energy.tdee_avg).toBe('2627')
-    expect(energy.balance_kcal).toBe('-736')
-    expect(energy.energy_days).toBe('1')
+    expect(weekField(out, 'Energy balance')).toContain('−736 kcal over the week')
+    expect(weekField(out, 'Energy balance')).toContain('*computed by Onyx, an estimate*')
+    const terms = tdeeLine(out)
+    expect(terms).toContain('TDEE 2,627/day')
+    expect(terms).toContain('1 day counted')
     // The corrected intake is what the TEF term was taken from, so a stale copy
     // held elsewhere would show up here too: 1891 × 0.105 = 198.6.
-    expect(energy.tef_avg).toBe('199')
-    expect([energy.bmr_avg, energy.active_avg]).toEqual(['1517', '911'])
+    expect(terms).toContain('TEF 199')
+    expect(terms).toContain('BMR 1,517')
+    expect(terms).toContain('Apple Watch active 911')
   })
 
   it('prints a zero-calorie correction as 0, not as "not recorded"', () => {
-    // A logged fast is a measurement. Only an ABSENT entry is an em-dash, and
-    // in v3 that distinction IS the difference between `0` and `—` in one cell.
+    // A logged fast is a measurement. Only an ABSENT entry is "no data", and
+    // that distinction is the whole reason this document never prints a blank.
     const out = buildWeeklyExport(base({ days: [day({ calories: 0 })] }))
-    expect(dayRow(out, '2026-08-05').kcal).toBe('0')
-    expect(dayRow(out, '2026-08-05').kcal).not.toBe(DASH)
-    // And an absent one still dashes, so the two cannot be confused.
+    expect(dayField(out, '2026-08-05', 'Intake')).toContain('0 / 1,955 kcal')
+    // And an absent one has no intake row at all — a day the app heard nothing
+    // about says so once, at the foot, rather than printing a ratio against a
+    // target nobody ate toward.
     const absent = buildWeeklyExport(base({ days: [day({ calories: null })] }))
-    expect(dayRow(absent, '2026-08-05').kcal).toBe(DASH)
+    expect(dayFieldOrNull(absent, '2026-08-05', 'Intake')).toBeNull()
+    expect(notRecorded(absent, '2026-08-05')).toContain('intake')
+    // A half-logged day still prints, and still names the gap inside the row.
+    const partial = buildWeeklyExport(base({ days: [day({ proteinG: 173 })] }))
+    expect(dayField(partial, '2026-08-05', 'Intake')).toContain(`${NO_DATA} / 1,955 kcal`)
+    expect(dayField(partial, '2026-08-05', 'Intake')).toContain('173 / 170 P')
   })
 })
