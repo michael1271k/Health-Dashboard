@@ -288,7 +288,12 @@ final class DayModel {
         database: AppDatabase, on dateISO: String
     ) -> [MuscleRecovery.Bout] {
         guard let day = LogicalDay.date(fromISO: dateISO) else { return [] }
-        let anchor = Calendar.current.startOfDay(for: day).addingTimeInterval(86_400)
+        // `byAdding: .day`, not +86,400 seconds: on the two days a year the
+        // clocks move, a day is 23 or 25 hours and the arithmetic version puts
+        // the anchor an hour inside or outside the day it is meant to bound.
+        let calendar = Calendar.current
+        let midnight = calendar.startOfDay(for: day)
+        let anchor = calendar.date(byAdding: .day, value: 1, to: midnight) ?? midnight.addingTimeInterval(86_400)
         let from = ISODate.addDays(dateISO, -Int(MuscleRecovery.horizonHours / 24)) ?? dateISO
         return ((try? database.sessionHistory()) ?? [])
             .filter { $0.date >= from && $0.date <= dateISO && $0.endedAt != nil }

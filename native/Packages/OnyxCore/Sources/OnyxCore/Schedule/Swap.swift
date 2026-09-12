@@ -424,14 +424,27 @@ public extension Swap {
                 )
             }
 
+            // ── THE PLACEMENT RULE GATES BOTH OUTCOMES ──────────────────────
+            // This check used to sit BELOW the clears branch, and that branch
+            // returned early — so deleting an override was the one way to
+            // change a date's meaning without asking whether a session was on
+            // it. Monday overridden to Legs A, Legs A logged there, Monday put
+            // back to the plan: the row vanished and the schedule claimed Push
+            // A on a date that had run Legs A. That is the exact state
+            // `blockForPlacement`'s own header calls unrepresentable.
+            //
+            // A clear is a change of meaning like any other, so it is asked the
+            // same question. The no-op case stays allowed for free, because the
+            // rule already returns nil when the incoming key IS what was logged.
+            if let block = blockForPlacement(date, dayKey: want, logged: logged, sourceDate: current.date(of: want)) {
+                return WeekPlan(writes: [], clears: [], dropped: [], block: block)
+            }
+
             if want == base.key(on: date) {
                 // Back on the plan, and something is currently in the way. The
                 // override has to GO, not be rewritten to the plan's value.
                 clears.append(date)
                 continue
-            }
-            if let block = blockForPlacement(date, dayKey: want, logged: logged, sourceDate: current.date(of: want)) {
-                return WeekPlan(writes: [], clears: [], dropped: [], block: block)
             }
             writes.append(ScheduleWrite(date: date, dayKey: want))
         }

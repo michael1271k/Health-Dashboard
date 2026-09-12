@@ -57,7 +57,16 @@ struct WeeklyWrapView: View {
         .navigationBarTitleDisplayMode(.inline)
         // `task(id:)` and not `onChange`: it also fires on appear, so the card
         // exists before the first tap rather than one render after it.
-        .task(id: showBodyweight) { card = render() }
+        .task(id: showBodyweight) {
+            // Yield first. `render()` is synchronous and lays out and
+            // rasterises a 540 × 960 view at `displayScale` — roughly 18 MB —
+            // on the main actor, and without this it does so in the same turn
+            // as the navigation push, which is the one frame budget on this
+            // screen that is already spent.
+            await Task.yield()
+            guard !Task.isCancelled else { return }
+            card = render()
+        }
     }
 
     private var title: String {

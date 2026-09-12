@@ -25,6 +25,7 @@ import OnyxData
 private struct CardioToast: ViewModifier {
     @Environment(AppEnvironment.self) private var environment
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
 
     func body(content: Content) -> some View {
         content.overlay(alignment: .top) {
@@ -46,12 +47,22 @@ private struct CardioToast: ViewModifier {
                         : .move(edge: .top).combined(with: .opacity)
                 )
                 .task(id: report) {
+                    // ── SPOKEN, NOT JUST DRAWN ──────────────────────────────
+                    // The overlay takes no hit testing and removes itself, so
+                    // focus never reaches it: a VoiceOver user got no notice at
+                    // all for the one write this app makes unasked. An
+                    // announcement is the only way to say something that is
+                    // already over.
+                    AccessibilityNotification.Announcement(Self.title(report)).post()
                     // Four seconds: long enough to read two short lines at a
                     // glance, short enough that it is gone before you have
                     // decided whether to care. Cancelled by `task(id:)` if a
                     // second ingest lands first, which re-arms the timer rather
                     // than leaving the first one's deadline in charge.
-                    try? await Task.sleep(for: .seconds(4))
+                    //
+                    // Doubled under VoiceOver, where four seconds is shorter
+                    // than it takes to swipe to the thing being described.
+                    try? await Task.sleep(for: .seconds(voiceOver ? 8 : 4))
                     guard !Task.isCancelled else { return }
                     withAnimation(OnyxMotion.move) { environment.sync.clearCardioNotice() }
                 }
@@ -98,14 +109,3 @@ extension View {
     /// other claims; Nutrition and Settings have nothing to do with a walk.
     func cardioIngestNotice() -> some View { modifier(CardioToast()) }
 }
-
-#if DEBUG
-extension CardioToast {
-    /// Exposed for the preview catalogue, which draws the three shapes this
-    /// notice can take without a sync behind it.
-    static func previewTitles() -> [(String, String?)] {
-        [CardioIngestReport(inserted: 3), CardioIngestReport(inserted: 1, filled: 2), CardioIngestReport(filled: 1)]
-            .map { (title($0), message($0)) }
-    }
-}
-#endif

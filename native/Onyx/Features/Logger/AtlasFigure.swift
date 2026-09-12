@@ -22,9 +22,17 @@ struct AtlasFigure: View {
     var side: Side = .both
     /// Landmark → 0…1. `MuscleCredit.worked(from:)` produces exactly this.
     var worked: [LandmarkMuscle: Double] = [:]
-    /// Draw every muscle in the day's accent instead of its own family hue.
-    /// Used at thumbnail size, where sixteen hues turn to mud.
+    /// Draw every muscle in one colour instead of its own family hue.
+    ///
+    /// Two things used to be inferred from this being non-nil: "one hue" and
+    /// "this is a 44 pt thumbnail, skip the drop shadow". Pulse's composite
+    /// body is monochrome AND full size, so inheriting the second meaning
+    /// silently deleted the §6.7 shadow from a 170 pt figure. They are separate
+    /// questions now — `isThumbnail` asks the second one.
     var monochromeTint: Color?
+    /// A 44 pt figure in a tile: no drop shadow, because a 10 pt blur is
+    /// invisible at that size and costs an offscreen pass per tile.
+    var isThumbnail = false
     /// An explicit colour per muscle, overriding both the family hue and the
     /// monochrome tint. The DOMS body needs this: soreness is a SEVERITY ramp
     /// (§3.2 — none tertiary · mild Good · moderate Record · severe Danger) and
@@ -100,7 +108,7 @@ struct AtlasFigure: View {
             // The 44 pt monochrome thumbnails skip the layer: a 10 pt blur
             // under a thumbnail is invisible and an offscreen pass per tile.
             context.drawLayer { layer in
-                if monochromeTint == nil {
+                if !isThumbnail {
                     layer.addFilter(.shadow(color: .black.opacity(0.45), radius: 10, y: 6))
                 }
                 for build in OnyxAtlas.base {

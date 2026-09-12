@@ -166,7 +166,11 @@ struct WorkoutTabView: View {
         // week panel, today's card and the progression queue all read the
         // schedule, and a week rearranged behind a modal must not leave any of
         // them drawing the old one.
-        .sheet(isPresented: $weekSheetOpen, onDismiss: { Task { await week?.refresh() } }) {
+        // No `onDismiss` refresh: `applyWeekPlan` already re-reads on success,
+        // and a cancel changed nothing. Both fired before, so every confirm
+        // cost two full tab reads — and on a wrapped week each one carries the
+        // PR replay.
+        .sheet(isPresented: $weekSheetOpen) {
             if let week, week.loaded {
                 WeekOverrideSheet(week: week)
             }
@@ -252,7 +256,12 @@ struct WorkoutTabView: View {
                 .buttonStyle(.plain)
                 .onyxPress()
                 .contextMenu {
-                    Button { weekSheetOpen = true } label: {
+                    // `week?.loaded` gates the TAP rather than the sheet's content.
+            // Presenting and then drawing nothing is the black-cover-with-no-
+            // way-out shape this file already warns about below; a header that
+            // is simply inert for the half-second before the first detached
+            // read lands cannot produce it.
+            Button { if week?.loaded == true { weekSheetOpen = true } } label: {
                         Label("Rearrange this week", systemImage: "calendar.badge.clock")
                     }
                 }
@@ -465,7 +474,7 @@ struct WorkoutTabView: View {
                 // 44 pt, not 88: the figure on this card says WHERE, and where
                 // is legible at a thumbnail. The 96 pt hit-tested one lives on
                 // the session page, which is the screen about the landing.
-                AtlasFigure(side: .front, worked: worked(day), monochromeTint: accent)
+                AtlasFigure(side: .front, worked: worked(day), monochromeTint: accent, isThumbnail: true)
                     .frame(height: 44)
                     .accessibilityHidden(true)
             }

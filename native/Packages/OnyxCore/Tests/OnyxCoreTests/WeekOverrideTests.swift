@@ -124,6 +124,40 @@ struct WeekOverrideTests {
         #expect(out.writes.isEmpty)
     }
 
+    @Test("putting a day back on the plan is refused when the date is logged")
+    func returningToPlanRespectsALoggedSession() {
+        // The hole the first build left. The clears branch returned early,
+        // BEFORE `blockForPlacement`, so this path could delete an override on
+        // a date holding a committed session — leaving the schedule claiming
+        // Push A on a Monday that ran Legs A, which is precisely the
+        // `targetLogged` state the whole rule says is unrepresentable.
+        var current = plan
+        current.place("legs_a", on: week[1])     // Monday overridden to legs
+        let out = planWeek(
+            current: current, draft: plan,        // and put back to the plan
+            logged: [LoggedDay(date: week[1], dayKey: "legs_a")]
+        )
+        #expect(out.block?.kind == .targetLogged)
+        #expect(out.clears.isEmpty)
+        #expect(out.writes.isEmpty)
+    }
+
+    @Test("a logged date whose override already MATCHES what was logged still clears")
+    func clearingAnOverrideThatAgreesWithTheSessionIsAllowed() {
+        // The other half, and it must stay allowed: if Monday's override says
+        // push and Monday logged push, removing the row changes nothing about
+        // what the date means — `blockForPlacement` returns nil when the
+        // incoming key IS what was logged, and that no-op must not be refused.
+        var current = plan
+        current.place("legs_a", on: week[3])     // Wednesday gained legs
+        let out = planWeek(
+            current: current, draft: plan,
+            logged: [LoggedDay(date: week[1], dayKey: "push_a")]
+        )
+        #expect(out.block == nil)
+        #expect(out.clears.sorted() == [week[2], week[3]])
+    }
+
     @Test("moving a day onto a logged date it ALREADY occupies is not a block")
     func placingWhatIsAlreadyThere() {
         // `blockForPlacement` refuses a target holding a DIFFERENT key. Push on

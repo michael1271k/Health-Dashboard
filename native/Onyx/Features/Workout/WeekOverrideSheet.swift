@@ -140,8 +140,15 @@ struct WeekOverrideSheet: View {
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(Swap.shortDayLabel(date)), \(isRest ? "rest" : label(of: key))")
-        .accessibilityHint("Change what this day trains")
+        // The seal's own "Logged" label is swallowed by this one, and the row
+        // whose edit is about to be refused is the last row VoiceOver should be
+        // unable to tell apart — the visible seal exists to warn BEFORE the tap
+        // (see the comment on it) and the spoken label owes the same warning.
+        .accessibilityLabel(
+            "\(Swap.shortDayLabel(date)), \(isRest ? "rest" : label(of: key))"
+                + (locked ? ", logged" : "")
+        )
+        .accessibilityHint(locked ? "Logged days cannot be moved" : "Change what this day trains")
     }
 
     private func dayName(_ date: String) -> some View {
@@ -191,7 +198,13 @@ struct WeekOverrideSheet: View {
     private func binding(for date: String) -> Binding<String> {
         Binding(
             get: { draft.key(on: date) },
-            set: { next in withAnimation(OnyxMotion.move) { draft.place(next, on: date) } }
+            set: { next in
+                // A failure names the state of the LAST confirm. Leaving it up
+                // while the user rearranges the week further is the banner
+                // describing a draft that no longer exists.
+                failed = false
+                withAnimation(OnyxMotion.move) { draft.place(next, on: date) }
+            }
         )
     }
 

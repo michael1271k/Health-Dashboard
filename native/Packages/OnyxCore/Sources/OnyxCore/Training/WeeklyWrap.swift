@@ -32,7 +32,11 @@ public enum WeeklyWrap {
 
     /// One movement's best set in a week, and what it was last week.
     public struct Movement: Equatable, Sendable, Identifiable {
-        public var id: String { name }
+        /// Name AND split. A lift that appears in two splits is deliberately
+        /// two rows (see `dayKey` below), so keying identity on the name alone
+        /// hands `ForEach` duplicate ids — a runtime warning, and undefined
+        /// diffing in the very list this type exists to render.
+        public var id: String { "\(name)|\(dayKey)" }
         public var name: String
         /// The split it was trained on — a movement in two splits is two rows,
         /// because the comparison is same-movement-same-day_key.

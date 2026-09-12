@@ -21,6 +21,15 @@ import OnyxCore
 /// pass is the TRUTH here: nothing on it needs compositing, so nothing on it
 /// can be lied about by the renderer.
 ///
+/// ── AND WHY IT STILL USES THE TOKENS ────────────────────────────────────────
+/// The first draft spelled its own point sizes and greys, on the argument that
+/// a fixed 540 × 960 composition must not reflow. That argument is about
+/// SCALING, and `dynamicTypeSize(.large)` below already settles it — the roles
+/// render at their standard size and stay there. Spelling the values as well
+/// bought nothing and cost the one rule the native design system enforces:
+/// a view names meanings, and the meanings live in one file.
+/// (`native-token-discipline` is what caught it.)
+///
 /// ── NOTHING PRIVATE UNLESS ASKED ────────────────────────────────────────────
 /// Bodyweight is the one figure here that a person might not want in a photo
 /// they post, and it is off unless the toggle is on. Off is the only default
@@ -46,32 +55,29 @@ struct WeeklyShareCard: View {
         // set and the movers are the body. The mark is the footer. Slack goes
         // between the blocks, not inside them.
         VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: 28) {
+            VStack(alignment: .leading, spacing: OnyxSpace.xl) {
                 header
                 figures
             }
-            Spacer(minLength: 24)
-            VStack(alignment: .leading, spacing: 18) {
+            Spacer(minLength: OnyxSpace.xl)
+            VStack(alignment: .leading, spacing: OnyxSpace.l) {
                 if let top = summary.topSet { topSet(top) }
                 movements
             }
-            Spacer(minLength: 24)
+            Spacer(minLength: OnyxSpace.xl)
             footer
         }
-        .padding(36)
+        .padding(OnyxSpace.xl + OnyxSpace.m)
         .frame(width: size.width, height: size.height, alignment: .topLeading)
         .background {
             // A flat vertical gradient in the TRAIN accent, which is what the
             // app's own screens bleed behind their titles — the same identity
             // without the material that cannot survive the render.
             LinearGradient(
-                colors: [
-                    OnyxDomain.train.accent.opacity(0.34),
-                    Color(red: 0.04, green: 0.04, blue: 0.05),
-                ],
+                colors: [OnyxDomain.train.accent.opacity(0.34), Color.onyx.base],
                 startPoint: .top, endPoint: .center
             )
-            .background(Color(red: 0.04, green: 0.04, blue: 0.05))
+            .background(Color.onyx.base)
         }
         // The card is a fixed composition at a fixed size and is never read at
         // an accessibility text size — it is an image. Letting Dynamic Type
@@ -83,18 +89,17 @@ struct WeeklyShareCard: View {
     // MARK: - Parts
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: OnyxSpace.xs) {
             Text("WEEK OF \(Swap.shortDayLabel(summary.weekStart).uppercased())")
-                .font(.system(size: 13, weight: .semibold)).tracking(1.4)
-                .foregroundStyle(.white.opacity(0.55))
+                .onyxMicro()
             Text(summary.isDeload ? "Deload week" : "Week wrapped")
-                .font(.system(size: 34, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
+                .onyxType(.clock).fontWeight(.bold)
+                .foregroundStyle(Color.onyx.textPrimary)
         }
     }
 
     private var figures: some View {
-        HStack(alignment: .top, spacing: 20) {
+        HStack(alignment: .top, spacing: OnyxSpace.l) {
             figure("\(summary.sessions)", "SESSIONS", delta: nil)
             figure(OnyxFormat.volume(summary.tonnageKg), "KG LIFTED", delta: summary.tonnageDeltaKg)
             if summary.prCount > 0 {
@@ -106,16 +111,15 @@ struct WeeklyShareCard: View {
     private func figure(_ value: String, _ label: String, delta: Double?, tint: Color = .white) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(value)
-                .font(.system(size: 30, weight: .bold, design: .rounded))
+                .onyxType(.hero).onyxNumeral().fontWeight(.bold)
                 .foregroundStyle(tint)
                 .lineLimit(1).minimumScaleFactor(0.6)
             Text(label)
-                .font(.system(size: 11, weight: .semibold)).tracking(1.2)
-                .foregroundStyle(.white.opacity(0.5))
+                .onyxMicro()
             if let delta, delta != 0 {
                 Text("\(delta > 0 ? "+" : "−")\(OnyxFormat.volume(abs(delta)))")
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .foregroundStyle(delta > 0 ? Color.onyx.good : .white.opacity(0.5))
+                    .onyxType(.caption).onyxNumeral().fontWeight(.semibold)
+                    .foregroundStyle(delta > 0 ? Color.onyx.good : Color.onyx.textSecondary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -123,20 +127,18 @@ struct WeeklyShareCard: View {
 
     private func topSet(_ movement: WeeklyWrap.Movement) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text("HEAVIEST SET")
-                .font(.system(size: 11, weight: .semibold)).tracking(1.2)
-                .foregroundStyle(.white.opacity(0.5))
+            Text("HEAVIEST SET").onyxMicro()
             Text(movement.name)
-                .font(.system(size: 22, weight: .semibold, design: .rounded))
-                .foregroundStyle(.white)
+                .onyxType(.display).fontWeight(.semibold)
+                .foregroundStyle(Color.onyx.textPrimary)
                 .lineLimit(1).minimumScaleFactor(0.7)
             Text("\(OnyxFormat.kg(movement.weightKg)) kg × \(jsIntegerString(movement.reps))")
-                .font(.system(size: 16, weight: .medium, design: .rounded))
-                .foregroundStyle(.white.opacity(0.7))
+                .onyxType(.body).onyxNumeral()
+                .foregroundStyle(Color.onyx.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(RoundedRectangle(cornerRadius: 16).fill(.white.opacity(0.07)))
+        .padding(OnyxSpace.l)
+        .background(RoundedRectangle(cornerRadius: OnyxSpace.l).fill(.white.opacity(0.07)))
     }
 
     /// Five rows at most. A share card that lists eleven movements is a
@@ -145,20 +147,27 @@ struct WeeklyShareCard: View {
     /// magnitude.
     @ViewBuilder
     private var movements: some View {
-        let rows = Array((summary.progressions + summary.deloaded + summary.regressions).prefix(5))
+        // Sorted BEFORE the prefix. Each list is individually ordered by
+        // magnitude, but concatenating three of them and taking the first five
+        // is CATEGORY order — so a week with five progressions dropped every
+        // regression from the card that leaves the phone, which is the half a
+        // reader is owed most.
+        let rows = (summary.progressions + summary.deloaded + summary.regressions)
+            .sorted { abs($0.change ?? 0) > abs($1.change ?? 0) }
+            .prefix(5)
         if !rows.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: OnyxSpace.s) {
                 ForEach(rows) { movement in
                     let verdict = WeeklyWrap.verdict(movement, isDeload: summary.isDeload)
-                    HStack(spacing: 10) {
+                    HStack(spacing: OnyxSpace.s) {
                         Text(movement.name)
-                            .font(.system(size: 15, weight: .medium, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.85))
+                            .onyxType(.secondary)
+                            .foregroundStyle(Color.onyx.textPrimary)
                             .lineLimit(1).minimumScaleFactor(0.75)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         if let change = movement.change {
                             Text("\(change > 0 ? "+" : "−")\(jsIntegerString(jsRound(abs(change) * 100)))%")
-                                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                .onyxType(.secondary).onyxNumeral().fontWeight(.semibold)
                                 .foregroundStyle(tint(verdict))
                         }
                     }
@@ -177,24 +186,24 @@ struct WeeklyShareCard: View {
 
     @ViewBuilder
     private var footer: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: OnyxSpace.s) {
             if showBodyweight, let kg = summary.bodyweightKg {
-                HStack(spacing: 6) {
+                HStack(spacing: OnyxSpace.xs) {
                     Text("\(OnyxFormat.kg(kg)) kg")
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.85))
+                        .onyxType(.secondary).onyxNumeral().fontWeight(.semibold)
+                        .foregroundStyle(Color.onyx.textPrimary)
                     if let delta = summary.bodyweightDeltaKg, delta != 0 {
                         Text("\(delta > 0 ? "+" : "−")\(OnyxFormat.kg(abs(delta))) kg")
-                            .font(.system(size: 14, weight: .medium, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.5))
+                            .onyxType(.caption).onyxNumeral()
+                            .foregroundStyle(Color.onyx.textSecondary)
                     }
                 }
             }
-            HStack(spacing: 8) {
+            HStack(spacing: OnyxSpace.s) {
                 OnyxMark(size: 18, opacity: 0.5)
                 Text(program.label.isEmpty ? "Onyx" : program.label)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.45))
+                    .onyxType(.caption)
+                    .foregroundStyle(Color.onyx.textTertiary)
             }
         }
     }

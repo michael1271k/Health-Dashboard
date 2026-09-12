@@ -242,17 +242,18 @@ final class WorkoutWeek {
     func applyWeekPlan(_ plan: WeekPlan) -> Bool {
         guard plan.block == nil, !plan.isEmpty else { return false }
         do {
-            if !plan.writes.isEmpty {
-                try database.applyScheduleWrites(
-                    userId: userId, plan.writes.map { (date: $0.date, dayKey: $0.dayKey) },
-                    trainingOnlySupplementKeys: snapshot.trainingOnlyKeys
-                )
-            }
-            if !plan.clears.isEmpty {
-                try database.clearScheduleOverrides(
-                    userId: userId, dates: plan.clears, trainingOnlySupplementKeys: snapshot.trainingOnlyKeys
-                )
-            }
+            // ── ONE TRANSACTION, BECAUSE THE COPY PROMISES ONE ──────────────
+            // These were two calls, and each opens its own `writer.write`. A
+            // throw on the second left the first committed AND enqueued while
+            // the sheet printed "Nothing was altered." — the half-rearranged,
+            // half-pinned week this method's own comment says it exists to
+            // prevent, under a sentence claiming the opposite.
+            try database.applyWeekOverrides(
+                userId: userId,
+                writes: plan.writes.map { (date: $0.date, dayKey: $0.dayKey) },
+                clears: plan.clears,
+                trainingOnlySupplementKeys: snapshot.trainingOnlyKeys
+            )
             Task { await refresh() }
             return true
         } catch {
@@ -631,6 +632,15 @@ final class WorkoutWeek {
                 groups: groups, prior: prior, dayKey: session.dayKey, date: session.date, in: analysis
             ).prCount
 
+            // ── HOISTED OUT OF THE MOVEMENT LOOP ────────────────────────────
+            // `previousSession` reads the WHOLE session history and builds the
+            // complete top-set map for that split. Called per movement it did
+            // that once for every lift on the card and threw all but one entry
+            // away — five sessions of six movements was thirty full history
+            // scans per wrap build. The split and the week are constant across
+            // the loop, so the answer is too.
+            let previous = previousSession(database, dayKey: session.dayKey, before: weekStart)
+
             for group in groups {
                 let name = SessionAnalysis.displayName(id: group.exerciseId, stored: group.name)
                 guard let best = topSet(group.sets) else { continue }
@@ -642,9 +652,9 @@ final class WorkoutWeek {
                     name: name, dayKey: session.dayKey ?? "",
                     weightKg: best.weightKg, reps: best.reps,
                     e1rm: Epley.oneRepMax(weight: best.weightKg, reps: best.reps),
-                    previousE1rm: previousE1rm(
-                        database, name: name, dayKey: session.dayKey, before: weekStart
-                    )
+                    previousE1rm: previous?.top(for: name).flatMap {
+                        Epley.oneRepMax(weight: $0.weightKg, reps: $0.reps)
+                    }
                 )
                 // A movement trained twice on one split in a week keeps its
                 // best set, for the same reason the top set is the heaviest.
@@ -665,18 +675,6 @@ final class WorkoutWeek {
             bodyweightKg: weight,
             bodyweightDeltaKg: (weight != nil && before != nil) ? jsRound1(weight! - before!) : nil
         )
-    }
-
-    /// The same movement's top-set e1RM in the most recent session of the same
-    /// split BEFORE this week. Nil when the split did not run, or the movement
-    /// was not in it — which is a movement with no verdict, not a zero.
-    private nonisolated static func previousE1rm(
-        _ database: AppDatabase, name: String, dayKey: String?, before weekStart: String
-    ) -> Double? {
-        guard let previous = previousSession(database, dayKey: dayKey, before: weekStart),
-              let top = previous.top(for: name)
-        else { return nil }
-        return Epley.oneRepMax(weight: top.weightKg, reps: top.reps)
     }
 
     /// The heaviest set of a group, ties to reps — `previousSession`'s rule,

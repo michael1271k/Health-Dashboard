@@ -1043,6 +1043,7 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         // time, exactly as `addSet` splits a working set (see `presplit`).
         guard canSplit(exercise) else {
             exercise.rows.insert(SetRow(weightKg: weightKg, reps: reps, kind: .warmup), at: ordered)
+            restampFrom(ordered, in: exercise)
             return
         }
         let pairId = newOnyxID()
@@ -1052,6 +1053,15 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             },
             at: ordered
         )
+        // ── A MID-ARRAY INSERT MUST RESTAMP WHAT IT PUSHED DOWN ─────────────
+        // `snapshot(_:in:)` derives the stored `set_index` from array POSITION,
+        // and seeding matches a row on `(exercise_id, set_index)`. A rung added
+        // after a working set was ticked shifts every logged row below it by
+        // one (two on a pair) and leaves their stored indices behind — which
+        // collides two rows on one key and mis-orders the session report and
+        // the sync payload. `removeSet` and `mergeSet` repair it for the same
+        // reason; this insert is the third mid-array mutation and needs it too.
+        restampFrom(ordered, in: exercise)
     }
 
     /// Re-write the stored `set_index` of every logged row from `index` down.

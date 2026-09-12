@@ -803,6 +803,49 @@ public extension AppDatabase {
         }
     }
 
+    /// A whole week's edit: the overrides to write and the ones to delete, in
+    /// ONE transaction.
+    ///
+    /// ── WHY NOT JUST CALL THE TWO ───────────────────────────────────────────
+    /// Because they are one change. `applyScheduleWrites` and
+    /// `clearScheduleOverrides` each open their own `write`, so calling them in
+    /// sequence lets the first commit and enqueue while the second throws —
+    /// leaving a week half rearranged and half pinned, which is the state the
+    /// undo path takes a LIST of dates to prevent one tier down. The week sheet
+    /// also tells the user "Nothing was altered" on failure, and that sentence
+    /// has to be true.
+    func applyWeekOverrides(
+        userId: String,
+        writes: [(date: String, dayKey: String)],
+        clears: [String],
+        trainingOnlySupplementKeys: [String] = []
+    ) throws {
+        guard !writes.isEmpty || !clears.isEmpty else { return }
+        try writer.write { db in
+            for write in writes {
+                var row = try ScheduleOverrideRow
+                    .filter(Column("user_id") == userId && Column("date") == write.date)
+                    .fetchOne(db)
+                    ?? ScheduleOverrideRow(userId: userId, date: write.date, dayKey: write.dayKey, updatedAt: Self.localWriteTimestamp)
+                row.dayKey = write.dayKey
+                try row.save(db)
+                try Self.enqueueRowUpsert(
+                    table: ScheduleOverrideRow.databaseTableName,
+                    id: try Self.rowID(table: ScheduleOverrideRow.databaseTableName, key: ["user_id": userId, "date": write.date], in: db),
+                    in: db
+                )
+                try Self.dropTrainingOnlySupplements(db, userId: userId, date: write.date, keys: trainingOnlySupplementKeys)
+            }
+            for date in clears {
+                _ = try ScheduleOverrideRow.filter(Column("user_id") == userId && Column("date") == date).deleteAll(db)
+                try Self.enqueueRowDelete(
+                    table: ScheduleOverrideRow.databaseTableName, key: ["user_id": userId, "date": date], in: db
+                )
+                try Self.dropTrainingOnlySupplements(db, userId: userId, date: date, keys: trainingOnlySupplementKeys)
+            }
+        }
+    }
+
     /// Undo. Takes a LIST because a rest-day swap touches two dates, and undoing
     /// one leaves the week half-rearranged — worse than either state.
     func clearScheduleOverrides(
