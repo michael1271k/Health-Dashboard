@@ -147,6 +147,7 @@ struct DayScreen: View {
         .listSectionSpacing(OnyxSpace.m)
         .scrollContentBackground(.hidden)
         .onyxScreen(.body)
+        .cardioIngestNotice()
         .navigationTitle("Pulse")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

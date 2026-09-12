@@ -117,15 +117,33 @@ struct DomsTile: View {
     }
 
     private func side(_ view: OnyxAtlasView) -> some View {
-        // Only the SORE landmarks are handed over: `AtlasFigure` already draws
-        // an unrated muscle as the plain fill, and the hit test walks
-        // `OnyxAtlas.muscles` rather than this dictionary — so the whole body
-        // is tappable whether or not any of it hurts.
+        // ── ONE BODY, TWO CHANNELS (§W6) ────────────────────────────────────
+        // The FILL is what the ledger implies you are still carrying — sets
+        // landed on a muscle, decayed by how long ago they landed. The RING is
+        // what you reported. They disagree constantly and both are right: you
+        // can be sore in a muscle the plan barely touched, and fresh in one
+        // that took twelve sets, and that disagreement is the most interesting
+        // thing either of them has to say.
+        //
+        // A second figure beside this one would make the reader do the
+        // comparison; two fills on one figure cannot both be seen. A ring can.
+        //
+        // The fill is MONOCHROME in the recover accent rather than the sixteen
+        // family hues. Recovery is one quantity — how loaded, nothing else —
+        // and painting it in per-muscle hues would say that a loaded quad and a
+        // loaded lat differ in kind. The family language belongs on the session
+        // figure, which answers "where did this land", not "how much is left".
+        //
+        // Only the SORE landmarks are ringed: `AtlasFigure` draws an unrated
+        // muscle as the plain fill, and the hit test walks `OnyxAtlas.muscles`
+        // rather than either dictionary — so the whole body is tappable whether
+        // or not any of it hurts or is loaded.
         AtlasFigure(
             side: view == .front ? .front : .back,
-            worked: DomsMap.worked(severity),
-            colors: colors,
+            worked: model.window.fatigue,
+            monochromeTint: Color.onyx.accent(.recover),
             values: spokenValues,
+            outlined: colors,
             onPick: { landmark in
                 guard let group = DomsMap.group(of: landmark) else { return }
                 rating = group
@@ -134,12 +152,21 @@ struct DomsTile: View {
         .frame(maxWidth: .infinity)
     }
 
-    /// Landmark → "Moderate", for VoiceOver's walk over the body.
+    /// Landmark → "Moderate · still loaded", for VoiceOver's walk over the body.
+    ///
+    /// BOTH channels, because a screen reader gets one string per muscle and
+    /// dropping either one would leave the sighted figure saying something the
+    /// spoken one does not. The report leads: it is the thing the user typed
+    /// and the thing a tap is about to change.
     private var spokenValues: [LandmarkMuscle: String] {
         var out: [LandmarkMuscle: String] = [:]
         for (group, landmarks) in DomsMap.landmarks {
             let level = severity[group] ?? 0
-            for landmark in landmarks { out[landmark] = DomsMap.levels[min(level, DomsMap.maxSeverity)] }
+            for landmark in landmarks {
+                let reported = DomsMap.levels[min(level, DomsMap.maxSeverity)]
+                guard let loaded = model.window.fatigue[landmark] else { out[landmark] = reported; continue }
+                out[landmark] = "\(reported) · \(MuscleRecovery.label(loaded).lowercased())"
+            }
         }
         return out
     }
@@ -164,6 +191,22 @@ struct DomsTile: View {
     /// protocol instead, because "rate this in 24 hours" is the only thing an
     /// empty soreness map has to say.
     private var caption: String {
+        // ── THE LOADED MUSCLES COME FIRST ───────────────────────────────────
+        // The fill is the channel with no words on it — a ring at least carries
+        // a colour from a ramp the user chose — so the caption is where the
+        // model gets to say what it thinks. Naming the two or three muscles
+        // most likely to limit today is the only actionable sentence either
+        // channel produces.
+        //
+        // The tap hint RIDES ALONG rather than being replaced. The first build
+        // swapped one for the other, and since something is loaded on most days
+        // of a training week, the only sentence telling you this figure is a
+        // control would have been absent nearly always — on a tile whose entire
+        // premise is that the body IS the interface.
+        let loaded = MuscleRecovery.mostLoaded(model.window.fatigue, limit: 2)
+        if !loaded.isEmpty {
+            return "Still loaded: " + loaded.map { $0.0.rawValue }.joined(separator: ", ") + " · tap to rate"
+        }
         let credited = model.doms.compactMap(\.sourceDayKey).first
         if let credited, let label = SessionAnalysis.dayLabel(credited, in: model.program) {
             return "Credited to \(label)"

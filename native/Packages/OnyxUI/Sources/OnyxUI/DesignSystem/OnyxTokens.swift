@@ -133,6 +133,25 @@ extension Color {
         /// never a control label, never the only copy of a fact.
         public static let textTertiary = Color.white.opacity(0.40)
 
+        /// A routine day's own stored accent — `routines.accent`, an RGB integer
+        /// the user picked when they built the deck.
+        ///
+        /// ── WHY THIS IS A TOKEN AND NOT A `Color(hex:)` IN THE VIEW ─────────
+        /// It reads like a violation of the one native design rule and is not:
+        /// nothing is being SPELLED OUT, a stored value is being decoded. But
+        /// `native-token-discipline` scans text, not intent, so the call site
+        /// was indistinguishable in review from a designer-invented hex — which
+        /// is exactly the confusion the rule exists to prevent.
+        ///
+        /// Decoding it here costs one function and makes the view name a
+        /// meaning, which is what the rule actually asks for. Negative or
+        /// out-of-range values clamp to the train accent rather than to black,
+        /// which would draw an invisible rail.
+        public static func routineAccent(_ stored: Int) -> Color {
+            guard stored > 0 else { return OnyxDomain.train.accent }
+            return Color(hex: UInt32(truncatingIfNeeded: stored))
+        }
+
         /// Destructive actions, validation failures, and the over-budget segment
         /// of a gauge. Never a chart series, never an accent.
         public static let danger = Color(hex: 0xE5484D)

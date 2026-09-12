@@ -374,6 +374,22 @@ public extension AppDatabase {
         })
     }
 
+    /// One date's bouts, oldest first — the same order and filter the stream
+    /// gives, without an observation behind it.
+    ///
+    /// The automatic ingest needs the day's rows ONCE, inside an actor, to
+    /// decide what is already there; subscribing to a stream for a question
+    /// asked once per launch would leave an observation open for the life of
+    /// the sync.
+    func cardioRows(userId: String, date: String) throws -> [CardioLogRow] {
+        try writer.read { db in
+            try CardioLogRow
+                .filter(Column("user_id") == userId && Column("date") == date)
+                .order(Column("created_at"))
+                .fetchAll(db)
+        }
+    }
+
     /// Log a cardio bout. `kcal` is written alongside `active_kcal` on purpose:
     /// historical readers and the weekly export's pre-migration fallback still
     /// read the old column for the active figure.
@@ -783,6 +799,49 @@ public extension AppDatabase {
                     in: db
                 )
                 try Self.dropTrainingOnlySupplements(db, userId: userId, date: write.date, keys: trainingOnlySupplementKeys)
+            }
+        }
+    }
+
+    /// A whole week's edit: the overrides to write and the ones to delete, in
+    /// ONE transaction.
+    ///
+    /// ── WHY NOT JUST CALL THE TWO ───────────────────────────────────────────
+    /// Because they are one change. `applyScheduleWrites` and
+    /// `clearScheduleOverrides` each open their own `write`, so calling them in
+    /// sequence lets the first commit and enqueue while the second throws —
+    /// leaving a week half rearranged and half pinned, which is the state the
+    /// undo path takes a LIST of dates to prevent one tier down. The week sheet
+    /// also tells the user "Nothing was altered" on failure, and that sentence
+    /// has to be true.
+    func applyWeekOverrides(
+        userId: String,
+        writes: [(date: String, dayKey: String)],
+        clears: [String],
+        trainingOnlySupplementKeys: [String] = []
+    ) throws {
+        guard !writes.isEmpty || !clears.isEmpty else { return }
+        try writer.write { db in
+            for write in writes {
+                var row = try ScheduleOverrideRow
+                    .filter(Column("user_id") == userId && Column("date") == write.date)
+                    .fetchOne(db)
+                    ?? ScheduleOverrideRow(userId: userId, date: write.date, dayKey: write.dayKey, updatedAt: Self.localWriteTimestamp)
+                row.dayKey = write.dayKey
+                try row.save(db)
+                try Self.enqueueRowUpsert(
+                    table: ScheduleOverrideRow.databaseTableName,
+                    id: try Self.rowID(table: ScheduleOverrideRow.databaseTableName, key: ["user_id": userId, "date": write.date], in: db),
+                    in: db
+                )
+                try Self.dropTrainingOnlySupplements(db, userId: userId, date: write.date, keys: trainingOnlySupplementKeys)
+            }
+            for date in clears {
+                _ = try ScheduleOverrideRow.filter(Column("user_id") == userId && Column("date") == date).deleteAll(db)
+                try Self.enqueueRowDelete(
+                    table: ScheduleOverrideRow.databaseTableName, key: ["user_id": userId, "date": date], in: db
+                )
+                try Self.dropTrainingOnlySupplements(db, userId: userId, date: date, keys: trainingOnlySupplementKeys)
             }
         }
     }

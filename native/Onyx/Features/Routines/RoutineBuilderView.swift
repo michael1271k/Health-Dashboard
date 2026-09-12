@@ -131,7 +131,7 @@ struct RoutineBuilderView: View {
     private func dayRow(_ day: RoutineDay) -> some View {
         HStack(spacing: OnyxSpace.m) {
             Capsule()
-                .fill(Color(hex: UInt32(truncatingIfNeeded: max(0, day.accent))))
+                .fill(Color.onyx.routineAccent(day.accent))
                 .frame(width: 4)
                 .frame(maxHeight: .infinity)
                 .accessibilityHidden(true)

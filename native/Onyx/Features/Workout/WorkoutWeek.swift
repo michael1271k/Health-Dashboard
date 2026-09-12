@@ -137,6 +137,36 @@ final class WorkoutWeek {
         /// The last time this split was trained — what the plan card prints in
         /// place of the prescription. Nil on the first ever session of a split.
         var previous: Previous?
+
+        // ── THE WEEK SHEET'S THREE ASSIGNMENTS (W6) ─────────────────────────
+        // `weekCurrent` is what the panel draws — plan plus overrides. `weekBase`
+        // is the same week with the overrides taken away, and it is the one the
+        // sheet could not work without: it is how "put this back where it was"
+        // is told from "pin the plan's own value here", which look identical for
+        // a week and diverge the moment the layout is permanently changed.
+        /// The week as it stands: plan, layout and per-date overrides.
+        var weekCurrent = WeekAssignment(dates: [], days: [:])
+        /// The same week with no per-date overrides at all.
+        var weekBase = WeekAssignment(dates: [], days: [:])
+        /// Committed sessions inside the week, for the placement rule.
+        var loggedDays: [LoggedDay] = []
+        /// The day keys the plan asks for this week, in plan order — what a
+        /// draft is checked against for a session it has left homeless.
+        var scheduledKeys: [String] = []
+        /// The week's summary, once every planned session is logged.
+        ///
+        /// Nil is the ordinary state — a week with work left in it. Non-nil is
+        /// what turns the This-week tile into the wrap-up door.
+        var wrap: WeeklyWrap.Summary?
+
+        /// Training-only supplement keys, unioned over the week's seven days.
+        ///
+        /// The day tier passes ONE date's keys. A week batch touches seven
+        /// weekdays whose stacks differ, and `applyScheduleWrites` takes a
+        /// single list — so the union is what makes the cascade complete.
+        /// Deleting a key that was never scheduled on a date removes no row,
+        /// which is why the wider list is the safe one rather than the lossy one.
+        var trainingOnlyKeys: [String] = []
     }
 
     // MARK: - Live state
@@ -194,6 +224,36 @@ final class WorkoutWeek {
     func addCardio(_ row: CardioLogRow) -> Bool {
         do {
             try database.addCardio(row)
+            Task { await refresh() }
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    /// Apply a week's edit: the overrides that must be written, and the ones
+    /// that must go.
+    ///
+    /// Both halves in one call because they are one change. Writing the moves
+    /// and failing to clear the returns leaves a week that is half rearranged
+    /// and half pinned — the state `undoSwap` exists to prevent one tier down,
+    /// and the reason that method takes a list rather than a date.
+    @discardableResult
+    func applyWeekPlan(_ plan: WeekPlan) -> Bool {
+        guard plan.block == nil, !plan.isEmpty else { return false }
+        do {
+            // ── ONE TRANSACTION, BECAUSE THE COPY PROMISES ONE ──────────────
+            // These were two calls, and each opens its own `writer.write`. A
+            // throw on the second left the first committed AND enqueued while
+            // the sheet printed "Nothing was altered." — the half-rearranged,
+            // half-pinned week this method's own comment says it exists to
+            // prevent, under a sentence claiming the opposite.
+            try database.applyWeekOverrides(
+                userId: userId,
+                writes: plan.writes.map { (date: $0.date, dayKey: $0.dayKey) },
+                clears: plan.clears,
+                trainingOnlySupplementKeys: snapshot.trainingOnlyKeys
+            )
             Task { await refresh() }
             return true
         } catch {
@@ -306,6 +366,66 @@ final class WorkoutWeek {
             )
         }
 
+        // ── THE WEEK SHEET'S INPUT ──────────────────────────────────────────
+        // Built here rather than in the sheet so it costs the same one detached
+        // pass as everything else on this tab: a sheet that opened its own
+        // schedule context would read the catalogue a second time, on the main
+        // actor, while a modal was animating in.
+        //
+        // `bare` is `context` with the overrides removed and NOTHING else
+        // changed — same plan, same phase, same permanent layout — so it
+        // answers "what does the plan say about this date", which is the only
+        // question `planWeek` needs a second context for.
+        // `let` copies, not the mutable `context` above: `ResolveDay` is
+        // `@Sendable` and captures its context, so capturing a `var` is a data
+        // race the compiler refuses outright. Two immutable snapshots is also
+        // what the two closures actually mean.
+        let withOverrides = context
+        var stripped = context
+        stripped.overrides = [:]
+        let bare = stripped
+        // ── A LOGGED DAY IS WHAT IT LOGGED, NOT WHAT THE PLAN SAYS ──────────
+        // The same rule `DayCell` above applies, and for the same reason: a
+        // session is attributed by its own `day_key` everywhere in this app, so
+        // a Wednesday that ran Chest & Back after a swap IS Chest & Back. The
+        // first build of this sheet took the plan's answer for every date and
+        // drew "Rest" beside a completed-session seal on the one row where the
+        // two disagree — the exact day a week sheet exists to be opened about.
+        //
+        // `weekBase` is deliberately NOT given this treatment: its job is to
+        // answer "what does the plan say", which is how `planWeek` tells
+        // clearing an override from pinning one.
+        var current = Swap.weekAssignment(of: today, resolve: { Schedule.scheduleDayIn(withOverrides, $0) })
+        for (date, session) in finished {
+            guard let key = session.dayKey, !key.isEmpty else { continue }
+            // `set`, not `place`: the record may hold the same split on two
+            // dates and neither one evicts the other. See `WeekAssignment.set`.
+            current.set(key, on: date)
+        }
+        out.weekCurrent = current
+        out.weekBase = Swap.weekAssignment(of: today, resolve: { Schedule.scheduleDayIn(bare, $0) })
+        // A session's own `day_key` is what it is attributed by, everywhere in
+        // this app. A finished session with no key cannot collide with a
+        // placement and is carried as nil rather than dropped, because
+        // `blockForPlacement` still refuses to overwrite the DATE.
+        out.loggedDays = dates.compactMap { date in
+            finished[date].map { LoggedDay(date: date, dayKey: $0.dayKey) }
+        }
+        out.scheduledKeys = out.weekBase.dates
+            .map { out.weekBase.key(on: $0) }
+            .filter { $0 != Schedule.restOverride }
+        let customs = (try? database.read { db in try CustomSupplementRow.fetchAll(db) }) ?? []
+        let active = Supplements.active(customs.map(AppDatabase.custom), on: today)
+        out.trainingOnlyKeys = Array(Set((0..<7).flatMap { weekday in
+            Supplements.stackForDate(
+                Supplements.customSlotsForDate(active, weekday: weekday, isTraining: true),
+                isTraining: true, weekday: weekday
+            )
+            .flatMap(\.items)
+            .filter { $0.trainingOnly == true }
+            .map(\.key)
+        })).sorted()
+
         // ── Last week, for the Trends door's delta ──────────────────────────
         //
         // The same loop as above over the seven dates before this week. It is
@@ -337,6 +457,16 @@ final class WorkoutWeek {
                 out.weekDeltaKg = jsRound(out.weekTonnageKg - previous)
             }
         }
+
+        // ── The wrap-up (W6) ────────────────────────────────────────────────
+        // Built here, off the rows this pass already holds, and only when the
+        // week has actually closed — a summary of a week with work left in it
+        // is the thing `WeeklyWrap.isWrapped` exists to refuse.
+        out.wrap = wrap(
+            database, weekStart: weekStart, dates: dates, finished: finished,
+            base: out.weekBase, tonnageKg: out.weekTonnageKg, deltaKg: out.weekDeltaKg,
+            phases: context.phases, analysis: analysis, userId: database.localUserId()
+        )
 
         // ── What the card prints where the rep window used to be ────────────
         out.previous = previousSession(database, dayKey: out.todayKey, before: today)
@@ -451,6 +581,115 @@ final class WorkoutWeek {
         }
 
         return out
+    }
+
+    // MARK: - The week, wrapped (W6)
+
+    /// The summary, or nil while the week still has work in it.
+    ///
+    /// ── WHY IT COSTS A PR REPLAY PER SESSION ────────────────────────────────
+    /// `personal_records` is a CURRENT-BEST table: it answers "none" for any
+    /// session whose records have since been beaten, so a week's PR count read
+    /// from it shrinks as the weeks after it go well. The only honest count is
+    /// the replay the save path already performs — records detected against
+    /// everything logged before that session — which is what `.done` does for
+    /// today and what this does four or five times for the week.
+    ///
+    /// ponytail: four replays, each a read over one movement's whole history.
+    /// It runs once per refresh, detached, and only on a week that has closed.
+    /// If it ever shows up in a trace, cache the count on `workout_sessions` at
+    /// close time and read it back — the number never changes after the fact.
+    private nonisolated static func wrap(
+        _ database: AppDatabase, weekStart: String, dates: [String],
+        finished: [String: WorkoutSession], base: WeekAssignment,
+        tonnageKg: Double, deltaKg: Double?, phases: [PhaseDef],
+        analysis: SessionAnalysis.Context, userId: String
+    ) -> WeeklyWrap.Summary? {
+        let planned = Set(dates.filter { base.key(on: $0) != Schedule.restOverride })
+        guard WeeklyWrap.isWrapped(
+            weekStart: weekStart, logged: Set(finished.keys), isTrainingDay: { planned.contains($0) }
+        ) else { return nil }
+
+        // A DELOAD week relabels every drop. Both halves of the rule, because
+        // the app has two ways to declare one and a wrap-up that honoured only
+        // the phase table would file a lever-driven release week in red.
+        let ladder = (try? database.leverLadder(userId: userId)) ?? LeverLadder()
+        let isDeload = dates.contains {
+            Maintenance.isMaintenanceDate($0, today: dates.last ?? weekStart, ladder: ladder, phases: phases)
+        }
+
+        var movements: [String: WeeklyWrap.Movement] = [:]
+        var prCount = 0
+        for session in finished.values {
+            let rows = ((try? database.historySets(sessionId: session.id)) ?? [])
+                .filter { SetTags.isWorkingSet($0.setType) }
+            guard !rows.isEmpty else { continue }
+            let groups = SessionAnalysis.grouped(rows)
+
+            let prior = ((try? database.historySets(exerciseIds: groups.map(\.exerciseId))) ?? [])
+                .filter { $0.sessionId != session.id }
+            prCount += SessionAnalysis.detect(
+                groups: groups, prior: prior, dayKey: session.dayKey, date: session.date, in: analysis
+            ).prCount
+
+            // ── HOISTED OUT OF THE MOVEMENT LOOP ────────────────────────────
+            // `previousSession` reads the WHOLE session history and builds the
+            // complete top-set map for that split. Called per movement it did
+            // that once for every lift on the card and threw all but one entry
+            // away — five sessions of six movements was thirty full history
+            // scans per wrap build. The split and the week are constant across
+            // the loop, so the answer is too.
+            let previous = previousSession(database, dayKey: session.dayKey, before: weekStart)
+
+            for group in groups {
+                let name = SessionAnalysis.displayName(id: group.exerciseId, stored: group.name)
+                guard let best = topSet(group.sets) else { continue }
+                // Keyed by movement AND split: a lift that appears in two
+                // splits is two rows, because the comparison this summary makes
+                // is same-movement-same-day_key against last week.
+                let key = "\(name.lowercased())|\(session.dayKey ?? "")"
+                let movement = WeeklyWrap.Movement(
+                    name: name, dayKey: session.dayKey ?? "",
+                    weightKg: best.weightKg, reps: best.reps,
+                    e1rm: Epley.oneRepMax(weight: best.weightKg, reps: best.reps),
+                    previousE1rm: previous?.top(for: name).flatMap {
+                        Epley.oneRepMax(weight: $0.weightKg, reps: $0.reps)
+                    }
+                )
+                // A movement trained twice on one split in a week keeps its
+                // best set, for the same reason the top set is the heaviest.
+                if let held = movements[key], held.weightKg >= movement.weightKg { continue }
+                movements[key] = movement
+            }
+        }
+
+        // The weigh-ins that BOUND the week: the last one in it, and the last
+        // one before it. A delta taken inside the week would report a Friday
+        // against a Wednesday and call it a week's change.
+        let weight = try? database.bodyweight(onOrBefore: dates.last ?? weekStart)
+        let before = ISODate.addDays(weekStart, -1).flatMap { try? database.bodyweight(onOrBefore: $0) }
+        return WeeklyWrap.Summary(
+            weekStart: weekStart, sessions: finished.count, tonnageKg: tonnageKg,
+            tonnageDeltaKg: deltaKg, prCount: prCount, isDeload: isDeload,
+            movements: movements.values.sorted { $0.name < $1.name },
+            bodyweightKg: weight,
+            bodyweightDeltaKg: (weight != nil && before != nil) ? jsRound1(weight! - before!) : nil
+        )
+    }
+
+    /// The heaviest set of a group, ties to reps — `previousSession`'s rule,
+    /// and `ExerciseSummary`'s before it.
+    private nonisolated static func topSet(_ rows: [HistorySetRow]) -> (weightKg: Double, reps: Double)? {
+        var best: (weightKg: Double, reps: Double)?
+        for candidate in collapsed(rows) {
+            guard let held = best else { best = (candidate.weightKg, candidate.reps); continue }
+            if candidate.weightKg > held.weightKg
+                || (candidate.weightKg == held.weightKg && candidate.reps > held.reps) {
+                best = (candidate.weightKg, candidate.reps)
+            }
+        }
+        guard let best, best.reps > 0 || best.weightKg > 0 else { return nil }
+        return best
     }
 
     // MARK: - The last time this split was trained

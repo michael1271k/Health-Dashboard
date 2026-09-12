@@ -167,6 +167,20 @@ public actor SyncCoordinator: MirrorRefreshing {
     /// does everything a sync does and more. Joining it the other way round
     /// needs no upgrade.
     private var queuedReason: SyncReason?
+
+    /// What the last automatic cardio ingest brought in, or nil when the last
+    /// pass found nothing new.
+    ///
+    /// Held rather than streamed: it is read once, by the tab that puts the
+    /// notice up, and `take` clears it so the same three walks are not
+    /// announced again on every foreground for the rest of the day.
+    private var lastCardioIngest: CardioIngestReport?
+
+    /// Read and clear.
+    public func takeCardioIngest() -> CardioIngestReport? {
+        defer { lastCardioIngest = nil }
+        return lastCardioIngest
+    }
     /// Whether `current` has begun its steps. Between one run's handover and
     /// the next run's first line there is a hop back onto the actor; a caller
     /// arriving in that gap can still join the promoted task instead of
@@ -358,6 +372,20 @@ public actor SyncCoordinator: MirrorRefreshing {
         // and the closing drain below is what pushes what is written here.
         if let health, !reason.isRealtime {
             _ = try? await health.syncSessionMetrics(now: now, calendar: calendar)
+            // ── THE BOUT NOBODY HAD TO TYPE ─────────────────────────────────
+            // Same placement and the same reason as session metrics: after the
+            // pull, because `applyPulled*` overwrites local rows with the
+            // server's, and before the closing drain, which is what pushes
+            // whatever this wrote.
+            //
+            // `try?` because a cardio bout is not worth failing a sync over.
+            // The report is kept rather than discarded so the UI can say what
+            // arrived — a row that appears in the ledger with no account of
+            // where it came from is the kind of data people stop trusting.
+            if let report = try? await health.syncCardioBouts(now: now, calendar: calendar),
+               !report.isEmpty {
+                lastCardioIngest = report
+            }
         }
 
         state = .running(SyncProgress(reason: reason, step: .score))

@@ -123,3 +123,80 @@ public enum CardioImport {
             .min { $0.1 < $1.1 }?.0
     }
 }
+
+// MARK: - The SMART MERGE (W6)
+
+public extension CardioImport {
+
+    /// The measurable numbers a bout carries, with nothing else attached.
+    ///
+    /// A value type rather than the row because the merge rule is the one part
+    /// of the automatic ingest that can DESTROY something a person typed, and
+    /// the rule that can destroy something is the rule that gets a pure test
+    /// and no database import.
+    struct Fields: Sendable, Equatable {
+        public var distanceM: Double?
+        public var durationMin: Double?
+        public var activeKcal: Double?
+        public var totalKcal: Double?
+        public var avgHr: Double?
+        public var elevationM: Double?
+        public var inclinePct: Double?
+
+        public init(
+            distanceM: Double? = nil,
+            durationMin: Double? = nil,
+            activeKcal: Double? = nil,
+            totalKcal: Double? = nil,
+            avgHr: Double? = nil,
+            elevationM: Double? = nil,
+            inclinePct: Double? = nil
+        ) {
+            self.distanceM = distanceM
+            self.durationMin = durationMin
+            self.activeKcal = activeKcal
+            self.totalKcal = totalKcal
+            self.avgHr = avgHr
+            self.elevationM = elevationM
+            self.inclinePct = inclinePct
+        }
+    }
+
+    /// Fill the gaps in a stored bout from an incoming one. **Never overwrite.**
+    ///
+    /// ── WHY THE STORED VALUE ALWAYS WINS ────────────────────────────────────
+    /// The sheet's import is a person looking at a card and tapping it: an
+    /// overwrite there is consented to, reviewable before Save, and correct —
+    /// Health's figures are better than a guess and the person asked for them.
+    ///
+    /// The automatic ingest is neither looked at nor asked for. It runs on
+    /// launch, over bouts nobody opened a screen about, and the row it may find
+    /// is one somebody typed by hand — a treadmill walk with the console's own
+    /// distance in it, which is the number they trust and Health's phone-derived
+    /// one is the number they do not. An unattended process that replaces a
+    /// typed figure with a measured one has silently overruled the user, and
+    /// they find out a month later from a chart.
+    ///
+    /// So the automatic path only ever ADDS: heart rate, ascent, total energy —
+    /// the figures nobody types, because no console shows them. A field that is
+    /// already present is left exactly as it is, incoming value discarded.
+    ///
+    /// The consequence is worth stating plainly: a wrong figure typed by hand
+    /// stays wrong until a person edits it. That is the correct failure. The
+    /// other direction loses data nobody can recover.
+    static func merge(stored: Fields, incoming: Fields) -> Fields {
+        Fields(
+            distanceM: stored.distanceM ?? incoming.distanceM,
+            durationMin: stored.durationMin ?? incoming.durationMin,
+            activeKcal: stored.activeKcal ?? incoming.activeKcal,
+            totalKcal: stored.totalKcal ?? incoming.totalKcal,
+            avgHr: stored.avgHr ?? incoming.avgHr,
+            elevationM: stored.elevationM ?? incoming.elevationM,
+            // Incline is never read from Health — HealthKit has no such metric
+            // for a walk — so it is carried through untouched. It is in `Fields`
+            // so that a merge is a whole-row replacement the caller cannot
+            // accidentally narrow, not because the ingest ever supplies one.
+            inclinePct: stored.inclinePct ?? incoming.inclinePct
+        )
+    }
+}

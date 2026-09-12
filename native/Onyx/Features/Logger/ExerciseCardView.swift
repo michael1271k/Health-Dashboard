@@ -694,6 +694,8 @@ struct ExerciseCardView: View {
                 )
             }
 
+            warmupRungs
+
             Button {
                 withAnimation(OnyxMotion.move) { model.addSet(to: exercise) }
             } label: {
@@ -716,6 +718,75 @@ struct ExerciseCardView: View {
         // are the most expensive, so the gutters pay.
         .padding(.horizontal, OnyxSpace.xs)
         .padding(.bottom, OnyxSpace.m)
+    }
+
+    // MARK: - Warm-up rungs
+
+    /// A tap per rung, each one a number you would otherwise work out in your
+    /// head from a weight you can see.
+    ///
+    /// ── WHY RUNGS AND NOT A GENERATE BUTTON ─────────────────────────────────
+    /// The founder's call, and `Warmup`'s own header says why: how many ramp-up
+    /// sets a lift wants depends on the lift, the day, and whether the last
+    /// exercise already warmed the same joint. A fixed two-or-three-set ladder
+    /// gets deleted by hand on the days it is wrong, which leaves you doing
+    /// plate maths AND tidying.
+    ///
+    /// ── AND WHY EVERY LOADED MOVEMENT GETS THEM, NOT JUST COMPOUNDS ─────────
+    /// "Compound" would have to be a name heuristic, and a heuristic is wrong
+    /// on exactly the movements somebody cares most about loading correctly.
+    /// "Carries external load" is a fact this card already knows. An isolation
+    /// lift nobody warms up simply has a row of chips nobody taps, which costs
+    /// 44 points; a compound the heuristic missed costs the feature.
+    @ViewBuilder
+    private var warmupRungs: some View {
+        if let target = model.warmupTarget(exercise) {
+            VStack(alignment: .leading, spacing: OnyxSpace.xs) {
+                Text("WARM-UP FROM \(OnyxFormat.kg(target)) KG")
+                    .onyxMicro()
+                    .accessibilityHidden(true)
+                // Wraps rather than scrolls: a horizontal scroller inside a
+                // vertically scrolling deck is a gesture fight, and five chips
+                // at AX5 need two lines, not a hidden overflow.
+                FlowRow(spacing: OnyxSpace.xs) {
+                    // `rungs`, not `percentages`: on a stack that moves in
+                    // fives two percentages can resolve to the same load, and
+                    // two buttons that add the identical set read as a bug in
+                    // the arithmetic. The core collapses them.
+                    ForEach(Warmup.rungs(of: target)) { rung($0) }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, OnyxSpace.xs)
+            .padding(.top, OnyxSpace.xs)
+        }
+    }
+
+    private func rung(_ rung: Warmup.Rung) -> some View {
+        Button {
+            withAnimation(OnyxMotion.move) { model.addWarmup(percent: rung.percent, to: exercise) }
+        } label: {
+            // The PERCENTAGE is the chip; the load it resolves to rides beside
+            // it in a lighter ink. Printing only "+50%" makes you do the sum
+            // the button exists to do; printing only "35 kg" hides which rung
+            // of the ladder you are on.
+            HStack(spacing: 4) {
+                Text("\(rung.percent)%")
+                    .onyxType(.caption).fontWeight(.semibold)
+                    .foregroundStyle(Color.onyx.textPrimary)
+                Text(OnyxFormat.kg(rung.kg))
+                    .onyxType(.caption).onyxNumeral()
+                    .foregroundStyle(Color.onyx.textSecondary)
+            }
+            .lineLimit(1)
+            .padding(.horizontal, OnyxSpace.s)
+            .frame(minHeight: 32)
+            .background(Capsule().fill(Color.onyx.hairline.opacity(0.6)))
+            .contentShape(.capsule)
+        }
+        .buttonStyle(.plain)
+        .onyxPress(scale: 0.94)
+        .accessibilityLabel("Add warm-up set, \(rung.percent) percent, \(OnyxFormat.kg(rung.kg)) kilograms, \(rung.reps) reps")
     }
 
     /// What the columns are.

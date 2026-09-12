@@ -647,18 +647,38 @@ public enum WeeklyExport {
         // Pace is the one derived value the raw body is allowed. `active_kcal`
         // here is ALREADY inside the day's own figure and must not be added on
         // top, which is why `total_kcal` sits beside it rather than replacing it.
+        //
+        // `start_time`, `elev_m` and `source` are the W6 columns, and they are
+        // HERE as well as in the TypeScript because this file's header is a
+        // promise: "a port of src/lib/reports/weeklyExport.ts, byte for byte".
+        // The first cut of that change touched only the web renderer, on the
+        // mistaken belief that Swift had none — the phone would have printed a
+        // CARDIO table with three fewer columns for the same week, and the
+        // golden fixture agreed with the stale side rather than catching it.
         if !cardio.isEmpty {
             L.append("")
-            L.append("## CARDIO" + sep + ["date", "day", "kind", "duration_min", "dist_km",
-                "pace_min_km", "avg_hr", "active_kcal", "total_kcal", "effort_cr10"].joined(separator: sep))
+            L.append("## CARDIO" + sep + ["date", "start_time", "day", "kind", "duration_min", "dist_km",
+                "pace_min_km", "elev_m", "avg_hr", "active_kcal", "total_kcal", "effort_cr10", "source"].joined(separator: sep))
             for c in cardio {
                 let weekday = weekdayOf(c.date, days)
+                // NOT defaulted to "manual". The TypeScript field is required
+                // and a row that arrives without one is malformed, not manual —
+                // it prints the same `—` every other unknown does. Defaulting
+                // here would make the two renderers disagree on exactly the
+                // inputs a golden fixture is most likely to contain.
+                let source = c.source ?? ""
                 L.append(fields([
-                    c.date, weekday.isEmpty ? dash : weekday, cardioLabel(c.kind),
+                    c.date,
+                    // A hand-typed row's `created_at` is an insertion instant,
+                    // not a start. Printing 21:00 for a walk done at 08:00 is
+                    // the export inventing a fact.
+                    source == "health" ? clock(c.startedAt) : dash,
+                    weekday.isEmpty ? dash : weekday, cardioLabel(c.kind),
                     n(c.durationMin, 1), kmOf(c.distanceM),
                     CardioMetrics.formatPace(CardioMetrics.paceMinPerKm(distanceM: c.distanceM, durationMin: c.durationMin)),
-                    n(c.avgHr), n(c.kcal), n(c.totalKcal),
+                    n(c.elevationM), n(c.avgHr), n(c.kcal), n(c.totalKcal),
                     c.effort == nil ? dash : js(c.effort!),
+                    source.isEmpty ? dash : source,
                 ]))
             }
         }

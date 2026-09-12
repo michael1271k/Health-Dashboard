@@ -104,6 +104,50 @@ enum HistoryPreviews {
                 WorkoutTabView(seededToday: "2026-09-05")
             }
             .environment(environment())
+        // ── W6: the week sheet, opened ──────────────────────────────────────
+        // A sheet cannot be photographed by launching the screen under it, so
+        // the harness presents it directly — the same trick `day-swap` and
+        // `session-atlas` use. Pinned to the same Thursday as `train`, so the
+        // seven rows in the shot are the seven cells in that one.
+        case "train-week":
+            PresentingWeek(today: "2026-09-03") { WeekOverrideSheet(week: $0) }
+                .environment(environment())
+        // ── W6: the wrap-up, and the card it shares ─────────────────────────
+        // Seeded rather than read: the shot's job is the LAYOUT — a week with a
+        // progression, a regression and a PR in it — and the engine behind it
+        // has its own unit suite. Building a fixture whose four planned days
+        // all happen to be logged would make this shot hostage to the seed.
+        case "train-wrap":
+            NavigationStack {
+                WeeklyWrapView(summary: wrapSummary, program: PlanTemplates.program("onyx5") ?? Program(id: "", label: "Onyx 5", days: []))
+            }
+            .environment(environment())
+        case "train-wrap-deload":
+            NavigationStack {
+                WeeklyWrapView(summary: deloadSummary, program: PlanTemplates.program("onyx5") ?? Program(id: "", label: "Onyx 5", days: []))
+            }
+            .environment(environment())
+        case "share-card":
+            // The 9:16 composition on its own, so the thing that leaves the
+            // phone is reviewed as a whole rather than as a thumbnail inside a
+            // share sheet.
+            //
+            // SCALED TO FIT, and that is the point: the card is a fixed 540×960
+            // and a 402 pt screen is not, so drawing it at its own size
+            // photographs the middle third of it. The first run of this shot
+            // came out with the headline sheared off the left edge and read as
+            // a layout bug in the card, which it was not.
+            GeometryReader { proxy in
+                WeeklyShareCard(
+                    summary: wrapSummary,
+                    program: PlanTemplates.program("onyx5") ?? Program(id: "", label: "Onyx 5", days: []),
+                    showBodyweight: true
+                )
+                .scaleEffect(min(proxy.size.width / 540, proxy.size.height / 960))
+                .frame(width: proxy.size.width, height: proxy.size.height)
+            }
+            .ignoresSafeArea()
+            .background(Color.black)
         case "library":
             NavigationStack { ExerciseLibraryView(seeded: PreviewHarness.sampleExercises) }
                 .environment(environment())
@@ -288,6 +332,67 @@ enum HistoryPreviews {
                 sessionId: id == "c-1" ? lastSession : nil,
                 inclinePct: incline
             ).insert(db)
+        }
+    }
+}
+
+/// A week with one of everything in it: a progression, a regression, a PR, a
+/// movement that held, and an unloaded movement with no estimate at all.
+@MainActor
+private var wrapSummary: WeeklyWrap.Summary {
+    WeeklyWrap.Summary(
+        weekStart: "2026-08-30", sessions: 5, tonnageKg: 42_180, tonnageDeltaKg: 1_240,
+        prCount: 2, isDeload: false,
+        movements: [
+            .init(name: "Incline DB Press", dayKey: "cb_a", weightKg: 42, reps: 11, e1rm: 57.4, previousE1rm: 53.3),
+            .init(name: "Lat Pulldown", dayKey: "cb_a", weightKg: 65, reps: 11, e1rm: 88.8, previousE1rm: 88),
+            .init(name: "Leg Press", dayKey: "legs_a", weightKg: 70, reps: 12, e1rm: 98, previousE1rm: 110),
+            .init(name: "Seated Cable Row", dayKey: "cb_a", weightKg: 40, reps: 12, e1rm: 56, previousE1rm: 52),
+            .init(name: "Side Plank", dayKey: "legs_a", weightKg: 0, reps: 61),
+        ],
+        bodyweightKg: 64.2, bodyweightDeltaKg: -0.4
+    )
+}
+
+/// The same week, declared a deload — every drop relabelled, nothing in red.
+@MainActor
+private var deloadSummary: WeeklyWrap.Summary {
+    var out = wrapSummary
+    out.isDeload = true
+    out.tonnageDeltaKg = -6_400
+    out.prCount = 0
+    return out
+}
+
+/// The Workout tab with a sheet already up.
+///
+/// `WorkoutWeek` is built by `WorkoutTabView`'s own `.task` and is not reachable
+/// from outside it, so this builds a second one against the same seeded store
+/// and hands it to the sheet. Two instances read the same rows and neither
+/// writes here, which is the whole cost of photographing a modal.
+private struct PresentingWeek<Sheet: View>: View {
+    @Environment(AppEnvironment.self) private var environment
+    let today: String
+    @ViewBuilder let sheet: (WorkoutWeek) -> Sheet
+
+    @State private var week: WorkoutWeek?
+    @State private var shown = true
+
+    var body: some View {
+        NavigationStack {
+            WorkoutTabView(seededDay: PlanTemplates.program("onyx5")?.day(key: "cb_a"), seededToday: today)
+        }
+        .sheet(isPresented: $shown) {
+            if let week, week.loaded { sheet(week) }
+        }
+        .task {
+            if week == nil {
+                week = WorkoutWeek(
+                    database: environment.database, userId: environment.userIdString,
+                    phase: .cut, seededToday: today, seededDayKey: "cb_a"
+                )
+            }
+            await week?.refresh()
         }
     }
 }

@@ -121,9 +121,14 @@ struct WeeklyExportBuilderTests {
                                    waterPct: 58.6, boneMassKg: 2.7, bmi: 21.4, createdAt: t, fatMassKg: 10.9,
                                    bodyWaterMassKg: 38, musclePct: 40, proteinPct: 18, boneMineralPct: 4.1,
                                    skeletalMuscleMassKg: 26.9).insert(conn)
+            // Two bouts, one of each provenance — the pair that pins the
+            // `created_at` double meaning the export has to carry. `cl1` was
+            // typed, so its stamp is the moment of typing; `cl2` came from
+            // Health, so its stamp IS the bout's start and the export may say so.
             try CardioLogRow(id: "cl1", userId: user, date: "2026-08-26", kind: "walk", distanceM: 5000, durationMin: 50, kcal: 250, createdAt: t).insert(conn)
-            try CardioLogRow(id: "cl2", userId: user, date: "2026-08-29", kind: "run", distanceM: 3000, durationMin: 18, kcal: 200, createdAt: t,
-                             activeKcal: 200, totalKcal: 230, avgHr: 150, effort: 7).insert(conn)
+            try CardioLogRow(id: "cl2", userId: user, date: "2026-08-29", kind: "run", distanceM: 3000, durationMin: 18, kcal: 200,
+                             fromHealthkit: true, createdAt: iso("2026-08-29T06:12:00Z"),
+                             activeKcal: 200, totalKcal: 230, avgHr: 150, effort: 7, elevationM: 120).insert(conn)
             try SleepSessionRow(id: "sl1", userId: user, startTime: iso("2026-08-22T22:30:00Z"), endTime: iso("2026-08-23T06:30:00Z"),
                                 durationMin: 480, deepMin: 60, remMin: 100, coreMin: 300, awakeMin: 20, createdAt: t).insert(conn)
             try SleepSessionRow(id: "sl2", userId: user, startTime: iso("2026-08-24T00:15:00Z"), endTime: iso("2026-08-24T07:00:00Z"),
@@ -319,8 +324,10 @@ struct WeeklyExportBuilderTests {
          "boneMineral": 4.1, "fatMassKg": 10.9, "proteinPercent": 18, "boneMineralKg": 2.7, "waterMassKg": 38, "skeletalMuscleMassKg": 26.9}
       ],
       "cardio": [
-        {"date": "2026-08-26", "kind": "walk", "distanceM": 5000, "durationMin": 50, "kcal": 250},
-        {"date": "2026-08-29", "kind": "run", "distanceM": 3000, "durationMin": 18, "kcal": 200, "totalKcal": 230, "avgHr": 150, "effort": 7}
+        {"date": "2026-08-26", "kind": "walk", "distanceM": 5000, "durationMin": 50, "kcal": 250,
+         "startedAt": "2026-08-23T00:00:00Z", "source": "manual"},
+        {"date": "2026-08-29", "kind": "run", "distanceM": 3000, "durationMin": 18, "kcal": 200, "totalKcal": 230, "avgHr": 150, "effort": 7,
+         "startedAt": "2026-08-29T06:12:00Z", "elevationM": 120, "source": "health"}
       ],
       "supplementProtocol": [
         {"time": "15:00", "name": "Creatine Monohydrate", "dose": "5 g"},

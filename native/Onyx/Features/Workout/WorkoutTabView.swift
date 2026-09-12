@@ -40,6 +40,7 @@ struct WorkoutTabView: View {
     var seededToday: String?
 
     @State private var week: WorkoutWeek?
+    @State private var weekSheetOpen = false
     /// The session this tab is keeping, live or not. Survives the cover being
     /// dismissed — that is the whole reason it lives here.
     @State private var session: LoggerModel?
@@ -114,6 +115,9 @@ struct WorkoutTabView: View {
             .padding(.bottom, OnyxSpace.xl)
         }
         .onyxScreen(.train)
+        // The bout arrived without being asked for; the tab it belongs to says
+        // so once and then forgets. Train and Pulse only — see the modifier.
+        .cardioIngestNotice()
         .navigationTitle("Train")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom, spacing: 0) { footer }
@@ -156,6 +160,19 @@ struct WorkoutTabView: View {
                     get: { phase },
                     set: { storedPhase = $0.rawValue }
                 ))
+            }
+        }
+        // Re-read on dismissal for the same reason the day swap does: the
+        // week panel, today's card and the progression queue all read the
+        // schedule, and a week rearranged behind a modal must not leave any of
+        // them drawing the old one.
+        // No `onDismiss` refresh: `applyWeekPlan` already re-reads on success,
+        // and a cancel changed nothing. Both fired before, so every confirm
+        // cost two full tab reads — and on a wrapped week each one carries the
+        // PR replay.
+        .sheet(isPresented: $weekSheetOpen) {
+            if let week, week.loaded {
+                WeekOverrideSheet(week: week)
             }
         }
         .sheet(isPresented: $loggingCardio) {
@@ -210,19 +227,66 @@ struct WorkoutTabView: View {
     /// The tonnage is trailing in the header, where a supporting figure belongs.
     private var weekPanel: some View {
         VStack(alignment: .leading, spacing: OnyxSpace.s) {
-            // Label beside the tally until the tally alone is a line wide. At
-            // AX5 an `HStack` broke "THIS WEEK" and "12,510 kg" across four
-            // lines between them.
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .firstTextBaseline, spacing: OnyxSpace.s) {
-                    Text("This week").onyxMicro()
-                    Spacer(minLength: OnyxSpace.s)
-                    tally
+            // ── THE HEADER IS THE DOOR (W6) ─────────────────────────────────
+            // Tapping "This week" opens the week's seven days for reassignment.
+            // The header and not the cells: a cell already means "open the
+            // session that happened here", and giving it a second meaning that
+            // depends on whether the day is logged is the kind of control
+            // people learn by getting it wrong.
+            //
+            // A Button wrapping the whole ViewThatFits rather than just the
+            // Text, so the tap target is the full width of the panel's top
+            // line — a 60 pt word is not a target at the end of an arm holding
+            // a phone in a gym.
+            // ── THE TILE IS THE WRAP-UP DOOR ONCE THE WEEK CLOSES ──────────
+            // A wrap-up modal that appears on its own gets dismissed by reflex
+            // and is then gone — a summary of the week you just trained, shown
+            // once, at a moment you did not choose. The panel transforms
+            // instead: same tile, same place, now a door that stays.
+            //
+            // The rearrange sheet moves to a long press. It is the everyday
+            // action for six days of the week and the wrap-up is the news on
+            // the seventh, so the seventh takes the tap.
+            if let wrap = week?.snapshot.wrap {
+                NavigationLink {
+                    WeeklyWrapView(summary: wrap, program: week?.snapshot.program ?? Program(id: "", label: "", days: []))
+                } label: {
+                    wrapLabel(wrap)
                 }
-                VStack(alignment: .leading, spacing: OnyxSpace.xs) {
-                    Text("This week").onyxMicro()
-                    tally
+                .buttonStyle(.plain)
+                .onyxPress()
+                .contextMenu {
+                    // `week?.loaded` gates the TAP rather than the sheet's content.
+            // Presenting and then drawing nothing is the black-cover-with-no-
+            // way-out shape this file already warns about below; a header that
+            // is simply inert for the half-second before the first detached
+            // read lands cannot produce it.
+            Button { if week?.loaded == true { weekSheetOpen = true } } label: {
+                        Label("Rearrange this week", systemImage: "calendar.badge.clock")
+                    }
                 }
+            } else {
+            Button { weekSheetOpen = true } label: {
+                // Label beside the tally until the tally alone is a line wide. At
+                // AX5 an `HStack` broke "THIS WEEK" and "12,510 kg" across four
+                // lines between them.
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .firstTextBaseline, spacing: OnyxSpace.s) {
+                        weekLabel
+                        Spacer(minLength: OnyxSpace.s)
+                        tally
+                    }
+                    VStack(alignment: .leading, spacing: OnyxSpace.xs) {
+                        weekLabel
+                        tally
+                    }
+                }
+                .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+            .onyxPress()
+            .accessibilityLabel("This week")
+            .accessibilityHint("Rearrange this week's days")
             }
             HStack(spacing: OnyxSpace.xs) {
                 ForEach(week?.snapshot.cells ?? []) { cell in
@@ -236,6 +300,55 @@ struct WorkoutTabView: View {
         .onyxGlass(.tile)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("This week")
+    }
+
+    /// The closed week's header line: the news, the tally, and a chevron.
+    ///
+    /// Deliberately the same three parts in the same places as the open week's
+    /// — only the word changes. A tile that re-lays itself out when its state
+    /// flips reads as a different tile arriving, rather than as this one having
+    /// something new to say.
+    private func wrapLabel(_ wrap: WeeklyWrap.Summary) -> some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: OnyxSpace.s) {
+                wrapTitle(wrap)
+                Spacer(minLength: OnyxSpace.s)
+                tally
+            }
+            VStack(alignment: .leading, spacing: OnyxSpace.xs) {
+                wrapTitle(wrap)
+                tally
+            }
+        }
+        .contentShape(.rect)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Week wrapped. \(wrap.headline)")
+        .accessibilityHint("Open the weekly summary")
+    }
+
+    private func wrapTitle(_ wrap: WeeklyWrap.Summary) -> some View {
+        HStack(spacing: OnyxSpace.xs) {
+            Text(wrap.isDeload ? "Deload wrapped" : "Week wrapped")
+                .onyxMicro()
+                .foregroundStyle(OnyxDomain.train.accent)
+            Image(systemName: "chevron.right")
+                .onyxType(.micro)
+                .foregroundStyle(OnyxDomain.train.accent.opacity(0.7))
+                .accessibilityHidden(true)
+        }
+    }
+
+    /// The header's own line. A chevron beside it, because a heading that opens
+    /// something has to say so — the panel looked identical before it was
+    /// tappable, and an affordance nobody can see is a feature nobody uses.
+    private var weekLabel: some View {
+        HStack(spacing: OnyxSpace.xs) {
+            Text("This week").onyxMicro()
+            Image(systemName: "chevron.right")
+                .onyxType(.micro)
+                .foregroundStyle(Color.onyx.textTertiary)
+                .accessibilityHidden(true)
+        }
     }
 
     @ViewBuilder
@@ -361,7 +474,7 @@ struct WorkoutTabView: View {
                 // 44 pt, not 88: the figure on this card says WHERE, and where
                 // is legible at a thumbnail. The 96 pt hit-tested one lives on
                 // the session page, which is the screen about the landing.
-                AtlasFigure(side: .front, worked: worked(day), monochromeTint: accent)
+                AtlasFigure(side: .front, worked: worked(day), monochromeTint: accent, isThumbnail: true)
                     .frame(height: 44)
                     .accessibilityHidden(true)
             }

@@ -161,7 +161,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
       .select('date, weight_kg, bmi, body_fat_pct, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, muscle_mass_kg, fat_free_mass_kg, fat_mass_kg, protein_mass_kg, protein_percent, bone_mineral_kg, water_mass_kg, skeletal_muscle_mass_kg')
       .gte('date', weekStart).lte('date', weekEnd),
     // Walks / runs — a separate ledger; exported flagged as already counted.
-    supabase.from('cardio_logs').select('date, kind, distance_m, duration_min, kcal, active_kcal, total_kcal, avg_hr, effort')
+    supabase.from('cardio_logs').select('date, kind, distance_m, duration_min, kcal, active_kcal, total_kcal, avg_hr, effort, elevation_m, created_at, from_healthkit')
       .gte('date', weekStart).lte('date', weekEnd).order('date', { ascending: true }),
     // Session effort (Borg CR10) — its OWN query. Folding session_rpe into the
     // sessions select above would make a pre-migration DB drop every session
@@ -289,7 +289,8 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     cardio: (cardio.error ? [] : (cardio.data ?? [])) as Array<{
       date: string; kind: string; distance_m: number | null; duration_min: number | null
       kcal: number | null; active_kcal?: number | null; total_kcal?: number | null
-      avg_hr?: number | null; effort?: number | null
+      avg_hr?: number | null; effort?: number | null; elevation_m?: number | null
+      created_at?: string | null; from_healthkit?: boolean | null
     }>,
     // session_rpe may not be migrated yet — an error just means nothing rated.
     rpe: (rpe.error ? [] : (rpe.data ?? [])) as unknown as Array<{ id: string; session_rpe: number | null }>,
@@ -838,6 +839,12 @@ function toCardio(d: RangeData): ExportCardio[] {
     totalKcal: c.total_kcal ?? null,
     avgHr: c.avg_hr ?? null,
     effort: c.effort ?? null,
+    elevationM: c.elevation_m ?? null,
+    // `created_at` is the bout's START on an imported row and the moment of
+    // typing on a manual one. Both are exported; `source` is what tells them
+    // apart, and the renderer refuses to print a manual row's as a start.
+    startedAt: c.created_at ?? null,
+    source: c.from_healthkit ? 'health' : 'manual',
   }))
 }
 

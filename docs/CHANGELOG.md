@@ -47,6 +47,51 @@ _Nothing yet._
 
 ---
 
+## [2.2.0] — 2026-09-12 · The Week Bends, The Bout Arrives By Itself
+
+### Added
+- **Move a whole week without touching the plan.** Tapping "This week" on Train
+  opens all seven days at once — reassign any of them, take a rest day, and
+  next week goes back to normal. Every consequence is stated before you
+  confirm: what changes, what goes back to the plan, and which session has been
+  left with nowhere to go. A day you have already logged says so and cannot be
+  moved. (`WeekOverrideSheet`)
+- **Cardio arrives on its own.** Walks, runs, rides, rows, elliptical and HIIT
+  are read out of Apple Health on every sync and filed without you opening
+  anything — with their start time, heart rate, ascent and total energy. Train
+  and Pulse say briefly what landed. Nothing you typed is ever overwritten: an
+  import only ever fills a blank. (`HealthSync.syncCardioBouts`)
+- **The week, wrapped.** When the last planned session of the week is logged —
+  Friday, if that is when your plan finishes — the This-week tile becomes a
+  summary: sessions, tonnage and its change, PRs, the heaviest set you lifted,
+  and every movement that progressed or regressed against the same split last
+  week. A deload week says so and relabels its drops rather than filing them in
+  red. Shareable as a card, with bodyweight off unless you ask for it.
+  (`WeeklyWrapView`)
+- **The Pulse body now draws two things at once.** The fill is what the ledger
+  implies you are still carrying, muscle by muscle, decaying at a rate that
+  differs between a quad and a side delt. The ring over it is what you reported.
+  A muscle filled with no ring is loaded and not complaining; a ring with no
+  fill is complaining about work the ledger has no record of. (`MuscleRecovery`)
+- **Warm-up rungs in the Live Logger.** A row of chips under every loaded
+  movement — 40% · 15, 50% · 20, 75% · 30 — each one a tap that adds that set,
+  rounded to the increment the weight in front of you is already using. Build
+  the ladder you want; it is saved into the routine for next time.
+- **`start_time`, `elev_m` and `source` in the weekly export's CARDIO block.**
+  All three were already on the row and none of them reached the document, so a
+  week of walks read as a list of durations.
+
+### Changed
+- **Export is a closing ritual on the phone too.** "Export week" no longer
+  appears on a week with days left to log, and says which date it opens on. The
+  web has worked this way since the report loop was built.
+
+### Fixed
+- The Pulse review shot photographed a body with no training behind it, so half
+  of what the soreness tile draws was invisible in its own screenshot.
+
+---
+
 ## [2.1.0] — 2026-09-12 · Which Side, Which Part, Which Joint
 
 Soreness stops being ten numbers. You can now say WHICH part of a muscle is

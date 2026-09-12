@@ -120,6 +120,14 @@ public struct ExportCardio: Codable, Equatable, Sendable {
     public var totalKcal: Double?
     public var avgHr: Double?
     public var effort: Double?
+    /// The bout's own start on an imported row; the moment of typing on a
+    /// manual one. `source` is what tells the two apart — see the TypeScript
+    /// twin's doc comment for why the column carries both.
+    public var startedAt: String?
+    public var elevationM: Double?
+    /// `health` | `manual`. Optional only so a fixture written before this
+    /// field existed still decodes; the builder always supplies it.
+    public var source: String?
 }
 
 public struct ExportSet: Codable, Equatable, Sendable {

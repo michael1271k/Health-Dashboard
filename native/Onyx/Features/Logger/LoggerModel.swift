@@ -1003,6 +1003,67 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         })
     }
 
+    // MARK: - Warm-up rungs (W6)
+
+    /// The weight a warm-up ladder on this card is built from, or nil when the
+    /// movement has nothing to ramp to — bodyweight, timed, or the cardio card.
+    func warmupTarget(_ exercise: ExerciseState) -> Double? {
+        guard !BodyweightExercise.isUnloaded(exercise.name),
+              !exercise.rows.contains(where: \.isCardio)
+        else { return nil }
+        return Warmup.target(workingKg: exercise.rows.filter { $0.kind != .warmup }.compactMap(\.weightKg))
+    }
+
+    /// Add one rung.
+    ///
+    /// ── WHY IT IS INSERTED, NOT APPENDED ────────────────────────────────────
+    /// A warm-up belongs before the work, and within the warm-ups it belongs in
+    /// load order. Appending would put a 40% rung under a 75% one whenever they
+    /// were tapped out of order, and the deck would draw a ladder that descends
+    /// — which reads as a mistake even though every row in it is right.
+    ///
+    /// ── AND WHY NOTHING STOPS A DUPLICATE ───────────────────────────────────
+    /// Two sets at 50% is a legitimate ramp, and refusing the second tap would
+    /// make the chip row a set of switches rather than a set of buttons. The
+    /// undo is the row's own delete, which is where every other unwanted set on
+    /// this card is removed.
+    func addWarmup(percent: Int, to exercise: ExerciseState) {
+        guard let target = warmupTarget(exercise) else { return }
+        let weightKg = Warmup.load(percent: percent, of: target)
+        let reps = Warmup.reps(percent: percent)
+
+        // The first row that is not a warm-up — the top of the working block.
+        let insertAt = exercise.rows.firstIndex { $0.kind != .warmup } ?? exercise.rows.count
+        // A warm-up with no weight yet (one the user blanked) sorts to the top
+        // rather than swallowing the comparison: `nil > 20` is not false, it is
+        // not expressible, and defaulting it to 0 is the honest reading.
+        let ordered = exercise.rows[..<insertAt].firstIndex { ($0.weightKg ?? 0) > weightKg } ?? insertAt
+
+        // Same shape as the sets it sits with: a lunge warms up one side at a
+        // time, exactly as `addSet` splits a working set (see `presplit`).
+        guard canSplit(exercise) else {
+            exercise.rows.insert(SetRow(weightKg: weightKg, reps: reps, kind: .warmup), at: ordered)
+            restampFrom(ordered, in: exercise)
+            return
+        }
+        let pairId = newOnyxID()
+        exercise.rows.insert(
+            contentsOf: ["left", "right"].map { side in
+                SetRow(weightKg: weightKg, reps: reps, kind: .warmup, side: side, pairId: pairId)
+            },
+            at: ordered
+        )
+        // ── A MID-ARRAY INSERT MUST RESTAMP WHAT IT PUSHED DOWN ─────────────
+        // `snapshot(_:in:)` derives the stored `set_index` from array POSITION,
+        // and seeding matches a row on `(exercise_id, set_index)`. A rung added
+        // after a working set was ticked shifts every logged row below it by
+        // one (two on a pair) and leaves their stored indices behind — which
+        // collides two rows on one key and mis-orders the session report and
+        // the sync payload. `removeSet` and `mergeSet` repair it for the same
+        // reason; this insert is the third mid-array mutation and needs it too.
+        restampFrom(ordered, in: exercise)
+    }
+
     /// Re-write the stored `set_index` of every logged row from `index` down.
     private func restampFrom(_ index: Int, in exercise: ExerciseState) {
         guard store != nil, sessionId != nil else { return }
