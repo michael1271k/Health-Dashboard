@@ -236,6 +236,7 @@ describe('buildWeeklyExport', () => {
       cardio: [{
         date: '2026-07-19', kind: 'walk', distanceM: 4200, durationMin: 45,
         kcal: 210, totalKcal: 265, avgHr: 112, effort: 4,
+        startedAt: '2026-07-19T07:32:00+01:00', elevationM: 86, source: 'health',
       }],
     })
     // Every requested metric, named on the legend, in a fixed order. Pace is
@@ -253,12 +254,44 @@ describe('buildWeeklyExport', () => {
     expect(walk.total_kcal).toBe('265')
     expect(legendOf(withCardio, 'CARDIO'))
       .toEqual(expect.arrayContaining(['active_kcal', 'total_kcal']))
+    // An imported bout knows WHEN it happened and HOW MUCH it climbed. Both
+    // were on the row and neither was exported, so a week of walks read as an
+    // undifferentiated list of durations.
+    expect(walk.start_time).toBe('07:32')
+    expect(walk.elev_m).toBe('86')
+    expect(walk.source).toBe('health')
+  })
+
+  it('refuses to print a hand-typed row\'s insertion instant as a start time', () => {
+    // `cardio_logs.created_at` is the bout's start on an IMPORTED row and the
+    // moment of typing on a manual one — the column carries two meanings
+    // because the table has no `started_at` and cannot get one. Printing the
+    // manual one under `start_time` states that a walk done at 08:00 happened
+    // at 21:00. `source` is exported so a reader can tell the two apart, but
+    // the renderer does not make them depend on reading it.
+    const typed = buildWeeklyExport({
+      ...input,
+      cardio: [{
+        date: '2026-07-19', kind: 'walk', distanceM: 3000, durationMin: 30,
+        kcal: 150, totalKcal: null, avgHr: null, effort: null,
+        startedAt: '2026-07-19T21:04:00+01:00', elevationM: null, source: 'manual',
+      }],
+    })
+    const [walk] = cardioRows(typed, '2026-07-19')
+    expect(walk.start_time).toBe(DASH)
+    expect(walk.source).toBe('manual')
+    // And the elevation it never had stays unknown rather than becoming zero.
+    expect(walk.elev_m).toBe(DASH)
   })
 
   it('names every cardio metric even when it was never entered — and never invents a zero', () => {
     const sparse = buildWeeklyExport({
       ...input,
-      cardio: [{ date: '2026-07-19', kind: 'run', distanceM: null, durationMin: 30, kcal: null, totalKcal: null, avgHr: null, effort: null }],
+      cardio: [{
+        date: '2026-07-19', kind: 'run', distanceM: null, durationMin: 30, kcal: null,
+        totalKcal: null, avgHr: null, effort: null,
+        startedAt: null, elevationM: null, source: 'manual',
+      }],
     })
     // Dropping absent fields made two walks incomparable: one showed "avg HR
     // 112" and one showed nothing, with no way to tell missing data from a
@@ -266,7 +299,7 @@ describe('buildWeeklyExport', () => {
     const [run] = cardioRows(sparse, '2026-07-19')
     expect(run.kind).toBe('Run')
     expect(run.duration_min).toBe('30.0')
-    for (const k of ['dist_km', 'pace_min_km', 'active_kcal', 'total_kcal', 'avg_hr', 'effort_cr10']) {
+    for (const k of ['dist_km', 'pace_min_km', 'elev_m', 'active_kcal', 'total_kcal', 'avg_hr', 'effort_cr10', 'start_time']) {
       expect(run[k], `${k} on a sparse bout`).toBe(DASH)
     }
     // The invariant that mattered in the original test: no fabricated zeros.
@@ -714,8 +747,8 @@ describe('weeklySummary', () => {
   it('totals cardio duration and active calories across the week', () => {
     const s = weeklySummary(base({
       cardio: [
-        { date: '2026-07-19', kind: 'walk', distanceM: 3000, durationMin: 30, kcal: 150, totalKcal: null, avgHr: null, effort: null },
-        { date: '2026-07-21', kind: 'run', distanceM: 5000, durationMin: 25, kcal: 320, totalKcal: null, avgHr: null, effort: null },
+        { date: '2026-07-19', kind: 'walk', distanceM: 3000, durationMin: 30, kcal: 150, totalKcal: null, avgHr: null, effort: null, startedAt: null, elevationM: null, source: 'manual' },
+        { date: '2026-07-21', kind: 'run', distanceM: 5000, durationMin: 25, kcal: 320, totalKcal: null, avgHr: null, effort: null, startedAt: null, elevationM: null, source: 'manual' },
       ],
     }))
     expect(s.cardioMinutes).toBe(55)
@@ -804,6 +837,7 @@ describe('week-over-week ledger', () => {
   const walk = (durationMin: number | null): ExportCardio => ({
     date: '2026-07-19', kind: 'walk', distanceM: null, durationMin,
     kcal: null, totalKcal: null, avgHr: null, effort: null,
+    startedAt: null, elevationM: null, source: 'manual',
   })
   const base = (o: Partial<WeeklyExportInput> = {}): WeeklyExportInput => ({
     weekStart: '2026-08-02', weekEnd: '2026-08-08', weekLabel: 'Week 3',

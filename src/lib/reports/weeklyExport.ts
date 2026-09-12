@@ -322,6 +322,27 @@ export interface ExportCardio {
   totalKcal: number | null
   avgHr: number | null
   effort: number | null        // Borg CR10
+  /**
+   * The bout's own start, as a timestamp — `cardio_logs.created_at`.
+   *
+   * ── WHY THE COLUMN CARRIES TWO MEANINGS, AND WHY `source` IS BESIDE IT ─────
+   * `cardio_logs` has no start-time column and is not getting one (the table is
+   * shared with the web app and adding one is a paste-into-the-SQL-editor step
+   * this machine cannot perform). For an IMPORTED row the app stores the bout's
+   * start here, because for the one query that reads it — `ORDER BY created_at`
+   * — a start is a strictly better sort key than the instant of the import. For
+   * a HAND-TYPED row it is still the moment it was typed.
+   *
+   * So the figure alone cannot be read. `source` says which of the two it is,
+   * and a reader that wants "when did the walk happen" must check it first.
+   * Exporting the time without the provenance would state a 21:00 walk that
+   * happened at 08:00.
+   */
+  startedAt: string | null
+  /** Metres climbed. Most of what separates a hard walk from an easy one. */
+  elevationM: number | null
+  /** `health` = read from Apple Health, `manual` = typed. Never null. */
+  source: 'health' | 'manual'
 }
 
 /** One working set, in order. `side` is null on bilateral sets. */
@@ -1692,17 +1713,32 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
   // exported facts, and the unit a run is actually read in. `active_kcal` here
   // is ALREADY inside the day's own `active_kcal` and must not be added on top,
   // which is why `total_kcal` sits beside it rather than replacing it.
+  //
+  // `start_time` and `elev_m` joined the block when the app started ingesting
+  // bouts from Apple Health without being asked to. Both were already on the
+  // row and neither was exported: a week of walks read as an undifferentiated
+  // list of durations, when the record knew that one was 40 minutes uphill at
+  // 06:30 and another was 40 minutes flat after dinner. `source` is what makes
+  // `start_time` readable at all — see `ExportCardio.startedAt`.
   if (cardio.length) {
     L.push('')
-    L.push('## CARDIO' + SEP + ['date', 'day', 'kind', 'duration_min', 'dist_km',
-      'pace_min_km', 'avg_hr', 'active_kcal', 'total_kcal', 'effort_cr10'].join(SEP))
+    L.push('## CARDIO' + SEP + ['date', 'start_time', 'day', 'kind', 'duration_min', 'dist_km',
+      'pace_min_km', 'elev_m', 'avg_hr', 'active_kcal', 'total_kcal', 'effort_cr10', 'source'].join(SEP))
     for (const c of cardio) {
       L.push(fields(
-        c.date, weekdayOf(c.date, days) || DASH, cardioLabel(c.kind),
+        c.date,
+        // A hand-typed row's `created_at` is an insertion instant, not a start,
+        // and printing 21:00 under `start_time` for a walk done at 08:00 is the
+        // export inventing a fact. `source` is exported beside it, but a reader
+        // should not have to cross-check a column to avoid being misled — so an
+        // unknown start says so.
+        c.source === 'health' ? clock(c.startedAt) : DASH,
+        weekdayOf(c.date, days) || DASH, cardioLabel(c.kind),
         n(c.durationMin, 1), kmOf(c.distanceM),
         formatPace(paceMinPerKm(c.distanceM, c.durationMin)),
-        n(c.avgHr), n(c.kcal), n(c.totalKcal),
+        n(c.elevationM), n(c.avgHr), n(c.kcal), n(c.totalKcal),
         c.effort == null ? DASH : String(c.effort),
+        c.source,
       ))
     }
   }

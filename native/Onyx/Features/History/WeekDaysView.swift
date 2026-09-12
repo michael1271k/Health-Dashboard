@@ -88,7 +88,30 @@ struct WeekDaysView: View {
                     LabeledContent("Weekly report", value: report.periodStart)
                 }
             }
-            if let exportText {
+            // ── EXPORT IS A CLOSING RITUAL, NOT A LIVE ONE ──────────────────
+            // The web has refused this on a running week since the loop was
+            // built (`PathfinderTimeline`): an export of a week with days left
+            // to log is a partial record, and any report written from it then
+            // sits in the ledger looking final. The phone offered it on every
+            // week including the live one, which is the same bug with a nicer
+            // share sheet.
+            //
+            // `WeekReady.isComplete` is the CALENDAR rule — strictly after the
+            // week's last day — and deliberately not `isReady`, which fires
+            // mid-week the moment the planned work is done. The wrap-up wants
+            // `isReady`; a document that claims to be the week does not.
+            //
+            // The absence is stated rather than silent. A control that vanishes
+            // with no explanation reads as a bug, and the answer to "where did
+            // the button go" is a date.
+            if !weekIsComplete {
+                Label(
+                    "Export opens when the week closes · \(Swap.shortDayLabel(ISODate.addDays(window.start, 7) ?? window.start))",
+                    systemImage: "lock"
+                )
+                .onyxType(.caption)
+                .foregroundStyle(Color.onyx.textSecondary)
+            } else if let exportText {
                 // ── WHAT THIS SHARES, AND WHY IT IS JSON ────────────────────
                 // `WeeklyExportBuilder` assembles the week exactly as the
                 // report brief needs it — days, sessions, sets, targets, the
@@ -119,6 +142,12 @@ struct WeekDaysView: View {
                  ? "No weekly report has been written for these dates yet."
                  : "The report is the pasted-back brief; the export is what it was written from.")
         }
+    }
+
+    /// Strictly after this week's final day, in the device's own calendar —
+    /// the same rule the web's export gate reads.
+    private var weekIsComplete: Bool {
+        WeekReady.isComplete(weekStart: window.start, today: LogicalDayISO.today())
     }
 
     // MARK: - Loading

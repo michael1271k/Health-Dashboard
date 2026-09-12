@@ -118,6 +118,12 @@ public struct WeeklyExportBuilder: Sendable {
                     "date": c.date, "kind": c.kind, "distanceM": j(c.distanceM), "durationMin": j(c.durationMin),
                     // Pre-migration rows only have `kcal`; it always held the ACTIVE figure.
                     "kcal": j(c.activeKcal ?? c.kcal), "totalKcal": j(c.totalKcal), "avgHr": j(c.avgHr), "effort": j(c.effort),
+                    "elevationM": j(c.elevationM),
+                    // ISO-8601, because this payload is JSON read by a model and
+                    // not a rendered document — the web renderer is what turns
+                    // it into a wall clock, and only for an imported row.
+                    "startedAt": c.createdAt.map { ISO8601DateFormatter().string(from: $0) } ?? NSNull(),
+                    "source": (c.fromHealthkit ?? false) ? "health" : "manual",
                 ] as [String: Any]
             },
             "supplementProtocol": supplementStack(rows.customs),
