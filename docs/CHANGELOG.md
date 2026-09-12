@@ -47,6 +47,83 @@ _Nothing yet._
 
 ---
 
+## [2.3.0] — 2026-09-12 · The Week, Written Down
+
+The weekly export stops being a payload and becomes a document. The native
+**Export week** button shared a `JSONEncoder` dump; the web's **Copy raw data**
+shared markdown that read like a spreadsheet — `## DAYS` was forty columns
+joined by ` · `, one line per day, and answering "what happened on Monday" meant
+visiting four sections and counting dots. Both are now the same day-major
+document, byte for byte, in both languages.
+
+### Added
+- **The week is written day by day.** Everything Onyx knows about Monday sits
+  under `## DAY 2 · Mon · 2026-08-31` — sleep, vitals, body, readiness, head,
+  intake, micronutrients, the stack, activity, the shape it was given, its
+  sessions, its cardio, and the figures Onyx computed from it. One place per
+  day. (`src/lib/reports/weeklyExport.ts`, `OnyxCore/Reports/WeeklyExport.swift`)
+- **Sets you can read.** `` `S1` 75 kg × 12 @ 8.5 Hard `` rather than
+  `75×12@8.5` — the effort carries its word from the logger's own ladder, and a
+  unilateral pair states what it scored: `L 5 kg × 15 · R 5 kg × 17 → scores
+  5 kg × 15`.
+- **The Head row reaches a report for the first time.** `stress_logs` shipped
+  with the Pulse Head row and was read by nothing. Every day now names its slot,
+  its level with the word, what it was about and the note:
+  `morning 2 Okay · evening 4 Strained — work, money`. The web gained the same
+  reader, so both surfaces render the same week. (`src/lib/recovery/psychStress.ts`)
+- **Four tables, each a real grid** — the programme ledger, sets by muscle vs
+  target, body composition, and the weekly micronutrient average against every
+  target. Everything else stays prose, because a markdown table collapses into
+  one paragraph in Apple Notes.
+- **The four closing notes are back**, verbatim and last: the unilateral scoring
+  rule, the Epley estimate, the Apple Watch caveat, and the Week 7 reference.
+  Above them, a legend that explains every convention the document uses.
+- **The native app shares a real file.** `onyx-week-2026-08-30.md` reaches Files,
+  Mail and Notes with a name, rather than arriving as loose text.
+  (`native/Onyx/Features/History/WeekDaysView.swift`)
+
+### Changed
+- **A gap is named, never a blank.** A missing reading says `no data`, an empty
+  list says `none`, a skipped weigh-in says the reason the protocol recorded
+  (`no weigh-in — As Planned`). A row states what it has and names the rest
+  after `— not measured:`; a row with nothing at all is dropped and listed in
+  that day's closing `Not recorded:` line, so a blank Saturday costs one line
+  instead of twelve that all say the same thing.
+- **Computed figures are labelled where they sit.** v3 kept a document-level
+  fence with every derived figure below it. A day-major document has no fence,
+  so the marker travels with the number: `**Derived** *(computed by Onyx, not
+  measured)*`, and the energy balance says it is an estimate on its own line.
+- **A day's micronutrients print the exceptions only** — a floor missed, a
+  ceiling exceeded, a reading the document doubts. The full picture moved to the
+  weekly table, which is where an average belongs.
+- **Supplements are named, not keyed.** A day's taken list said `d3k2@07:00`; it
+  now says `Vitamin D3 + K2 07:00`. An item the protocol no longer names still
+  appears, under its key.
+- **Session counts are read off the rows the document prints**, not off the
+  stored `set_count`. Where the two disagreed the document stated one total and
+  then showed another.
+
+### Fixed
+- **A session dated outside the week's day rows no longer vanishes.** Nesting
+  sessions under days created a way to drop a whole workout that the old flat
+  section could not have; stranded work is printed under its own date and
+  counted in every total.
+- **A note keeps its own punctuation.** `;` and `:` were stripped because the
+  token grammar reserved them, so "barely slept; deadline" reached the document
+  as "barely slept deadline".
+- **The stand ring, the bed and wake times, and a hand-typed cardio start** all
+  read as what they are rather than as raw column values.
+
+### Removed
+- `weekJson.ts` / `WeekJson.swift` — the machine-readable half. It was fully
+  written, documented and tested, and called by nothing: this export has one
+  consumer and it is a person pasting into a chat window.
+- v3's token grammar. `line.split(' · ')` is no longer a complete parser, and
+  `export-recoverable.test.ts` now proves the obligation underneath it instead:
+  every set that went in comes back out of the document alone.
+
+---
+
 ## [2.2.0] — 2026-09-12 · The Week Bends, The Bout Arrives By Itself
 
 ### Added

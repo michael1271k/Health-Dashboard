@@ -6,9 +6,11 @@ import {
 } from '@/lib/reports/weeklyExport'
 import { stallProtocol, rollingAverage, type DayPoint, type SessionPoint } from '@/lib/coach/insights'
 import {
-  dayRow, rowsOf, rowFor, weekRow, bodyRow, cardioRows, sessionBlock, setsOf, exercise,
-  legendOf, sectionLines, sectionText, dataLines, headings, headerCells,
-  derivedRow, derivedWeekRow, howLine, assertAligned, DASH,
+  dayField, dayFieldOrNull, dayDates, dayHeadings, trained, notRecorded,
+  bodyRow, muscleRow, cardioLines, sessionBlock, setsOf, exercise, weekSessions,
+  sessionRpe, subsectionLines, hasSubsection, sectionLines, headings, metaCells,
+  title, weekField, weekTotals, energy, derivedOf, stackProtocol, shape,
+  legendText, readiness, dayLines, notMeasured, table, assertAligned, NO_DATA, NONE,
 } from './exportGrammar'
 
 const day = (date: string, p: Partial<DayPoint>): DayPoint => ({
@@ -147,29 +149,27 @@ describe('buildWeeklyExport', () => {
   })
 
   it('zips every row against the legend on its own heading', () => {
-    // The precondition for every other assertion in this file. A row one field
-    // wider than its legend reads the neighbouring column, and every field test
-    // then passes on the wrong number.
+    // The precondition for every other assertion in this file. A row missing
+    // its hard break runs into the row below it, and every field read after
+    // that silently returns two rows glued together.
     assertAligned(buildWeeklyExport(input))
   })
 
-  it('marks missing data as "—" instead of dropping the row or implying zero', () => {
+  it('names a gap instead of dropping the day or implying zero', () => {
     const out = buildWeeklyExport(input)
-    // The empty day is still PRESENT, and every column on it answers `—`.
-    const mon = dayRow(out, '2026-07-20')
-    expect(mon.day).toBe('Mon')
-    expect(mon.train).toBe('0')
-    for (const k of ['sleep_min', 'hrv_ms', 'rhr', 'steps', 'kcal', 'P', 'C', 'F',
-      'water_l', 'weight_kg', 'active_kcal', 'bmr_kcal']) {
-      expect(mon[k], `${k} on the empty day`).toBe(DASH)
+    // The empty day is still PRESENT — it has a heading of its own, and it
+    // names every row it had no reading for rather than going quiet.
+    expect(dayHeadings(out).find((h) => h.includes('2026-07-20'))).toBe('DAY 2 · Mon · 2026-07-20 · REST')
+    expect(trained(out, '2026-07-20')).toBe(false)
+    for (const row of ['sleep', 'vitals', 'intake', 'activity', 'training', 'cardio']) {
+      expect(notRecorded(out, '2026-07-20'), `${row} on the empty day`).toContain(row)
     }
-    // The two vitals that were fetched-and-dropped (blood oxygen) or never
-    // fetched at all (wrist temperature) are columns on every day now, dashed
-    // when absent — the whole point of adding them.
-    expect(mon.wrist_temp_c).toBe(DASH)
-    expect(mon.spo2_pct).toBe(DASH)
-    // Never a fabricated 0: the empty day carries no numeric cell at all.
-    expect(Object.values(mon).some((v) => v === '0' && v !== mon.train)).toBe(false)
+    for (const label of ['Sleep', 'Vitals', 'Intake', 'Activity']) {
+      expect(dayFieldOrNull(out, '2026-07-20', label), label).toBeNull()
+    }
+    // Never a fabricated 0. A day the app heard nothing about states nothing.
+    const block = dayLines(out, '2026-07-20').join('\n')
+    expect(block).not.toMatch(/\b0 (kcal|kg|steps|min)\b/)
   })
 
   it('is DRY DATA — no coaching prompt or instruction header', () => {
@@ -179,25 +179,25 @@ describe('buildWeeklyExport', () => {
     expect(out).not.toMatch(/highest-leverage/)
     // Starts straight at the week heading — the identity of the week, and
     // nothing telling the reader what to think about it.
-    expect(headerCells(out)[0]).toBe('# ONYX WEEK')
-    expect(headerCells(out)[1]).toBe('2026-07-19→2026-07-25')
+    expect(title(out)).toBe('# ONYX · WEEK')
+    expect(metaCells(out)[0]).toBe('2026-07-19 → 2026-07-25')
   })
 
   it('carries the program, sessions, and volume targets', () => {
     const out = buildWeeklyExport(input)
-    expect(headerCells(out)[2]).toBe('Helix Cut')
-    expect(sessionBlock(out, '2026-07-19').row.label).toBe('Upper A')
+    expect(metaCells(out)[1]).toBe('Helix Cut')
+    expect(sessionBlock(out, '2026-07-19').heading).toContain('Upper A')
     // The dose and the target, side by side. v2 graded it with a ZONE word
-    // ("building"); v3 prints no verdicts at all, so the comparison is the
-    // reader's to make — 4 against 8 says everything the word did.
-    const biceps = rowFor(out, 'WEEK.MUSCLE', 'Biceps')
-    expect(biceps.sets).toBe('4.0')
-    expect(biceps.target).toBe('8.0')
-    expect(sectionText(out, 'WEEK.MUSCLE')).not.toMatch(/building/)
+    // ("building"); the document prints no verdicts at all, so the comparison
+    // is the reader's to make — 4 against 8 says everything the word did.
+    const biceps = muscleRow(out, 'Biceps')
+    expect(biceps.Sets).toBe('4.0')
+    expect(biceps.Target).toBe('8.0')
+    expect(subsectionLines(out, 'Sets by muscle').join('\n')).not.toMatch(/building/)
   })
 
   it('nests body composition under the weigh-in day only when supplied', () => {
-    expect(headings(buildWeeklyExport(input))).not.toContain('## BODY')
+    expect(hasSubsection(buildWeeklyExport(input), 'Body composition')).toBe(false)
     const withBody = buildWeeklyExport({
       ...input,
       bodyComp: [{
@@ -212,25 +212,25 @@ describe('buildWeeklyExport', () => {
     // scale's own order — so a week-over-week read never has to multiply by a
     // bodyweight that is itself moving.
     const body = bodyRow(withBody, '2026-07-19')
-    expect([body.weight_kg, body.bmi, body.fat_pct, body.fat_mass_kg])
+    expect([body.Weight, body.BMI, body['Fat %'], body['Fat kg']])
       .toEqual(['65.3', '22.4', '13.2', '8.6'])
-    expect([body.muscle_pct, body.muscle_mass_kg]).toEqual(['46.1', '30.1'])
-    expect([body.protein_pct, body.protein_kg]).toEqual(['19.7', '12.9'])
-    expect([body.smm_kg, body.visceral, body.bmr_kcal]).toEqual(['27.0', '6.0', '1620'])
-    expect([body.whr, body.ffm_kg]).toEqual(['0.80', '56.7'])
+    expect([body['Muscle %'], body['Muscle kg']]).toEqual(['46.1', '30.1'])
+    expect([body['Protein %'], body['Protein kg']]).toEqual(['19.7', '12.9'])
+    expect([body.SMM, body.Visceral, body.BMR]).toEqual(['27.0', '6.0', '1,620'])
+    expect([body.WHR, body.FFM]).toEqual(['0.80', '56.7'])
     // THREE numbers here could answer to "muscle mass" and they are ~23 kg
-    // apart. v2 spent a parenthetical gloss on each; v3 gives each its own
-    // NAMED column on the legend, which is the same disambiguation for free.
-    expect(legendOf(withBody, 'BODY'))
-      .toEqual(expect.arrayContaining(['smm_kg', 'muscle_mass_kg', 'ffm_kg']))
-    // The day's own row carries the two figures a reader wants without leaving
-    // the daily log, and they agree with the scale's row.
-    expect(dayRow(withBody, '2026-07-19').smm_kg).toBe(body.smm_kg)
-    expect(dayRow(withBody, '2026-07-19').fat_pct).toBe(body.fat_pct)
+    // apart. Each gets its own NAMED column, which is the disambiguation v2
+    // spent a parenthetical gloss on.
+    expect(Object.keys(body)).toEqual(expect.arrayContaining(['SMM', 'Muscle kg', 'FFM']))
+    // The day's own row carries the same figures without leaving the day, and
+    // they agree with the scale's row.
+    const dayBody = dayField(withBody, '2026-07-19', 'Body')
+    expect(dayBody).toContain('SMM 27.0 kg')
+    expect(dayBody).toContain('BF 13.2 %')
   })
 
   it('nests walks/cardio under their day, flagged as already counted', () => {
-    expect(headings(buildWeeklyExport(input))).not.toContain('## CARDIO')
+    expect(buildWeeklyExport(input)).not.toContain('**Cardio**\n-')
     const withCardio = buildWeeklyExport({
       ...input,
       cardio: [{
@@ -241,25 +241,24 @@ describe('buildWeeklyExport', () => {
     })
     // Every requested metric, named on the legend, in a fixed order. Pace is
     // DERIVED (45 min ÷ 4.2 km = 10:43 /km), never a stored column.
-    const [walk] = cardioRows(withCardio, '2026-07-19')
-    expect(walk.day).toBe('Sun')
-    expect([walk.kind, walk.duration_min, walk.dist_km, walk.pace_min_km])
-      .toEqual(['Walk', '45.0', '4.20', '10:43 /km'])
-    expect([walk.avg_hr, walk.effort_cr10]).toEqual(['112', '4'])
-    // v2 shouted the double-count warning in bold on every walk line. v3 states
-    // it structurally instead: `active_kcal` is the share ALREADY inside the
-    // day's own active energy, and `total_kcal` sits BESIDE it rather than
-    // replacing it — two columns a reader cannot add together by accident.
-    expect(walk.active_kcal).toBe('210')
-    expect(walk.total_kcal).toBe('265')
-    expect(legendOf(withCardio, 'CARDIO'))
-      .toEqual(expect.arrayContaining(['active_kcal', 'total_kcal']))
+    const [walk] = cardioLines(withCardio, '2026-07-19')
+    expect(walk).toContain('**Walk**')
+    expect(walk).toContain('45.0 min')
+    expect(walk).toContain('4.20 km')
+    expect(walk).toContain('10:43 /km')
+    expect(walk).toContain('avg HR 112')
+    expect(walk).toContain('CR10 4')
+    // v2 shouted the double-count warning in bold on every walk line. The
+    // document states it structurally instead: the active share is named as
+    // active and the total sits BESIDE it in the same phrase, so a reader
+    // cannot add them together by accident.
+    expect(walk).toContain('210 kcal active (265 total)')
     // An imported bout knows WHEN it happened and HOW MUCH it climbed. Both
     // were on the row and neither was exported, so a week of walks read as an
     // undifferentiated list of durations.
-    expect(walk.start_time).toBe('07:32')
-    expect(walk.elev_m).toBe('86')
-    expect(walk.source).toBe('health')
+    expect(walk).toContain('07:32')
+    expect(walk).toContain('+86 m')
+    expect(walk).toContain('Apple Watch')
   })
 
   it('refuses to print a hand-typed row\'s insertion instant as a start time', () => {
@@ -277,11 +276,12 @@ describe('buildWeeklyExport', () => {
         startedAt: '2026-07-19T21:04:00+01:00', elevationM: null, source: 'manual',
       }],
     })
-    const [walk] = cardioRows(typed, '2026-07-19')
-    expect(walk.start_time).toBe(DASH)
-    expect(walk.source).toBe('manual')
-    // And the elevation it never had stays unknown rather than becoming zero.
-    expect(walk.elev_m).toBe(DASH)
+    const [walk] = cardioLines(typed, '2026-07-19')
+    expect(walk).toContain(`start ${NO_DATA}`)
+    expect(walk).toContain('typed')
+    expect(walk).not.toContain('21:04')
+    // And the elevation it never had stays unstated rather than becoming zero.
+    expect(walk).not.toMatch(/[+−]0 m/)
   })
 
   it('names every cardio metric even when it was never entered — and never invents a zero', () => {
@@ -296,59 +296,62 @@ describe('buildWeeklyExport', () => {
     // Dropping absent fields made two walks incomparable: one showed "avg HR
     // 112" and one showed nothing, with no way to tell missing data from a
     // missing export. Each field is a column and is explicitly unknown.
-    const [run] = cardioRows(sparse, '2026-07-19')
-    expect(run.kind).toBe('Run')
-    expect(run.duration_min).toBe('30.0')
-    for (const k of ['dist_km', 'pace_min_km', 'elev_m', 'active_kcal', 'total_kcal', 'avg_hr', 'effort_cr10', 'start_time']) {
-      expect(run[k], `${k} on a sparse bout`).toBe(DASH)
-    }
-    // The invariant that mattered in the original test: no fabricated zeros.
-    // Scoped to the cardio row — the day rows legitimately carry numbers
-    // ending in 0 (calorie targets, step counts).
-    expect(Object.values(run)).not.toContain('0')
+    const [run] = cardioLines(sparse, '2026-07-19')
+    expect(run).toContain('**Run**')
+    expect(run).toContain('30.0 min')
+    expect(run).toContain(`start ${NO_DATA}`)
+    expect(run).toContain(`avg HR ${NO_DATA}`)
+    // The invariant that mattered in the original test: no fabricated zeros. A
+    // distance, a pace, an elevation and a calorie figure that were never
+    // entered are simply not stated, rather than becoming 0.
+    expect(run).not.toMatch(/\b0(\.0+)? (km|m|kcal)\b/)
+    expect(run).not.toContain('/km')
   })
 
   it('carries the Borg CR10 session effort onto the session line', () => {
     // `srpe` is the Borg CR10 rating, stated as given — the scale is named on
     // the legend rather than repeated as a suffix on every row.
-    expect(sessionBlock(buildWeeklyExport(input), '2026-07-19').row.srpe).toBe('8')
-    expect(legendOf(buildWeeklyExport(input), 'SESSIONS')).toContain('srpe')
+    expect(sessionBlock(buildWeeklyExport(input), '2026-07-19').meta).toContain('sRPE 8 Very hard')
+    // The scale is named in the legend rather than repeated on every session.
+    expect(legendText(buildWeeklyExport(input))).toContain('Session sRPE uses Borg CR10')
   })
 
   it('lists EVERY working set, one per numbered line — not just the top set', () => {
-    // v3 numbers nothing: a set is a `load×reps` token in position, and every
-    // one of them is printed. The pin is that none is collapsed away.
+    // Every set gets its own numbered line. The pin is that none is collapsed
+    // away, and that the numbering counts WORKING sets.
     const out = buildWeeklyExport(input)
-    expect(setsOf(out, '2026-07-19', 'Chest Press')).toEqual(['60×12', '60×11', '57.5×10F'])
-    // The rep window the sets are read against rides on the same line.
-    expect(exercise(out, '2026-07-19', 'Chest Press')[1]).toBe('[10–12]')
+    expect(setsOf(out, '2026-07-19', 'Chest Press')).toEqual([
+      '`S1` 60 kg × 12', '`S2` 60 kg × 11', '`S3` 57.5 kg × 10 — to failure',
+    ])
+    // The rep window the sets are read against rides on the exercise's header.
+    expect(exercise(out, '2026-07-19', 'Chest Press').header).toContain('target 10–12 reps')
   })
 
   it('carries per-workout volume, failures, time and kcal burned', () => {
-    const row = sessionBlock(buildWeeklyExport(input), '2026-07-19').row
-    expect(row.duration_min).toBe('68')
-    expect(row.tonnage_kg).toBe('8240')
-    expect(row.sets).toBe('24')
-    expect(row.failure_sets).toBe('1')
-    expect(row.kcal).toBe('512')
-    expect(row.avg_bpm).toBe('118')
-    expect(row.session_no).toBe('#9')
+    const row = sessionBlock(buildWeeklyExport(input), '2026-07-19')
+    expect(row.meta).toContain('68 min')
+    expect(row.counts).toContain('8,240 kg tonnage')
+    // Counted from the rows the document prints, not from the stored
+    // `set_count`: where the two disagree the reader can count the lines.
+    expect(row.counts).toContain('2 to failure')
+    expect(row.meta).toContain('512 kcal')
+    expect(row.meta).toContain('avg 118 bpm')
+    expect(row.heading).toContain('Session #9')
   })
 
   it('marks a set taken to failure and NEVER emits an estimated 1RM', () => {
     const out = buildWeeklyExport(input)
-    // `F` is the flag, named on the legend rather than spelled out per set.
-    expect(setsOf(out, '2026-07-19', 'Chest Press')[2]).toBe('57.5×10F')
-    expect(sectionLines(out, 'SESSIONS').find((l) => l.startsWith('##   exercise')))
-      .toContain('[W|G|D|F]')
-    // A SET line never grows an estimate. The only e1rm in the document is the
-    // PR row's own column, and its legend says in as many words that it is an
+    // The words, not a flag letter: `F` needed a legend to be read at all.
+    expect(setsOf(out, '2026-07-19', 'Chest Press')[2]).toBe('`S3` 57.5 kg × 10 — to failure')
+    expect(legendText(out)).toContain('`to failure`')
+    // A SET line never grows an estimate. The only e1RM in the document is on a
+    // PR line, and the closing notes say in as many words that it is an
     // estimate rather than a lift that happened.
-    for (const cells of sessionBlock(out, '2026-07-19').exercises) {
-      for (const token of cells.slice(4)) expect(token).not.toMatch(/e1rm/i)
+    for (const ex of sessionBlock(out, '2026-07-19').exercises) {
+      for (const line of ex.sets) expect(line).not.toMatch(/e1rm/i)
     }
-    expect(sectionLines(out, 'SESSIONS').find((l) => l.startsWith('##   PR')))
-      .toContain('an ESTIMATE, not a lift that happened')
+    expect(buildWeeklyExport(input))
+      .toContain('not a lift that was performed')
   })
 
   it('splits unilateral work per side (L/R weight · reps · failure)', () => {
@@ -356,7 +359,7 @@ describe('buildWeeklyExport', () => {
     // ONE token for the pair, both sides inside it — decided per SET by
     // `pairId`, so the two arms can never drift into two separate sets.
     expect(setsOf(out, '2026-07-19', 'Single Arm Cable Crossover'))
-      .toEqual(['L7.5×15|R7.5×13F'])
+      .toEqual(['`S1` L 7.5 kg × 15 · R 7.5 kg × 13 — to failure → scores 7.5 kg × 13'])
   })
 
   it('names the PRs, and each axis carries its own value', () => {
@@ -365,18 +368,18 @@ describe('buildWeeklyExport', () => {
     // the estimate a reader would otherwise have to compute.
     const out = buildWeeklyExport(input)
     const [pr] = sessionBlock(out, '2026-07-19').prs
-    expect(pr).toEqual(['Chest Press', '60×12', 'Weight;1RM', '720', '84'])
+    expect(pr).toBe('Chest Press 60 kg × 12 · Weight, 1RM · 720 kg volume · e1RM 84 kg')
     // ONE row per record — the axis list and the values are columns of the
     // same line, so neither can be printed twice.
     expect(sessionBlock(out, '2026-07-19').prs).toHaveLength(1)
-    expect(sessionBlock(out, '2026-07-19').row.prs).toBe('1')
+    expect(sessionBlock(out, '2026-07-19').counts).toContain('1 PR')
   })
 
   it('carries steps and recovery signals per day', () => {
-    const sun = dayRow(buildWeeklyExport(input), '2026-07-19')
-    expect(sun.steps).toBe('9200')
-    expect(sun.hrv_ms).toBe('62.0')
-    expect(sun.rhr).toBe('48')
+    const out = buildWeeklyExport(input)
+    expect(dayField(out, '2026-07-19', 'Activity')).toContain('9,200 steps')
+    expect(dayField(out, '2026-07-19', 'Vitals')).toContain('HRV 62.0 ms')
+    expect(dayField(out, '2026-07-19', 'Vitals')).toContain('RHR 48')
   })
 
   /**
@@ -386,101 +389,108 @@ describe('buildWeeklyExport', () => {
    * `active_kcal` column on every day. What must never appear above the fence
    * is a verdict.
    */
-  const rawBody = (out: string) => {
-    const i = out.indexOf('\n## DERIVED')
-    expect(i, 'no ## DERIVED fence').toBeGreaterThan(-1)
-    return out.slice(0, i)
-  }
-
-  it('never emits Active Energy, Day Score or Battery', () => {
+  it('never emits Day Score or Battery, and names what it does compute', () => {
     const out = buildWeeklyExport(input)
-    const raw = rawBody(out)
-    expect(raw).not.toMatch(/battery/i)
-    expect(raw).not.toMatch(/\bscore\b/i)
-    expect(raw).not.toMatch(/readiness/i)
-    // Below the fence, and only there, the battery's own inputs are stated —
-    // each as one key with a value per day, in `## DAYS` order.
-    for (const key of ['load', 'acwr', 'strainZ', 'wellness']) {
-      expect(derivedRow(out, key)).toHaveLength(input.days.length)
+    // Score and Battery are Onyx's own OPINION of a day, not arithmetic a
+    // reader can audit, and they are exported nowhere.
+    expect(out).not.toMatch(/battery/i)
+    expect(out).not.toMatch(/\bday score\b/i)
+    // Apple's active energy is NOT one of them: it is a measurement, and it
+    // sits on the activity row of the day it was measured on.
+    expect(dayField(out, '2026-07-19', 'Activity')).toContain('active ')
+    // The battery's own inputs are stated per day, on a row that says in words
+    // that Onyx computed them. v3 kept a document-level fence; a day-major
+    // document carries the marker on the line instead.
+    for (const key of ['load', 'ACWR', 'strain z', 'wellness']) {
+      expect(Object.keys(derivedOf(out, '2026-07-19')), key).toContain(key)
     }
-    // And the fence says out loud what it is.
-    expect(sectionLines(out, 'DERIVED')[0]).toContain('computed by Onyx — not measured')
+    expect(out).toContain('**Derived** *(computed by Onyx, not measured)*')
   })
 
-  it('renders line-by-line TEXT with NO markdown tables', () => {
+  it('grows no table this week has no grid for', () => {
     const out = buildWeeklyExport(input)
-    // `## LEDGER` is the one deliberate table and this fixture has no ledger,
-    // so nothing in this document may be one.
-    expect(headings(out)).not.toContain('## LEDGER')
-    expect(out).not.toMatch(/^\|/m)
-    expect(out).not.toMatch(/\|---/)
-    // What is actually banned above the fence is Onyx's own opinions — never a
-    // measured column, however Apple-shaped.
-    expect(rawBody(out)).not.toMatch(/Battery/)
-    expect(legendOf(out, 'DAYS')).toContain('active_kcal')
+    // v4 allows four tables — the programme ledger, sets by muscle, body
+    // composition and the weekly micronutrient average — and each appears only
+    // when the week has rows for it. This fixture has no ledger, no body
+    // composition and no micros, so the only grid it may grow is the muscle
+    // one.
+    expect(hasSubsection(out, 'Week over week')).toBe(false)
+    expect(hasSubsection(out, 'Body composition')).toBe(false)
+    expect(out.split('\n').filter((l) => /^\|[:-]/.test(l))).toHaveLength(1)
+    // What is actually banned is Onyx's own opinions — never a measurement,
+    // however Apple-shaped.
+    expect(out).not.toMatch(/Battery/)
+    // Apple's active energy is a measurement and rides on the day it was
+    // measured on. This fixture logged none, so the row names it as unmeasured
+    // rather than printing a zero.
+    expect(notMeasured(out, '2026-07-19', 'Activity')).toContain('active energy')
   })
 
   /**
-   * A day is FOUR GROUPED LINES, not one long one. It used to be a single
-   * ~300-character run of eleven `·`-separated fields, which is correct data and
-   * an unreadable row: nothing marked where nutrition stopped and vitals began.
+   * A day is a SECTION, not a row.
    *
-   * The order is fixed and the groups are: identity → what was eaten → what was
-   * moved → what the body reported.
+   * v2 made it four grouped lines, then eight; v3 collapsed all eight into one
+   * forty-column line and moved the grouping onto a legend. Both were readable
+   * only against something else — a header, or a count of dots.
+   *
+   * v4 gives the day its own heading and one LABELLED row per group, in the
+   * order the day happens: the night, what the body reported, the body itself,
+   * how it felt, what was eaten, what was taken, what was moved, what it was
+   * shaped for, and finally the work. A reader wanting Sunday's protein reads
+   * the word "Intake" rather than counting to the twenty-eighth field.
    */
-  it('renders each day as EIGHT grouped lines, in a fixed order', () => {
+  it('renders each day as labelled rows, in a fixed order', () => {
     const out = buildWeeklyExport(input)
-    expect(headings(out)).toContain('## DAYS')
-    // v3 collapses the eight grouped lines into ONE line per day, and moves the
-    // grouping onto the legend: the columns still run identity → the night →
-    // what was moved → what was eaten → the stack → the body → the subjective,
-    // in that order, and every field keeps its place in it. Asserted as one
-    // list, because what is under test is the ORDER and the completeness —
-    // thirty-nine independent `toBe` calls would pass on a shuffled legend.
-    //
-    // It was four lines, then five, then eight, and the groups that joined are
-    // each one the old shape had no room for: the night's ARCHITECTURE
-    // (distinct from its duration), the day's MICROS (which the export omitted
-    // entirely while the app measured eight of them daily) and supplement
-    // COMPLIANCE (distinct from the protocol at the foot of the document,
-    // which is a prescription). Micros outgrew the row and are their own
-    // section now; the other two are columns here.
-    expect(legendOf(out, 'DAYS')).toEqual([
-      'date', 'day', 'train',
-      'sleep_min', 'deep_min', 'rem_min', 'core_min', 'awake_min',
-      'bed', 'wake', 'onset',
-      'hrv_ms', 'rhr', 'avg_hr', 'spo2_pct', 'resp_bpm', 'wrist_temp_c', 'vo2max',
-      'daylight_min', 'exercise_min', 'stand_hours', 'stand_min',
-      'steps', 'dist_km', 'training_min', 'active_kcal',
-      'kcal', 'P', 'C', 'F', 'water_l',
-      'supp', 'supp_log', 'supp_skipped',
-      'weight_kg', 'fat_pct', 'smm_kg', 'bmr_kcal',
-      'fatigue', 'doms', 'joints', 'tags',
+    const all = dayLines(out, '2026-07-19')
+    const end = all.findIndex((l) => l.startsWith('### '))
+    const rows = all.slice(0, end < 0 ? all.length : end)
+      .filter((l) => /^\*\*[A-Z]/.test(l))
+      .map((l) => /^\*\*(.+?)\*\*/.exec(l)![1])
+    // Asserted as one list, because what is under test is the ORDER and the
+    // completeness — nine independent `toContain` calls would pass on a
+    // shuffled day.
+    expect(rows).toEqual([
+      'Sleep', 'Vitals', 'Body', 'Readiness', 'Head',
+      'Intake', 'Stack', 'Activity', 'Shape',
     ])
+    // The work comes after them, and the day's computed figures close it —
+    // below the session, because they are arithmetic over the whole day.
+    expect(all.findIndex((l) => l.startsWith('### Session'))).toBe(end)
+    const last = all.filter((l) => l.trim() && l !== '---').at(-1)!
+    expect(last).toMatch(/^\*Not recorded:|^\*\*Derived\*\*/)
+    expect(dayFieldOrNull(out, '2026-07-19', 'Derived')).not.toBeNull()
 
-    const sun = dayRow(out, '2026-07-19')
-    expect([sun.date, sun.day, sun.train]).toEqual(['2026-07-19', 'Sun', '1'])
-    expect(sun.sleep_min).toBe('551')                          // the night
-    expect([sun.hrv_ms, sun.rhr]).toEqual(['62.0', '48'])      // what the body reported
-    expect([sun.steps, sun.dist_km, sun.training_min])
-      .toEqual(['9200', '7.10', '68'])                         // what was moved
-    expect([sun.kcal, sun.P, sun.C, sun.F, sun.water_l])
-      .toEqual(['1940', '172', '190', '54', '3.00'])           // what was eaten
-    // The denominator is em-dashed rather than assumed: this fixture states
-    // that three were taken and never says how many were asked for, and "3/3"
-    // would be an invented claim of perfect adherence.
-    expect(sun.supp).toBe(`3/${DASH}`)
-    expect(sun.weight_kg).toBe('65.3')
-    // A training day asks the training questions; every unanswered slot is a
-    // dash, and the slot is NAMED so a rest day's triple cannot be confused
+    expect(dayHeadings(out)[0]).toBe('DAY 1 · Sun · 2026-07-19 · TRAIN — Upper A')
+    expect(dayField(out, '2026-07-19', 'Sleep')).toContain('9 h 11 m')
+    expect(dayField(out, '2026-07-19', 'Vitals')).toContain('HRV 62.0 ms')
+    expect(dayField(out, '2026-07-19', 'Vitals')).toContain('RHR 48')
+    const activity = dayField(out, '2026-07-19', 'Activity')
+    expect(activity).toContain('9,200 steps')
+    expect(activity).toContain('7.10 km')
+    expect(activity).toContain('training 68 min')
+    const intake = dayField(out, '2026-07-19', 'Intake')
+    expect(intake).toContain('1,940 / 1,955 kcal')
+    expect(intake).toContain('172 / 170 P')
+    expect(intake).toContain('190 C')
+    expect(intake).toContain('54 F')
+    expect(intake).toContain('water 3.00')
+    // The denominator is NOT assumed: this fixture says three were taken and
+    // never says how many were asked for, and "3 of 3" would be an invented
+    // claim of perfect adherence.
+    expect(dayField(out, '2026-07-19', 'Stack')).toBe(`3 taken — **taken** no per-item log — **skipped** none logged`)
+    expect(dayField(out, '2026-07-19', 'Body')).toContain('65.3 kg')
+    // A training day asks the training questions; every unanswered slot says
+    // so, and the slot is NAMED so a rest day's triple cannot be confused
     // with it.
-    expect(sun.fatigue).toBe('Waking:—;Before training:—;After training:—')
-    // Apple's stand ring is two plain numbers rather than one `12h58` token:
-    // the composite assumed minutes-WITHIN-the-hour, and a caller handing it a
-    // day's total minutes produced a cell nothing could parse.
-    expect([sun.stand_hours, sun.stand_min]).toEqual([DASH, DASH])
-    // One line, and the whole day is on it.
-    expect(dataLines(out, 'DAYS')).toHaveLength(2)
+    expect(readiness(out, '2026-07-19').fatigue)
+      .toBe(`waking ${NO_DATA} · before training ${NO_DATA} · after training ${NO_DATA}`)
+    // Apple's stand ring is two numbers rather than one `12h58` token: the
+    // composite assumed minutes-WITHIN-the-hour, and a caller handing it a
+    // day's total minutes produced a cell nothing could parse. Absent here, so
+    // the row names it as unmeasured rather than printing a malformed one.
+    expect(activity).not.toMatch(/stand \d+h\d+/)
+    // One section per day, and the whole day is inside it.
+    expect(dayDates(out)).toEqual(['2026-07-19', '2026-07-20'])
   })
 
   // A blank weight can mean "not weighed", "the sync dropped it", or "skipped on
@@ -490,18 +500,17 @@ describe('buildWeeklyExport', () => {
     // scale before a bowel movement IS the protocol, and reporting it as a
     // logging gap reads a deliberate week as a sloppy one.
     const out = buildWeeklyExport(input)
-    expect(dayRow(out, '2026-07-20').weight_kg).toBe(DASH)
-    expect(dayRow(out, '2026-07-20').tags).toBe('skip:As Planned')
+    expect(dayField(out, '2026-07-20', 'Body')).toBe('no weigh-in — As Planned')
 
     const withReason = buildWeeklyExport({
       ...input,
       days: input.days.map((d) => (d.date === '2026-07-20' ? { ...d, weighInSkipReason: 'Travel' } : d)),
     })
     // Read DYNAMICALLY off the day — change the reason and the export follows.
-    expect(dayRow(withReason, '2026-07-20').tags).toBe('skip:Travel')
+    expect(dayField(withReason, '2026-07-20', 'Body')).toBe('no weigh-in — Travel')
     expect(withReason).not.toMatch(/As Planned/)
     // A day that WAS weighed never carries a skip marker.
-    expect(dayRow(withReason, '2026-07-19').tags).not.toMatch(/skip:/)
+    expect(dayField(withReason, '2026-07-19', 'Body')).not.toMatch(/no weigh-in/)
   })
 
   it('tags a declared exception on the intake it explains, and changes no total', () => {
@@ -511,12 +520,12 @@ describe('buildWeeklyExport', () => {
       ? { ...d, calories: 3210 } : d)) })
     const tagged = buildWeeklyExport({ ...input, days: dateNight })
 
-    // The tag rides the day the intake was eaten on, in the `tags` column —
-    // and the intake itself is stated in full, undiscounted.
-    expect(dayRow(tagged, '2026-07-19').kcal).toBe('3210')
-    expect(dayRow(tagged, '2026-07-19').tags).toBe('except:Event')
+    // The tag rides the day the intake was eaten on, on its `Shape` row — and
+    // the intake itself is stated in full, undiscounted.
+    expect(dayField(tagged, '2026-07-19', 'Intake')).toContain('3,210 / 1,955 kcal')
+    expect(shape(tagged, '2026-07-19')).toEqual(['Event — excepted from grading'])
     // An ordinary day is never annotated with one.
-    expect(dayRow(tagged, '2026-07-20').tags).not.toMatch(/except:/)
+    expect(shape(tagged, '2026-07-20')).not.toContain('Event — excepted from grading')
 
     // A PR set on a declared day is still a PR, printed exactly as any other:
     // "he hit a record on the night out" is the interesting fact, and the day's
@@ -525,13 +534,14 @@ describe('buildWeeklyExport', () => {
       .toEqual(sessionBlock(raw, '2026-07-19').prs)
 
     // THE INVARIANT: forgiving the grade must not move a single aggregate. The
-    // ONLY difference between these two documents is the one tag.
-    expect(tagged.replace('· except:Event', `· ${DASH}`)).toBe(raw)
+    // ONLY difference between these two documents is the one clause.
+    expect(tagged.replace('**Shape** Event — excepted from grading', '**Shape** standard day'))
+      .toBe(raw)
   })
 
   it('names WHICH axis each PR was set on, in a fixed order', () => {
     const out = buildWeeklyExport(input)
-    expect(sessionBlock(out, '2026-07-19').prs[0][2]).toBe('Weight;1RM')
+    expect(sessionBlock(out, '2026-07-19').prs[0]).toContain('Weight, 1RM')
 
     // A movement with no ledger row still lists — without inventing an axis.
     const noAxes = buildWeeklyExport({
@@ -539,9 +549,9 @@ describe('buildWeeklyExport', () => {
       sessions: input.sessions.map((s) => ({ ...s, prs: s.prs.map((p) => ({ ...p, axes: [] })) })),
     })
     const [pr] = sessionBlock(noAxes, '2026-07-19').prs
-    expect(pr[0]).toBe('Chest Press')
-    expect(pr[1]).toBe('60×12')
-    expect(pr[2]).toBe(DASH)
+    // No axis to name, so the line states the lift and its figures and stops —
+    // rather than printing an empty slot a reader has to interpret.
+    expect(pr).toBe('Chest Press 60 kg × 12 · 720 kg volume · e1RM 84 kg')
   })
 
   // Volume is a sum of quarter-kg microloads; 0 dp made the export disagree with
@@ -551,15 +561,15 @@ describe('buildWeeklyExport', () => {
       ...input,
       sessions: input.sessions.map((s) => ({ ...s, volumeKg: 8329.25 })),
     })
-    expect(sessionBlock(precise, '2026-07-19').row.tonnage_kg).toBe('8329.25')
-    expect(weekRow(precise).tonnage_kg).toBe('8329.25')
+    expect(sessionBlock(precise, '2026-07-19').counts).toContain('8,329.25 kg tonnage')
+    expect(weekTotals(precise).tonnageKg).toBe(8329.25)
     // A whole number stays whole — no cosmetic ".00".
     const whole = buildWeeklyExport({
       ...input,
       sessions: input.sessions.map((s) => ({ ...s, volumeKg: 8240 })),
     })
-    expect(sessionBlock(whole, '2026-07-19').row.tonnage_kg).toBe('8240')
-    expect(weekRow(whole).tonnage_kg).toBe('8240')
+    expect(sessionBlock(whole, '2026-07-19').counts).toContain('8,240 kg tonnage')
+    expect(weekTotals(whole).tonnageKg).toBe(8240)
   })
 
   it('renders ONE chronological supplements list, only when supplied', () => {
@@ -571,18 +581,19 @@ describe('buildWeeklyExport', () => {
         { time: '10:30', name: 'Vitamin D3 + K2', dose: '125 mcg' },
       ],
     })
-    expect(headings(withProtocol)).toContain('## SUPPS')
+    expect(hasSubsection(withProtocol, 'The stack')).toBe(true)
     // The stack is nearly identical on both kinds of day. Two headed lists
     // duplicated a dozen identical lines to express one differing dose; v3 has
     // one row per item, with the training/rest split as two of its columns.
     expect(withProtocol).not.toMatch(/Training days/)
     expect(withProtocol).not.toMatch(/Rest days/)
-    expect(legendOf(withProtocol, 'SUPPS'))
-      .toEqual(['time', 'name', 'dose', 'training_dose', 'rest_dose', 'training_only', 'notes'])
+    // One line per item, with the training/rest split stated as the rule it is
+    // rather than as two columns a reader has to reconcile.
+    expect(stackProtocol(withProtocol).every((r) => r.time && r.name && r.dose)).toBe(true)
     // Chronological, so the list is read in the order the day happens in.
-    expect(rowsOf(withProtocol, 'SUPPS').map((r) => r.name))
+    expect(stackProtocol(withProtocol).map((r) => r.name))
       .toEqual(['Vitamin D3 + K2', 'L-Citrulline'])
-    expect(rowFor(withProtocol, 'SUPPS', '11:45').dose).toBe('3 g')
+    expect(stackProtocol(withProtocol).find((r) => r.time === '11:45')!.dose).toBe('3 g')
   })
 
   it('prints the dose it is GIVEN, with nothing memorised about any supplement', () => {
@@ -596,16 +607,16 @@ describe('buildWeeklyExport', () => {
         { time: '10:30', name: 'Two Per Day Multivitamin', dose: '1 tab' },
       ],
     })
-    const cit = rowsOf(out, 'SUPPS').find((r) => r.name === 'L-Citrulline')!
+    const cit = stackProtocol(out).find((r) => r.name === 'L-Citrulline')!
     expect(cit.dose).toBe('6 g')
-    expect(cit.training_only).toBe('1')
+    expect(cit.trainingOnly).toBe(true)
     expect(out).not.toMatch(/3 g/)
     // No asserted multivitamin sentence any more — every field comes from the
-    // row, and a row that says nothing extra prints dashes rather than a rule.
-    const mv = rowsOf(out, 'SUPPS').find((r) => r.name === 'Two Per Day Multivitamin')!
+    // row, and a row that says nothing extra says nothing rather than a rule.
+    const mv = stackProtocol(out).find((r) => r.name === 'Two Per Day Multivitamin')!
     expect(mv).toEqual({
       time: '10:30', name: 'Two Per Day Multivitamin', dose: '1 tab',
-      training_dose: DASH, rest_dose: DASH, training_only: '0', notes: DASH,
+      trainingOnly: false, notes: null,
     })
   })
 
@@ -617,10 +628,11 @@ describe('buildWeeklyExport', () => {
         { time: '15:00', name: 'Creatine Monohydrate', dose: '5 g' },
       ],
     })
-    expect(rowFor(out, 'SUPPS', '09:00').notes).toBe('2 tabs on Monday & Friday (Leg Days)')
+    const byTime = (t: string) => stackProtocol(out).find((r) => r.time === t)!
+    expect(byTime('09:00').notes).toBe('2 tabs on Monday & Friday (Leg Days)')
     // A supplement with no rule gets no invented one.
-    expect(rowFor(out, 'SUPPS', '15:00').notes).toBe(DASH)
-    expect(rowFor(out, 'SUPPS', '15:00').dose).toBe('5 g')
+    expect(byTime('15:00').notes).toBeNull()
+    expect(byTime('15:00').dose).toBe('5 g')
   })
 
   it('states a split dose as the rule it is, rather than picking a column', () => {
@@ -630,11 +642,11 @@ describe('buildWeeklyExport', () => {
         { time: '09:00', name: 'Multivitamin', dose: '1 tab', trainingDose: '2 tabs', restDose: '1 tab' },
       ],
     })
-    // v2 folded the split into one sentence; v3 states it as the two columns it
-    // is, which is the same rule without a clause to parse.
-    const mv = rowFor(out, 'SUPPS', '09:00')
-    expect([mv.dose, mv.training_dose, mv.rest_dose]).toEqual(['1 tab', '2 tabs', '1 tab'])
-    expect(sectionText(out, 'SUPPS').match(/Multivitamin/g)).toHaveLength(1)
+    // A dose that differs by day is stated as the RULE it is, rather than
+    // arbitrarily picking one of the two figures.
+    const mv = stackProtocol(out).find((r) => r.time === '09:00')!
+    expect(mv.dose).toBe('2 tabs on training days / 1 tab on rest days')
+    expect(subsectionLines(out, 'The stack').join('\n').match(/Multivitamin/g)).toHaveLength(1)
   })
 
   it('marks a training-only item as one, and nothing else', () => {
@@ -647,8 +659,8 @@ describe('buildWeeklyExport', () => {
       ],
     })
     // Creatine is taken every day; tagging it would state a rule that isn't one.
-    expect(rowFor(out, 'SUPPS', '15:00').training_only).toBe('0')
-    expect(rowsOf(out, 'SUPPS').filter((r) => r.training_only === '1')).toHaveLength(2)
+    expect(stackProtocol(out).find((r) => r.time === '15:00')!.trainingOnly).toBe(false)
+    expect(stackProtocol(out).filter((r) => r.trainingOnly)).toHaveLength(2)
   })
 
   it('deduplicates by supplement, so one row can never print twice', () => {
@@ -660,8 +672,8 @@ describe('buildWeeklyExport', () => {
         { time: '11:45', name: 'L-Citrulline', dose: '6 g' },
       ],
     })
-    expect(sectionText(out, 'SUPPS').match(/reatine/g)).toHaveLength(1)
-    expect(rowFor(out, 'SUPPS', '11:45').name).toBe('L-Citrulline')
+    expect(subsectionLines(out, 'The stack').join('\n').match(/reatine/g)).toHaveLength(1)
+    expect(stackProtocol(out).find((r) => r.time === '11:45')!.name).toBe('L-Citrulline')
   })
 
   // Warm-ups used to be filtered out upstream, so the export read as if every
@@ -680,9 +692,10 @@ describe('buildWeeklyExport', () => {
         }],
       }],
     })
-    // Flagged rather than numbered — `W` says which token was the warm-up, and
-    // the working set beside it is untouched.
-    expect(setsOf(out, '2026-07-19', 'Leg Press')).toEqual(['40×10W', '70×12'])
+    // Flagged rather than numbered — `W` takes no set number, and the working
+    // set beside it keeps the `S1` the warm-up would otherwise have consumed.
+    expect(setsOf(out, '2026-07-19', 'Leg Press'))
+      .toEqual(['`W` 40 kg × 10 — warm-up', '`S1` 70 kg × 12'])
   })
 
   it('states a missing session effort rather than omitting the segment', () => {
@@ -690,12 +703,13 @@ describe('buildWeeklyExport', () => {
       ...input,
       sessions: [{ ...input.sessions[0], sessionRpe: null }],
     })
-    // `—` is this document's word for "not reported", and it is never a 0.
-    expect(sessionBlock(out, '2026-07-19').row.srpe).toBe(DASH)
+    // "not reported" is a claim about the LOG; a 0 would be a claim about how
+    // hard the session was, and they are different facts.
+    expect(sessionBlock(out, '2026-07-19').meta).toContain('sRPE not reported')
   })
 
   it('includes soreness', () => {
-    expect(dayRow(buildWeeklyExport(input), '2026-07-20').doms).toBe('Quads:2')
+    expect(readiness(buildWeeklyExport(input), '2026-07-20').doms).toBe('Quads 2')
   })
 
   // The old free-floating "vs previous week" prose block stays gone — the
@@ -793,11 +807,13 @@ describe('weeklySummary', () => {
   it('prints the summary above the daily log, and says so when nothing is sore', () => {
     const in_ = base({ days: [day({ sleepMin: 450 })] })
     const out = buildWeeklyExport(in_)
-    // Nothing sore, and the day says so with a dash rather than by omission.
+    // Nothing sore, and the day says "none" rather than going silent.
     expect(weeklySummary(in_).peakDoms).toBeNull()
-    expect(rowsOf(out, 'DAYS').every((r) => r.doms === DASH)).toBe(true)
-    // And the aggregates sit BELOW the log they summarise, not above it.
-    expect(out.indexOf('\n## DAYS')).toBeLessThan(out.indexOf('\n## WEEK'))
+    expect(dayDates(out).every((d) => readiness(out, d).doms === NONE)).toBe(true)
+    // The aggregates sit ABOVE the days now, which is the one ordering rule v4
+    // inverts: a reader opening a weekly report wants the week, and can scroll
+    // for a Tuesday.
+    expect(out.indexOf('## THE WEEK')).toBeLessThan(out.indexOf('## DAY 1'))
   })
 
   it('names the worst muscle in the printed line', () => {
@@ -811,7 +827,7 @@ describe('weeklySummary', () => {
     // …and the document names the muscle, the severity AND the day it was felt
     // on, which is what the single "worst" line could never say.
     const out = buildWeeklyExport({ ...in_, days: [day({ date: '2026-07-21' })] })
-    expect(dayRow(out, '2026-07-21').doms).toBe('Quads:3')
+    expect(readiness(out, '2026-07-21').doms).toBe('Quads 3')
   })
 })
 
@@ -888,12 +904,11 @@ describe('week-over-week ledger', () => {
     const out = buildWeeklyExport(base({
       ledger: [week('Week 2', '2026-07-26'), week('Week 3', '2026-08-02')],
     }))
-    // The programme and the week number identify the DOCUMENT, so v3 states
-    // them once on the header rather than again over the table.
-    expect(headerCells(out)[0]).toBe('# ONYX Week 3')
-    expect(headerCells(out)[2]).toBe('Helix Cut')
-    expect(sectionLines(out, 'LEDGER')[0])
-      .toBe('## LEDGER · every week of the programme, oldest first')
+    // The programme and the week number identify the DOCUMENT, so they are
+    // stated once on the header rather than again over the table.
+    expect(title(out)).toBe('# ONYX · WEEK 3')
+    expect(metaCells(out)[1]).toBe('Helix Cut')
+    expect(hasSubsection(out, 'Week over week')).toBe(true)
   })
 
   /**
@@ -918,14 +933,17 @@ describe('week-over-week ledger', () => {
     expect(out.indexOf('| Week 0')).toBeLessThan(out.indexOf('| Week 3'))
   })
 
-  it('closes the export — the evidence is read before the trend', () => {
+  it('closes the week block — the trend is read after the totals', () => {
     const out = buildWeeklyExport(base({
       sessions: [session(8000)],
       ledger: [week('Week 3', '2026-08-02')],
     }))
-    expect(out.indexOf('\n## DAYS')).toBeLessThan(out.indexOf('\n## LEDGER'))
-    expect(out.indexOf('\n## SESSIONS')).toBeLessThan(out.indexOf('\n## LEDGER'))
-    expect(out.indexOf('\n## WEEK')).toBeLessThan(out.indexOf('\n## LEDGER'))
+    // v3 put the ledger below every measurement. v4 keeps it inside `## THE
+    // WEEK`, after the totals it compares against and before the days — a
+    // programme's trajectory belongs with the week's own numbers, and a reader
+    // who wants a Tuesday scrolls past both.
+    expect(out.indexOf('**Training**')).toBeLessThan(out.indexOf('### Week over week'))
+    expect(out.indexOf('### Week over week')).toBeLessThan(out.indexOf('## LEGEND'))
   })
 
   it('carries one column per metric', () => {
@@ -1045,21 +1063,21 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
     // "Sets Targets", kilograms under "Volume by muscle group" — which asked
     // the reader to hold one to compare it with the other. They are the same
     // question about the same muscle, so v3 puts them on ONE row.
-    expect(headings(out)).toContain('## WEEK.MUSCLE')
-    expect(legendOf(out, 'WEEK.MUSCLE'))
-      .toEqual(['muscle', 'sets', 'target', 'direct', 'indirect', 'tonnage_kg', 'direct_kg'])
-    expect(rowFor(out, 'WEEK.MUSCLE', 'Quads').tonnage_kg).toBe('22000')
-    expect(rowFor(out, 'WEEK.MUSCLE', 'Chest').tonnage_kg).toBe('15000')
-    // And it sits below the daily evidence, with the rest of the aggregates.
-    expect(out.indexOf('\n## DAYS')).toBeLessThan(out.indexOf('\n## WEEK.MUSCLE'))
+    expect(hasSubsection(out, 'Sets by muscle')).toBe(true)
+    expect(table(out, 'Sets by muscle').columns)
+      .toEqual(['Muscle', 'Sets', 'Target', 'Δ', 'Direct', 'Indirect', 'Tonnage kg'])
+    expect(muscleRow(out, 'Quads')['Tonnage kg']).toBe('22,000')
+    expect(muscleRow(out, 'Chest')['Tonnage kg']).toBe('15,000')
+    // It sits with the rest of the week's aggregates, above the days.
+    expect(out.indexOf('**Training**')).toBeLessThan(out.indexOf('### Sets by muscle'))
   })
 
   it('prints the week total at full precision, matching the Session page', () => {
     // 3571.25 is the Aug 5 session exactly. `n()` would have rounded it to 3571
     // and the export would disagree with the screen about the same workout.
     const out = buildWeeklyExport(base({ sessions: [session({ volumeKg: 3571.25 })] }))
-    expect(weekRow(out).tonnage_kg).toBe('3571.25')
-    expect(weekRow(out).sessions).toBe('1')
+    expect(weekTotals(out).tonnageKg).toBe(3571.25)
+    expect(weekTotals(out).sessions).toBe(1)
   })
 
   it('warns that per-muscle rows deliberately over-sum', () => {
@@ -1071,12 +1089,15 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
     // instead: the two rows total 1800 against a week's 1000, and they sit
     // directly under the total, so the over-sum is visible rather than warned
     // about. One set credits every muscle it trains, which is the whole reason.
-    const perMuscle = rowsOf(out, 'WEEK.MUSCLE')
-      .reduce((n, r) => n + Number(r.tonnage_kg), 0)
+    const perMuscle = table(out, 'Sets by muscle').rows
+      .reduce((n, r) => n + Number(r[6].replace(/,/g, '')), 0)
     expect(perMuscle).toBe(1800)
-    expect(Number(weekRow(out).tonnage_kg)).toBe(1000)
-    expect(perMuscle).toBeGreaterThan(Number(weekRow(out).tonnage_kg))
-    expect(out.indexOf('\n## WEEK ')).toBeLessThan(out.indexOf('\n## WEEK.MUSCLE'))
+    expect(weekTotals(out).tonnageKg).toBe(1000)
+    expect(perMuscle).toBeGreaterThan(weekTotals(out).tonnageKg!)
+    // The week's own total is stated above the table, so the over-sum is
+    // visible rather than warned about — and the legend says why.
+    expect(out.indexOf('**Training**')).toBeLessThan(out.indexOf('### Sets by muscle'))
+    expect(legendText(out)).toContain('does NOT sum to the week')
   })
 
   // ── Energy balance ──
@@ -1087,19 +1108,19 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
       day({ date: '2026-07-20', calories: 1900, bmrKcal: 1500, activeKcal: 600 }),
     ]
     const out = buildWeeklyExport(base({ days }))
-    const energy = derivedWeekRow(out)
+    const balance = energy(out)
     // The SIGN is the word: negative is a deficit, and the figure is never
     // restated as an absolute value beside a shouted noun.
-    expect(energy.balance_kcal).toBe('-799')
-    expect(energy.balance_kcal_day).toBe('-399')
-    expect(energy.energy_days).toBe('2')
-    expect(energy.tdee_avg).toBe('2300')     // 4599 kcal out over the two days
+    expect(balance.balanceKcal).toBe(-799)
+    expect(balance.perDayKcal).toBe(-399)
+    expect(balance.daysCounted).toBe(2)
+    expect(balance.tdeeAvg).toBe(2300)       // 4599 kcal out over the two days
     // Each term of that 2300 is stated beside it, so the estimate can be
     // audited rather than taken: 1500 + 600 + 199.5.
-    expect([energy.bmr_avg, energy.active_avg, energy.tef_avg])
-      .toEqual(['1500', '600', '200'])
+    expect([balance.bmrAvg, balance.activeAvg, balance.tefAvg])
+      .toEqual([1500, 600, 200])
     // The intake side is a MEASUREMENT and stays above the fence.
-    expect(weekRow(out).kcal_avg).toBe('1900')
+    expect(weekTotals(out).kcalAvg).toBe(1900)
   })
 
   it('names TEF in the breakdown, and states the rate it used', () => {
@@ -1110,14 +1131,14 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
     }))
     // 1500 + 600 + 210 = 2310, stated per day under the fence and averaged on
     // the `## WEEK` row — the two must be the same arithmetic.
-    expect(derivedRow(out, 'tdee')).toEqual(['2310'])
-    expect(derivedWeekRow(out).tdee_avg).toBe('2310')
+    expect(derivedOf(out, '2026-07-19').TDEE).toBe('2,310 kcal')
+    expect(energy(out).tdeeAvg).toBe(2310)
     // The term has its own column, so it can never be folded invisibly into
     // the total…
-    expect(derivedWeekRow(out).tef_avg).toBe('210')
+    expect(energy(out).tefAvg).toBe(210)
     // …and it is NAMED, with the rate it used, so a TDEE that silently grew by
     // 200 kcal/day reads as a correction rather than a data error.
-    expect(howLine(out)).toContain('intake × 0.105')
+    expect(legendText(out)).toContain('intake × 0.105')
   })
 
   it('counts no TEF on a day with no intake — that day is not counted at all', () => {
@@ -1130,14 +1151,18 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
         day({ date: '2026-07-20', calories: null, bmrKcal: 1500, activeKcal: 600 }),
       ],
     }))
-    expect(derivedWeekRow(out).energy_days).toBe('1')
-    expect(derivedWeekRow(out).energy_excluded).toBe('2026-07-20')
-    expect(derivedWeekRow(out).tdee_avg).toBe('2310')
+    expect(energy(out).daysCounted).toBe(1)
+    expect(energy(out).excluded).toEqual(['2026-07-20'])
+    expect(energy(out).tdeeAvg).toBe(2310)
     // 210, not 315: the TEF is the counted day's own, never the week's.
-    expect(derivedWeekRow(out).tef_avg).toBe('210')
+    expect(energy(out).tefAvg).toBe(210)
     // The uncounted day still has a tdee of its own — BMR and active energy
     // are both there — but no TEF to add, and no intake to balance it against.
-    expect(derivedRow(out, 'tdee')).toEqual(['2310', DASH])
+    expect(derivedOf(out, '2026-07-19').TDEE).toBe('2,310 kcal')
+    // …and that day's computed row is dropped entirely rather than printing a
+    // column of gaps: it is named in the day's own closing line instead.
+    expect(derivedOf(out, '2026-07-20').TDEE).toBeUndefined()
+    expect(notRecorded(out, '2026-07-20')).toContain('derived figures')
   })
 
   it('names a surplus a surplus', () => {
@@ -1147,8 +1172,8 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
     }))
     // A surplus is a POSITIVE balance. The same column says both, which is why
     // the sign can never disagree with the noun.
-    expect(derivedWeekRow(out).balance_kcal).toBe('685')
-    expect(derivedWeekRow(out).balance_kcal_day).toBe('685')
+    expect(energy(out).balanceKcal).toBe(685)
+    expect(energy(out).perDayKcal).toBe(685)
   })
 
   it('carries BMR across the days the scale was skipped, and says so', () => {
@@ -1160,11 +1185,11 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
         day({ date: '2026-07-20', calories: 1900, bmrKcal: 1500, activeKcal: 600 }),
       ],
     }))
-    expect(derivedWeekRow(out).energy_days).toBe('2')   // the un-weighed day counts
-    expect(derivedWeekRow(out).energy_excluded).toBe(DASH)
+    expect(energy(out).daysCounted).toBe(2)   // the un-weighed day counts
+    expect(energy(out).excluded).toEqual([])
     // …and it SAYS SO in its own column, rather than leaving the reader to
     // notice that a day with no scale reading was counted anyway.
-    expect(derivedWeekRow(out).bmr_carried).toBe('1')
+    expect(energy(out).bmrCarried).toBe(true)
     // A week where every day was weighed says 0, so the flag means something.
     const weighed = buildWeeklyExport(base({
       days: [
@@ -1172,9 +1197,9 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
         day({ date: '2026-07-20', calories: 1900, bmrKcal: 1500, activeKcal: 600 }),
       ],
     }))
-    expect(derivedWeekRow(weighed).bmr_carried).toBe('0')
+    expect(energy(weighed).bmrCarried).toBe(false)
     // And the document states the rule on the line that explains tdee.
-    expect(howLine(out)).toContain('BMR (from the scale, carried across gaps)')
+    expect(legendText(out)).toContain('BMR (from the scale, carried across gaps)')
   })
 
   it('counts only days holding BOTH an intake and an expenditure', () => {
@@ -1186,20 +1211,20 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
       ],
     }))
     // Day 2 inherits a BMR but has no active energy; day 3 logged no food.
-    expect(derivedWeekRow(out).energy_days).toBe('1')
-    expect(derivedWeekRow(out).energy_excluded).toBe('2026-07-20;2026-07-21')
+    expect(energy(out).daysCounted).toBe(1)
+    expect(energy(out).excluded).toEqual(['2026-07-20', '2026-07-21'])
   })
 
   it('skips the balance entirely rather than reporting half a week as zero', () => {
     const out = buildWeeklyExport(base({ days: [day({ calories: 1900 })] }))
     // No expenditure side at all, so the cell is `—` rather than 0 — and the
     // day it could not use is named.
-    const energy = derivedWeekRow(out)
-    expect(energy.balance_kcal).toBe(DASH)
-    expect(energy.tdee_avg).toBe(DASH)
-    for (const k of ['bmr_avg', 'active_avg', 'tef_avg']) expect(energy[k]).toBe(DASH)
-    expect(energy.energy_days).toBe('0')
-    expect(energy.energy_excluded).toBe('2026-07-19')
+    const balance = energy(out)
+    expect(balance.stated).toBe(false)
+    expect(weekField(out, 'Energy balance'))
+      .toBe(`${NO_DATA} — no day carried both an intake and an expenditure.`)
+    expect(balance.balanceKcal).toBeNull()
+    expect(balance.tdeeAvg).toBeNull()
   })
 
   it('flags the balance as an estimate wherever it appears', () => {
@@ -1207,18 +1232,21 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
       days: [day({ calories: 1900, bmrKcal: 1500, activeKcal: 600 })],
     }))
     // The expenditure the balance is struck against is Onyx's own arithmetic
-    // over three estimates, so the WHOLE balance sits under the fence — not
-    // beside the measured intake on `## WEEK`, which is where it spent one
-    // draft. The heading says what everything below it is.
-    expect(sectionLines(out, 'DERIVED')[0]).toContain('computed by Onyx — not measured')
-    expect(out.indexOf('\n## DERIVED')).toBeLessThan(out.indexOf('\n## DERIVED.WEEK'))
-    expect(weekRow(out).balance_kcal).toBeUndefined()
-    // …and the `##   how` line names every term of it.
-    expect(howLine(out)).toContain('tdee = BMR')
-    expect(howLine(out)).toContain('heart rate, calories and steps come off the Apple Watch and are estimates')
+    // over three estimates, so the WHOLE balance is labelled as computed. v3
+    // put it below a document-level fence; a day-major document has none, so
+    // the marker travels with the figure instead.
+    expect(weekField(out, 'Energy balance')).toContain('*computed by Onyx, an estimate*')
+    // …and the line under it names every term.
+    const terms = sectionLines(out, 'THE WEEK').find((l) => l.startsWith('TDEE '))!
+    expect(terms).toContain('BMR')
+    expect(terms).toContain('Apple Watch active')
+    expect(terms).toContain('TEF')
+    expect(legendText(out)).toContain('tdee = BMR')
+    expect(out).toContain('sourced from the Apple Watch')
     // The averaged figure is that same tdee, so a reader who checks one
     // against the other cannot find two numbers.
-    expect(derivedWeekRow(out).tdee_avg).toBe(derivedRow(out, 'tdee')[0])
+    expect(energy(out).tdeeAvg).toBe(2300)
+    expect(derivedOf(out, '2026-07-19').TDEE).toBe('2,300 kcal')
   })
 
   // ── Steps ──
@@ -1234,9 +1262,12 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
     }))
     // The mean SKIPS the day with no count rather than averaging it in as 0,
     // and no cardio row is needed to make a step count real.
-    expect(weekRow(out).steps_avg).toBe('11000')
-    expect(headings(out)).not.toContain('## CARDIO')
-    expect(rowsOf(out, 'DAYS').map((r) => r.steps)).toEqual(['10000', '12000', DASH])
+    expect(weekTotals(out).stepsAvg).toBe(11000)
+    expect(weekField(out, 'Cardio')).toBe(NONE)
+    const [a, b, c] = dayDates(out)
+    expect(dayField(out, a, 'Activity')).toContain('10,000 steps')
+    expect(dayField(out, b, 'Activity')).toContain('12,000 steps')
+    expect(notRecorded(out, c)).toContain('activity')
   })
 
   // ── The week NAMES ITSELF, or says WEEK — never "Week undefined" ──
@@ -1246,13 +1277,13 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
   // that qualify a printed number now ride on the legend of the section that
   // prints it, and that move is pinned once, in `export-layout.test.ts`.
   it('falls back to unnumbered wording rather than printing "Week undefined"', () => {
-    expect(headerCells(buildWeeklyExport(base({ weekLabel: 'Week 5' })))[0])
-      .toBe('# ONYX Week 5')
+    expect(title(buildWeeklyExport(base({ weekLabel: 'Week 5' }))))
+      .toBe('# ONYX · WEEK 5')
     const out = buildWeeklyExport(base())
-    expect(headerCells(out)[0]).toBe('# ONYX WEEK')
+    expect(title(out)).toBe('# ONYX · WEEK')
     expect(out).not.toMatch(/undefined/)
     // A label of pure whitespace is a missing label, not a name.
-    expect(headerCells(buildWeeklyExport(base({ weekLabel: '  ' })))[0]).toBe('# ONYX WEEK')
+    expect(title(buildWeeklyExport(base({ weekLabel: '  ' })))).toBe('# ONYX · WEEK')
   })
 
   it('does not carry a second week of line-by-line data by default', () => {
@@ -1276,16 +1307,16 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
       days: [day({ date: '2026-08-05', weekdayLabel: 'Wed', isTrainingDay: false })],
       sessions: [session({ date: '2026-08-05', label: 'Delts & Arms' })],
     }))
-    // v2 relabelled the day "Workout (off-plan / swapped)". v3's `train` column
-    // reports the PLAN and nothing else, and the swap is visible as the join:
-    // a session row exists on a day the template called a rest day.
-    expect(dayRow(out, '2026-08-05').train).toBe('0')
+    // v2 relabelled the day "Workout (off-plan / swapped)". The heading reports
+    // the PLAN and nothing else, and the swap is visible structurally: a
+    // session sits inside a day the template called a rest day.
+    expect(trained(out, '2026-08-05')).toBe(false)
     const swapped = sessionBlock(out, '2026-08-05')
-    expect(swapped.row.label).toBe('Delts & Arms')
-    expect(swapped.row.day).toBe('Wed')
+    expect(swapped.heading).toContain('Delts & Arms')
+    expect(dayHeadings(out).find((h) => h.includes('2026-08-05'))).toContain('· Wed ·')
     // The work is attributed to the day it happened on, which is the fact the
     // relabelling existed to carry.
-    expect(rowsOf(out, 'SESSIONS').map((r) => r.date)).toEqual(['2026-08-05'])
+    expect(weekSessions(out).map((x) => x.date)).toEqual(['2026-08-05'])
   })
 
   it('leaves an ordinary training day unmarked', () => {
@@ -1293,8 +1324,8 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
       days: [day({ date: '2026-07-20', weekdayLabel: 'Mon', isTrainingDay: true })],
       sessions: [session({ date: '2026-07-20', label: 'Legs & Core A' })],
     }))
-    expect(dayRow(out, '2026-07-20').train).toBe('1')
-    expect(sessionBlock(out, '2026-07-20').row.label).toBe('Legs & Core A')
+    expect(trained(out, '2026-07-20')).toBe(true)
+    expect(sessionBlock(out, '2026-07-20').heading).toContain('Legs & Core A')
     expect(out).not.toMatch(/off-plan/)
   })
 
@@ -1302,13 +1333,14 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
     const out = buildWeeklyExport(base({
       days: [day({ date: '2026-08-04', weekdayLabel: 'Tue', isTrainingDay: false })],
     }))
-    // `0` and nothing else — v2 used to read "Rest · rest", the word twice, and
-    // v3 states the fact once, in one character, in a named column.
-    expect(dayRow(out, '2026-08-04').train).toBe('0')
-    expect(headings(out)).not.toContain('## SESSIONS')
-    // Scoped to the log itself: `rest_dose` and `rest_target` are legend words
-    // in other sections and are not verdicts about a day.
-    expect(sectionText(out, 'DAYS')).not.toMatch(/rest/i)
+    // One word on the heading, and it is a FACT about the day rather than a
+    // verdict on it: v2 used to read "Rest · rest", the word twice.
+    expect(trained(out, '2026-08-04')).toBe(false)
+    expect(dayHeadings(out)[0]).toContain('· REST')
+    expect(weekSessions(out)).toHaveLength(0)
+    // Scoped to the day block itself: "rest" is a legend word elsewhere and is
+    // not a verdict about a day.
+    expect(dayLines(out, '2026-08-04').join('|')).not.toMatch(/rest/i)
   })
 })
 
@@ -1360,14 +1392,16 @@ describe('body rows, effort and sparklines', () => {
       days: [day({ date: '2026-08-02', weekdayLabel: 'Sun' })],
       bodyComp: [body({ date: '2026-08-02', skeletalMuscleMassKg: 26.8, estimatedWaistToHipRatio: 0.8 })],
     }))
-    expect(dataLines(out, 'BODY')).toHaveLength(1)
+    expect(table(out, 'Body composition').rows).toHaveLength(1)
     const row = bodyRow(out, '2026-08-02')
-    expect([row.smm_kg, row.whr]).toEqual(['26.8', '0.80'])
-    for (const k of ['weight_kg', 'fat_pct', 'fat_mass_kg', 'muscle_mass_kg', 'ffm_kg']) {
-      expect(row[k], `${k} without a weight`).toBe(DASH)
+    expect([row.SMM, row.WHR]).toEqual(['26.8', '0.80'])
+    for (const k of ['Weight', 'Fat %', 'Fat kg', 'Muscle kg', 'FFM']) {
+      expect(row[k], `${k} without a weight`).toBe('—')
     }
-    // The day line still tells the whole truth about the day.
-    expect(dayRow(out, '2026-08-02').tags).toBe('skip:As Planned')
+    // The day still tells the whole truth about the day: what it DID measure,
+    // and why there was no weigh-in.
+    expect(dayField(out, '2026-08-02', 'Body')).toContain('SMM 26.8 kg')
+    expect(notMeasured(out, '2026-08-02', 'Body')).toContain('weight')
   })
 
   it('still prints the reading the moment a weight is present', () => {
@@ -1376,12 +1410,12 @@ describe('body rows, effort and sparklines', () => {
       bodyComp: [body({ date: '2026-08-02', weightKg: 64.2, bodyFatPct: 17.3, skeletalMuscleMassKg: 26.8 })],
     }))
     const row = bodyRow(out, '2026-08-02')
-    expect(row.weight_kg).toBe('64.2')
-    expect(row.fat_pct).toBe('17.3')
-    expect(row.smm_kg).toBe('26.8')
-    // The absent compartments dash rather than vanish — an omitted field is
+    expect(row.Weight).toBe('64.2')
+    expect(row['Fat %']).toBe('17.3')
+    expect(row.SMM).toBe('26.8')
+    // The absent compartments dash rather than vanish — an omitted column is
     // indistinguishable from a zero to whoever reads this.
-    expect(row.muscle_mass_kg).toBe(DASH)
+    expect(row['Muscle kg']).toBe('—')
   })
 
   it('does not suppress a genuine reading just because some fields are absent', () => {
@@ -1395,11 +1429,11 @@ describe('body rows, effort and sparklines', () => {
       })],
     }))
     const row = bodyRow(out, '2026-07-27')
-    expect([row.weight_kg, row.bmi, row.fat_pct]).toEqual(['64.5', '22.3', '17.6'])
-    expect([row.muscle_pct, row.muscle_mass_kg]).toEqual(['78.0', '50.3'])
-    expect([row.ffm_kg, row.smm_kg]).toEqual(['53.1', '26.6'])
+    expect([row.Weight, row.BMI, row['Fat %']]).toEqual(['64.5', '22.3', '17.6'])
+    expect([row['Muscle %'], row['Muscle kg']]).toEqual(['78.0', '50.3'])
+    expect([row.FFM, row.SMM]).toEqual(['53.1', '26.6'])
     // The ones the scale did not report stay dashed on the same line.
-    expect(row.water_pct).toBe(DASH)
+    expect(row['Water %']).toBe('—')
   })
 
   // ── §5b · effort ──
@@ -1417,8 +1451,8 @@ describe('body rows, effort and sparklines', () => {
     expect(s.avgSessionRpe).toBe(8.5)
     expect(s.ratedSessions).toBe(2)
     // And the document shows the three ratings the mean was taken over.
-    expect(rowsOf(buildWeeklyExport(in_), 'SESSIONS').map((r) => r.srpe))
-      .toEqual(['8', '9', DASH])
+    expect(weekSessions(buildWeeklyExport(in_)).map(sessionRpe))
+      .toEqual(['8', '9', null])
   })
 
   it('says "not rated" rather than scoring an unrated week 0', () => {
@@ -1426,7 +1460,8 @@ describe('body rows, effort and sparklines', () => {
     // Null, never 0 — an unrated week is unmeasured, not effortless.
     expect(weeklySummary(in_).avgSessionRpe).toBeNull()
     expect(weeklySummary(in_).ratedSessions).toBe(0)
-    expect(rowsOf(buildWeeklyExport(in_), 'SESSIONS')[0].srpe).toBe(DASH)
+    expect(sessionRpe(weekSessions(buildWeeklyExport(in_))[0])).toBeNull()
+    expect(weekSessions(buildWeeklyExport(in_))[0].meta).toContain('sRPE not reported')
   })
 
   it('does not let an unrated session drag the mean down', () => {
@@ -1435,7 +1470,7 @@ describe('body rows, effort and sparklines', () => {
     expect(weeklySummary(in_).ratedSessions).toBe(1)
     // Two sessions, one rating — the document says so rather than implying the
     // rating covered both.
-    expect(rowsOf(buildWeeklyExport(in_), 'SESSIONS').map((r) => r.srpe)).toEqual(['9', DASH])
+    expect(weekSessions(buildWeeklyExport(in_)).map(sessionRpe)).toEqual(['9', null])
   })
 
   // ── §5a · sparklines ──
@@ -1490,14 +1525,17 @@ describe('body rows, effort and sparklines', () => {
     }))
     // A missing step count is a GAP: the day may well have been walked, so it
     // is `—` and not a bar at the floor.
-    const steps = rowsOf(out, 'DAYS').map((r) => r.steps)
-    expect(steps).toEqual(['12000', '6000', DASH])
+    const steps = dayDates(out).map((d) => {
+      const m = /^([\d,]+) steps/.exec(dayFieldOrNull(out, d, 'Activity') ?? '')
+      return m ? m[1].replace(/,/g, '') : null
+    })
+    expect(steps).toEqual(['12000', '6000', null])
     // A rest day is a REAL zero for volume — no training happened — and it
-    // shows as the absence of a session row rather than as an invented 0.
-    expect(rowsOf(out, 'SESSIONS').map((r) => r.date)).toEqual(['2026-08-02'])
-    expect(weekRow(out).tonnage_kg).toBe('4000')
+    // shows as the absence of a session rather than as an invented 0.
+    expect(weekSessions(out).map((x) => x.date)).toEqual(['2026-08-02'])
+    expect(weekTotals(out).tonnageKg).toBe(4000)
     // The series the bars were drawn from is still exactly one glyph per day.
-    expect(sparkline(steps.map((v) => (v === DASH ? null : Number(v))))).toBe('█▅·')
+    expect(sparkline(steps.map((v) => (v == null ? null : Number(v))))).toBe('█▅·')
   })
 
   it('sums a double-session day into ONE volume bar', () => {
@@ -1512,16 +1550,17 @@ describe('body rows, effort and sparklines', () => {
         session({ date: '2026-08-03', volumeKg: 2000 }),
       ],
     }))
-    // Both days did 2000 kg. v3 prints each session on its own row — that is
-    // the evidence — and the per-day sum has to come out equal, or any reading
-    // of the week is a lie.
+    // Both days did 2000 kg. The document prints each session under its own
+    // day — that is the evidence — and the per-day sum has to come out equal,
+    // or any reading of the week is a lie.
     const byDate = new Map<string, number>()
-    for (const r of rowsOf(out, 'SESSIONS')) {
-      byDate.set(r.date, (byDate.get(r.date) ?? 0) + Number(r.tonnage_kg))
+    for (const r of weekSessions(out)) {
+      const kg = Number(/([\d,.]+) kg tonnage/.exec(r.counts)![1].replace(/,/g, ''))
+      byDate.set(r.date, (byDate.get(r.date) ?? 0) + kg)
     }
     expect([...byDate.values()]).toEqual([2000, 2000])
     // And the week's own total counts each session once, not each day once.
-    expect(weekRow(out).tonnage_kg).toBe('4000')
-    expect(weekRow(out).sessions).toBe('3')
+    expect(weekTotals(out).tonnageKg).toBe(4000)
+    expect(weekTotals(out).sessions).toBe(3)
   })
 })

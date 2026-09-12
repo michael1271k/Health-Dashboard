@@ -25,7 +25,14 @@ struct WeekDaysView: View {
     /// under it — see `AppEnvironment.rescoreGeneration`.
     @State private var loadedAt = -1
 
-    @State private var exportText: String?
+    /// The week as a `.md` FILE, written to the temporary directory.
+    ///
+    /// A `URL` and not a `String`: `ShareLink` hands a string to the sheet as
+    /// loose text, so Files offers no "Save to", Mail has nothing to attach and
+    /// the artefact reaches the other side with no name. A file arrives as
+    /// `onyx-week-07-2026-08-30.md`, which is what makes a weekly document
+    /// something you can keep rather than something you can paste once.
+    @State private var exportFile: URL?
 
     var body: some View {
         List {
@@ -111,28 +118,22 @@ struct WeekDaysView: View {
                 )
                 .onyxType(.caption)
                 .foregroundStyle(Color.onyx.textSecondary)
-            } else if let exportText {
-                // ── WHAT THIS SHARES, AND WHY IT IS JSON ────────────────────
-                // `WeeklyExportBuilder` assembles the week exactly as the
-                // report brief needs it — days, sessions, sets, targets, the
-                // lever periods in force. What does NOT exist in Swift is the
-                // Markdown renderer that turns it into FMT v2; that lives in
-                // the web app, and porting it is a wave of its own.
+            } else if let exportFile {
+                // ── WHAT THIS SHARES ────────────────────────────────────────
+                // The week as a DOCUMENT. `WeeklyExportBuilder` assembles the
+                // payload and `WeeklyExport.build` renders it — the same
+                // renderer the web app runs, byte for byte, pinned by the
+                // golden fixture both languages read.
                 //
-                // So this shares the assembled input verbatim rather than
-                // inventing a second format that would drift from the first.
-                // It is complete, it pastes, and it is honest about being the
-                // data rather than the document.
-                //
-                // ponytail: JSON, not FMT v2 Markdown. Port
-                // `src/lib/reports/render` and swap the item when the reader
-                // wants a document rather than a payload.
+                // This used to share the assembled input as raw JSON, because
+                // the Markdown renderer existed only on the web. It has been
+                // ported; the payload was never the thing a reader wanted.
                 ShareLink(
-                    item: exportText,
+                    item: exportFile,
                     subject: Text("\(window.label(in: environment.targets?.schedule)) · \(window.rangeLabel)"),
-                    preview: SharePreview("\(window.label(in: environment.targets?.schedule)) export")
+                    preview: SharePreview(exportFile.lastPathComponent)
                 ) {
-                    LabeledContent("Export week", value: "JSON")
+                    LabeledContent("Export week", value: "Markdown")
                 }
             }
         } header: {
@@ -169,15 +170,33 @@ struct WeekDaysView: View {
             let detail = HistoryWeeks.detail(database: database, window: window)
             let input = try? WeeklyExportBuilder(database: database, userId: userId)
                 .input(weekStart: window.start)
-            let encoder = JSONEncoder()
-            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-            let text = input
-                .flatMap { try? encoder.encode($0) }
-                .flatMap { String(data: $0, encoding: .utf8) }
+            let text = input.map { WeeklyExport.build($0) }
             return (detail, text)
         }.value
         detail = built.0
-        exportText = built.1
+        exportFile = built.1.flatMap { Self.writeExport($0, weekStart: window.start) }
+    }
+
+    /// The document, on disk, under a name a reader can file.
+    ///
+    /// The temporary directory and not the App Group: this is a hand-off to the
+    /// share sheet and nothing else reads it. The file is REWRITTEN on every
+    /// load rather than appended to or suffixed, so re-exporting the same week
+    /// twice leaves one file rather than a drawer of near-identical ones.
+    private static func writeExport(_ markdown: String, weekStart: String) -> URL? {
+        // `2026-08-30` → `onyx-week-2026-08-30.md`. The date and not the week
+        // NUMBER: a number is only meaningful inside one programme, and a file
+        // outlives the programme it came from.
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("onyx-week-\(weekStart).md")
+        do {
+            try markdown.write(to: url, atomically: true, encoding: .utf8)
+            return url
+        } catch {
+            // A share that cannot be written is a button that does nothing, so
+            // the row disappears rather than presenting an empty sheet.
+            return nil
+        }
     }
 }
 

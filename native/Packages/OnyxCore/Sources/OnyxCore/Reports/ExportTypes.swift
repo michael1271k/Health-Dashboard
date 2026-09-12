@@ -9,6 +9,10 @@ import Foundation
 public struct ExportSupplement: Codable, Equatable, Sendable {
     /// "HH:MM", or nil for an unscheduled item.
     public var time: String?
+    /// The `custom_supplements.schedule.key` each `supplement_log` row is
+    /// written against. Carried so a day's "taken" list can print NAMES: the
+    /// log holds keys, and `d3k2@07:00` is not a line a person reads.
+    public var key: String?
     public var name: String
     public var dose: String
     public var trainingDose: String?
@@ -190,6 +194,24 @@ public struct ExportFatigue: Codable, Equatable, Sendable {
     public var label: String
 }
 
+/// One `stress_logs` row — the "Head" reading, self-reported.
+///
+/// Not a second fatigue scale: `ExportFatigue` asks what the BODY could do and
+/// this asks what is on the mind, and the two answer differently on the same
+/// day. See `Recovery/PsychStress.swift`, which owns the vocabulary.
+public struct ExportStress: Codable, Equatable, Sendable {
+    public var date: String
+    /// `morning` / `midday` / `evening`, derived from the clock, never chosen.
+    public var slot: String
+    public var level: Double
+    /// `PsychStress.levels`' own word — the number alone is not readable and
+    /// the word alone cannot be compared.
+    public var label: String
+    /// Report-only: nothing scores a tag, and a reading with none is complete.
+    public var tags: [String]?
+    public var note: String?
+}
+
 public struct ExportDoms: Codable, Equatable, Sendable {
     public var date: String
     public var muscle: String
@@ -287,6 +309,10 @@ public struct WeeklyExportInput: Codable, Equatable, Sendable {
     /// Flagged joints. Optional: a payload built before v2 simply has none.
     public var joints: [ExportJoint]?
     public var fatigue: [ExportFatigue]?
+    /// Self-reported psychological stress — the Head row. Optional: a payload
+    /// built by a surface that does not write `stress_logs` simply has none,
+    /// and the day says `no data` rather than claiming a calm week.
+    public var stress: [ExportStress]?
     public var bodyComp: [ExportBodyComp]?
     public var cardio: [ExportCardio]?
     public var supplementProtocol: [ExportSupplement]?

@@ -116,6 +116,15 @@ struct WeeklyExportBuilderTests {
             try FatigueLogRow(id: "f2", userId: user, date: "2026-08-24", slot: "waking", level: 3, createdAt: t.addingTimeInterval(1)).insert(conn)
             try FatigueLogRow(id: "f3", userId: user, date: "2026-08-24", slot: "bogus", level: 5, createdAt: t.addingTimeInterval(2)).insert(conn)
             try FatigueLogRow(id: "f4", userId: user, date: "2026-08-26", slot: "midday", level: 4, createdAt: t).insert(conn)
+            // The HEAD row. Two readings on one day, out of clock order and
+            // with a tag the vocabulary does not know — the export has to sort
+            // them into the order the day happens in and drop the unknown tag.
+            try StressLogRow(id: "st1", userId: user, date: "2026-08-24", slot: "evening", level: 4,
+                             tags: JSONText(raw: "[\"work\",\"nonsense\"]"), note: "deadline; again",
+                             createdAt: t, updatedAt: t).insert(conn)
+            try StressLogRow(id: "st2", userId: user, date: "2026-08-24", slot: "morning", level: 2,
+                             tags: JSONText(raw: "[]"), note: nil,
+                             createdAt: t.addingTimeInterval(1), updatedAt: t).insert(conn)
 
             try BodyCompositionRow(id: "bc1", userId: user, measuredAt: t, date: "2026-08-25", weightKg: 64, bodyFatPct: 16.8,
                                    waterPct: 58.6, boneMassKg: 2.7, bmi: 21.4, createdAt: t, fatMassKg: 10.9,
@@ -165,6 +174,7 @@ struct WeeklyExportBuilderTests {
         #expect(got.tonnageByMuscle == want.tonnageByMuscle)
         #expect(got.doms == want.doms)
         #expect(got.fatigue == want.fatigue)
+        #expect(got.stress == want.stress)
         #expect(got.bodyComp == want.bodyComp)
         #expect(got.cardio == want.cardio)
         #expect(got.supplementProtocol == want.supplementProtocol)
@@ -194,7 +204,11 @@ struct WeeklyExportBuilderTests {
 
         let markdown = WeeklyExport.build(got)
         #expect(markdown.contains("Legs & Core A"))
-        #expect(markdown.hasPrefix("# ONYX Week 6 \u{00B7} 2026-08-23\u{2192}2026-08-29 \u{00B7} Onyx-5 Cut \u{00B7} Cut \u{00B7} lever=mixed"))
+        // v4's header is two lines: the week's name, then what it was run under.
+        #expect(markdown.hasPrefix("# ONYX \u{00B7} WEEK 6\n2026-08-23 \u{2192} 2026-08-29 \u{00B7} Onyx-5 Cut \u{00B7} Cut \u{00B7}"))
+        // And every day is a section of its own, in order.
+        #expect(markdown.contains("## DAY 1 \u{00B7} Sun \u{00B7} 2026-08-23 \u{00B7}"))
+        #expect(markdown.hasSuffix(WeeklyExport.notes[3]))
     }
 
     /// The whole payload, by hand — every field the web's `weekPayload` would
@@ -329,10 +343,14 @@ struct WeeklyExportBuilderTests {
         {"date": "2026-08-29", "kind": "run", "distanceM": 3000, "durationMin": 18, "kcal": 200, "totalKcal": 230, "avgHr": 150, "effort": 7,
          "startedAt": "2026-08-29T06:12:00Z", "elevationM": 120, "source": "health"}
       ],
+      "stress": [
+        {"date": "2026-08-24", "slot": "morning", "level": 2, "label": "Okay", "tags": []},
+        {"date": "2026-08-24", "slot": "evening", "level": 4, "label": "Strained", "tags": ["work"], "note": "deadline; again"}
+      ],
       "supplementProtocol": [
-        {"time": "15:00", "name": "Creatine Monohydrate", "dose": "5 g"},
-        {"time": "11:45", "name": "Caffeine", "dose": "200 mg", "trainingOnly": true},
-        {"time": "15:00", "name": "Omega-3", "dose": "2 caps"}
+        {"time": "15:00", "key": "creatine", "name": "Creatine Monohydrate", "dose": "5 g"},
+        {"time": "11:45", "key": "caffeine", "name": "Caffeine", "dose": "200 mg", "trainingOnly": true},
+        {"time": "15:00", "key": "omega3", "name": "Omega-3", "dose": "2 caps"}
       ],
       "ledger": [
         {"label": "Week 0", "weekStart": "2026-07-12", "totals": {}},
